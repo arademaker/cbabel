@@ -1,0 +1,77 @@
+(
+connector GUARD-GET {
+  var bool gg@cheio = FALSE ;
+  staterequired int gg@items ;
+  staterequired bool gg@vazio ;
+  staterequired bool gg@semaphoro ;
+
+  in port gg@in ;
+  out port gg@out ;
+
+  interaction {
+    gg@in > 
+    guard(gg@semaphoro == TRUE && gg@cheio == TRUE) {
+     before {
+      gg@semaphoro = FALSE ;
+     } 
+     after {
+      gg@vazio = TRUE ;
+      if (gg@items == 0) {
+        gg@cheio = FALSE ;
+      }
+      gg@semaphoro = TRUE ;
+     }
+    } > gg@out ;
+  }
+}
+)
+
+(
+connector GUARD-PUT {
+  var bool gp@vazio = TRUE ;
+  var bool gp@semaphoro = TRUE ;
+  var int gp@maxitems = 2 ;
+  staterequired int gp@items ;
+  staterequired bool gp@cheio ;
+
+  in port gp@in ;
+  out port gp@out ;
+
+  interaction {
+    gp@in >
+    guard(gp@semaphoro == TRUE && gp@vazio == TRUE) {
+     before {
+      gp@semaphoro = FALSE ;
+     } 
+     after {
+      gp@cheio = TRUE ;
+      if (gp@items == gp@maxitems) {
+        gp@vazio = FALSE ;
+      }
+      gp@semaphoro = TRUE ;
+     }
+    } > gp@out ;
+  }
+}
+)
+
+(
+application PC-MONITOR {
+ instantiate BUFFER as buff ;
+ instantiate PRODUCER as prod ;
+ instantiate CONSUMER as cons ;
+ instantiate GUARD-GET as gget ;
+ instantiate GUARD-PUT as gput ;
+
+ link prod.producer@put to gput.gp@in ;
+ link cons.consumer@get to gget.gg@in ;
+ link gput.gp@out to buff.buffer@put ;
+ link gget.gg@out to buff.buffer@get ;
+
+ bind int gput.gp@items to buff.buffer@items ; 
+ bind int gget.gg@items to buff.buffer@items ;
+ bind bool gput.gp@cheio to gget.gg@cheio ;
+ bind bool gget.gg@vazio to gput.gp@vazio ;
+ bind bool gget.gg@semaphoro to gput.gp@semaphoro ;
+}
+)

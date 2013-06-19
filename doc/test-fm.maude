@@ -1,0 +1,24 @@
+(omod BAR is
+  sort Bar1 .
+  op bar : -> Bar1 .
+endom)
+
+eof
+
+(omod FOO is 
+  sort Foo .
+endom)
+
+(omod FOOBAR is
+  inc FOO .
+  inc BAR .
+
+  sort Foobar .
+
+  op fb : Foo Bar -> Foobar .
+endom)
+
+
+
+
+

@@ -1,0 +1,90 @@
+(
+module PHILOSOPHER { 
+ out port get-fork ;
+}
+)
+
+(
+module FOOD {
+ in port eat ;
+}
+)
+
+(
+connector LFORK {
+ var bool lf@available = TRUE ;
+ in port lf@in ;
+ out port lf@out ; 
+
+ interaction {
+  lf@in > 
+  guard( lf@available == TRUE ) { 
+   before { 
+    lf@available = FALSE ;
+   }
+   after {
+    lf@available = TRUE ;
+   }
+  } > lf@out ;
+ }
+}
+)
+
+(
+connector RFORK {
+ staterequired bool rf@available ;
+ in port rf@in ;
+ out port rf@out ; 
+
+ interaction {
+  rf@in > 
+  guard( rf@available == TRUE ) { 
+   before { 
+    rf@available = FALSE ;
+   }
+   after {
+    rf@available = TRUE ;
+   }
+  } > rf@out ;
+ }
+}
+)
+
+(
+application DP {
+ instantiate PHILOSOPHER as phi1 ;
+ instantiate PHILOSOPHER as phi2 ;
+ instantiate PHILOSOPHER as phi3 ;
+ instantiate PHILOSOPHER as phi4 ;
+ instantiate FOOD as food ;
+ instantiate LFORK as lfork1 ;
+ instantiate LFORK as lfork2 ;
+ instantiate LFORK as lfork3 ;
+ instantiate LFORK as lfork4 ;
+ instantiate RFORK as rfork1 ;
+ instantiate RFORK as rfork2 ;
+ instantiate RFORK as rfork3 ;
+ instantiate RFORK as rfork4 ;
+
+ link phi1.get-fork to lfork1.lf@in ;
+ link lfork1.lf@out to rfork4.rf@in ;
+ link rfork4.rf@out to food.eat ;
+
+ link phi2.get-fork to lfork2.lf@in ;
+ link lfork2.lf@out to rfork1.rf@in ;
+ link rfork1.rf@out to food.eat ;
+
+ link phi3.get-fork to lfork3.lf@in ;
+ link lfork3.lf@out to rfork2.rf@in ;
+ link rfork2.rf@out to food.eat ;
+
+ link phi4.get-fork to lfork4.lf@in ;
+ link lfork4.lf@out to rfork3.rf@in ;
+ link rfork3.rf@out to food.eat ;
+
+ bind bool rfork1.rf@available to lfork1.lf@available ;
+ bind bool rfork2.rf@available to lfork2.lf@available ;
+ bind bool rfork3.rf@available to lfork3.lf@available ;
+ bind bool rfork4.rf@available to lfork4.lf@available ;
+}
+)

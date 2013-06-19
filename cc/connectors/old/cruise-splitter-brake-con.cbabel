@@ -1,0 +1,22 @@
+(
+/*
+    Sends the signal to the car engine and
+    to the cruise control
+*/
+
+connector splitter-brake {
+
+  // controles normais de um carro padrao
+
+  in port oneway  brake-in;
+
+  out port oneway  brake-out1;
+
+  out port oneway  brake-out2;
+
+  interaction {
+     brake-in > (brake-out1 || brake-out2);
+  }
+} // splitter
+
+)

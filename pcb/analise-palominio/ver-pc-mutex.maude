@@ -1,0 +1,67 @@
+load pc-mutex.maude
+load model-checker.maude
+
+omod EXEC-PCB is
+ inc CBABEL-CONFIGURATION .
+ inc PC-MUTEX . 
+
+ var C : Configuration .
+ vars AS AS' : AttributeSet .
+ vars O O' : Oid .
+ vars IT IT1 IT2 : Interaction .
+ vars M N : Int .
+
+ op initial : -> Configuration .
+ eq initial = topology 
+              do(cons1, consumer@get, none) do(prod1, producer@put, none) 
+              do(cons2, consumer@get, none) do(prod2, producer@put, none) .
+
+ rl [producer-do] : done(O, producer@put, IT) => do(O, producer@put, none) .
+ rl [consumer-do] : done(O, consumer@get, IT) => do(O, consumer@get, none) .
+
+ rl [buffer-do-put] :
+    do(O, buffer@put, IT) < O : BUFFER | buffer@items : N , AS > => 
+    done(O, buffer@put, IT) < O : BUFFER | buffer@items : inc(N) , AS > .
+
+ rl [buffer-do-get] : 
+    do(O, buffer@get, IT) < O : BUFFER | buffer@items : N , AS > => 
+    done(O, buffer@get, IT) < O : BUFFER | buffer@items : dec(N) , AS > .
+
+ op inc : Int -> Int .
+ eq inc(N) = if s(N) > 3 then 3 else s(N) fi .
+ op dec : Int -> Int .
+ eq dec(N) = if (N - 1) < -1 then -1 else (N - 1) fi .
+endom
+
+omod VER-PCB is 
+ inc EXEC-PCB .
+ inc MODEL-CHECKER .
+
+ var C : Configuration .
+ vars O O' : Oid .
+ vars AS AS' : AttributeSet .
+ vars IT IT1 IT2 : Interaction .
+ vars M N : Int .
+
+ subsort Configuration < State .
+ ops putting getting : -> Prop .
+ eq send(O, buffer@put, IT) C |= putting = true .
+ eq send(O, buffer@get, IT) C |= getting = true .
+
+ op raceCond : -> Formula .
+ eq raceCond = (putting /\ getting) . 
+endom
+
+
+*** race
+red modelCheck(initial, [] ~ raceCond) .
+
+*** starvation do produtor
+red modelCheck(initial, [] <> putting) .
+
+*** starvation do consumidor
+red modelCheck(initial, [] <> getting) .
+
+*** deadlock free using search
+search initial =>! C:Configuration .
+

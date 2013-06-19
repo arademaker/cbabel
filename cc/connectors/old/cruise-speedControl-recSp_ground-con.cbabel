@@ -1,0 +1,28 @@
+(
+
+connector SpeedControl-recSp_ground {
+  var int DISABLED = int(0);      // speed control states
+  var int ENABLED  = int(1);
+  var int state = DISABLED;       // initial state
+  var int setSpeed = int(0);      // target cruise control speed
+
+  staterequired int speed;        // vem do modulo engine
+
+  in port oneway recordSpeed;
+
+  interaction {
+    recordSpeed >
+       guard (true) {
+         before {setSpeed = speed;}
+         alternative (ground);
+       }
+    > ground;
+
+  }
+}
+
+)
+
+
+
+

@@ -1,0 +1,132 @@
+***  var int INACTIVE = 0 ;
+***  var int ACTIVE   = 1 ;
+***  var int CRUISING = 2 ;
+***  var int STANDBY  = 3 ;
+
+(
+connector ControllerBrake {
+  var int cb@controlState  = 0 ; 
+  in  port oneway cb@brake ;
+  out port oneway cb@disableControl ;
+
+  interaction {
+    cb@brake > guard (cb@controlState == 2) { 
+              alternative (ground) ;
+              before { cb@controlState = 3 ; } 
+            }
+    > cb@disableControl ;
+  }
+}
+)
+
+(
+connector ControllerAccelerator { 
+  staterequired int ca@controlState ;
+  in  port oneway ca@accelerate ; 
+  out port oneway ca@disableControl ;
+
+  interaction {
+    ca@accelerate > guard (ca@controlState == 2) { 
+                    alternative (ground) ;
+                    before { ca@controlState = 3 ; } 
+                  }
+    > ca@disableControl ;
+  }
+}
+)
+
+(
+connector ControllerEngineOffCorreta {
+  staterequired int ceoffc@controlState ;
+  in  port oneway ceoffc@engineOff ;
+  out port oneway ceoffc@correta ; 
+
+  interaction {
+     ceoffc@engineOff > guard (ceoffc@controlState != 0) { 
+                   alternative (ground) ;
+                   before { ceoffc@controlState = 0 ; } 
+                 }
+     > ceoffc@correta ;
+  }
+}
+)
+
+(
+connector ControllerEngineOffGround {
+  staterequired int ceoffg@controlState ;
+  in port oneway ceoffg@engineOff ;
+
+  interaction {
+     ceoffg@engineOff > guard (ceoffg@controlState != 0) { 
+                   alternative (ground) ;
+                   before { ceoffg@controlState = 0 ; } 
+                 }
+     > ground ;
+  }
+}
+)
+
+(
+connector ControllerEngineOn {
+  staterequired int ceon@controlState ;
+  in  port oneway ceon@engineOn ;
+  out port oneway ceon@clearSpeed ;
+
+  interaction {
+    ceon@engineOn > guard (ceon@controlState == 0) { 
+                 alternative (ground) ;
+                 before { ceon@controlState = 1 ; } 
+               }
+    > ceon@clearSpeed ;
+  }
+}
+)
+
+(
+connector ControllerOff {
+  staterequired int coff@controlState ;
+  in  port oneway coff@off ;
+  out port oneway coff@disableControl ;
+
+  interaction {
+    coff@off > guard (coff@controlState == 2) {
+            alternative (ground) ;
+            before { coff@controlState = 3 ; }
+          }
+    > coff@disableControl ;
+  }
+}
+)
+
+(
+connector ControllerOn {
+  staterequired int con@controlState ;
+  in  port oneway con@on ;
+  out port oneway con@rec-ena ;
+
+  interaction {
+    con@on > guard (con@controlState == 0) { 
+           alternative (ground) ;
+           before { con@controlState = 2 ; }
+         }
+    > con@rec-ena ;
+  }
+}
+)
+
+(
+connector ControllerResume {
+  staterequired int cr@controlState ;
+  in  port oneway cr@resume ;
+  out port oneway cr@enableControl ;
+
+  interaction {
+    cr@resume > guard (cr@controlState == 3) {
+               alternative (ground) ;
+               before { cr@controlState = 2 ; }
+             }
+    > cr@enableControl ;
+  }
+}
+)
+

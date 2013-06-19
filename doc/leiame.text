@@ -1,0 +1,12 @@
+
+para tratar output do MC:
+
+awk '{ gsub("---------","\n\n\n") ; print }' resp.text > resp-1.text
+
+
+----/0----
+
+Pendente:
+
+Se forem criadas duas instancias de mesmo nome? O que acontece?
+

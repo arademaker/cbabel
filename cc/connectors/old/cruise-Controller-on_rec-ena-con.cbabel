@@ -1,0 +1,26 @@
+(
+connector Controller-on_rec-ena {
+  staterequired int INACTIVE;
+  staterequired int ACTIVE;
+  staterequired int CRUISING;
+  staterequired int STANDBY;
+  staterequired int controlState;
+
+  // comandos do cruise contro acionados pelo usuario
+  in port oneway on;
+
+  out port oneway rec-ena; //split para duas portas
+
+   interaction {
+     on >
+        guard (controlState==INACTIVE) {
+          alternative (ground);
+          before {controlState=CRUISING;}}
+    > rec-ena;
+  }
+} // end Control
+
+)
+
+
+

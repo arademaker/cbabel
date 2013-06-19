@@ -1,0 +1,31 @@
+(
+module FORK {
+ var bool free ;
+
+ in port fork@request ;
+ in port fork@release ;
+}
+)
+
+(
+module TABLE { 
+ var int used-places = 0 ;
+
+ in port table@request ;
+ in port table@release ;
+}
+)
+
+(
+module PHILOSOPHER { 
+ var int state = 0 ;
+
+ out port get-lfork ;
+ out port rel-lfork ;
+ out port get-rfork ;
+ out port rel-rfork ;
+ out port get-table ;
+ out port rel-table ;
+}
+)
+

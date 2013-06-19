@@ -1,0 +1,79 @@
+in modules.cbabel
+in table-guard.cbabel
+in phi-table.cbabel
+
+(omod EXEC-DP is
+ inc DINING-PHILOSOPHERS . 
+
+ var C : Configuration . var O : Oid .
+ var IT IT1 IT2 : Interaction . vars N : Int .
+
+ op initial : -> Configuration .
+ eq initial = topology init(phi1) init(phi2) init(phi3) init(phi4) . 
+
+ op init : Oid -> Configuration .
+ eq init(O) < O : PHILOSOPHER | state : 0 > = < O : PHILOSOPHER | state : 1 > .
+
+ rl < O : PHILOSOPHER | state : 1 > =>
+    < O : PHILOSOPHER | state : 2 > do(O, get-table, none) .
+
+ rl done(O, get-table, IT1) < O : PHILOSOPHER | > =>
+    < O : PHILOSOPHER | state : 3 > .
+
+ rl < O : PHILOSOPHER | state : 3 > =>
+    < O : PHILOSOPHER | state : 4 > do(O, rel-table, none) .
+
+ rl done(O, rel-table, IT1) < O : PHILOSOPHER | > =>
+    < O : PHILOSOPHER | state : 1 > .
+
+ rl < O : FORK | > do(O, fork@request, IT) => 
+    < O : FORK | > done(O, fork@request, IT) .
+
+ rl < O : FORK | > do(O, fork@release, IT) => 
+    < O : FORK | > done(O, fork@release, IT) .
+
+ rl < O : TABLE | used-places : N > do(O, table@request, IT) =>
+    < O : TABLE | used-places : (N + 1) > done(O, table@request, IT) .
+
+ rl < O : TABLE | used-places : N > do(O, table@release, IT) =>
+    < O : TABLE | used-places : (N - 1) > done(O, table@release, IT) .
+endom)
+
+
+(omod VER-DP is 
+ inc EXEC-DP .
+ pr MODEL-CHECKER .
+
+ var C : Configuration . var O : Oid .
+ var IT IT1 IT2 : Interaction . vars N : Int .
+
+ subsort Configuration < State .
+
+ op eating : Oid -> Prop .
+ eq < O : PHILOSOPHER | state : 4 > C |= eating(O) = true .
+
+ op hungry : Oid -> Prop .
+ eq < O : PHILOSOPHER | state : 1 > C |= hungry(O) = true .
+endom)
+
+
+*** Algumas análises possiveis
+(select EXEC-DP .)
+
+
+*** Self exclusive?
+(search [1] initial =>* send(table, table@request, IT1:Interaction) send(table, table@request, IT2:Interaction) C:Configuration .)
+
+
+*** Exclusive? 
+(search [1] initial =>* send(table, table@request, IT1:Interaction) send(table, table@release, IT2:Interaction) C:Configuration .)
+
+
+*** Guardas
+(search [1] initial =>* C:Configuration < table : TABLE | used-places : N:Int > such that N:Int < 0 .)
+
+(search [1] initial =>* C:Configuration < table : TABLE | used-places : N:Int > such that N:Int > 3 .)
+
+
+*** Deadlock?
+(search initial =>! C:Configuration .)

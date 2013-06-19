@@ -1,0 +1,70 @@
+(
+connector SELF-EXCLUSIVE-REQUEST-FORK {
+ in port serf@in ;
+ out port serf@out ;
+
+ exclusive {
+  serf@in > serf@out ; 
+ }
+}
+)
+
+
+(
+connector SELF-EXCLUSIVE-LEAVE-FORK {
+ in port self@in ;
+ out port self@out ;
+
+ exclusive {
+  self@in > self@out ; 
+ }
+}
+)
+
+
+(
+connector REQUEST-FORK {
+  var bool free = TRUE ;
+
+  in port rf@in ;
+  out port rf@out ;
+
+  interaction {
+    rf@in > guard (free == TRUE) {
+             before { free = FALSE ; }
+            }
+    > rf@out ;
+  }
+}
+)
+
+(
+connector LEAVE-FORK {
+  staterequired bool lf@free ;
+
+  in port lf@in ;
+  out port lf@out ;
+
+  interaction {
+   lf@in > guard( TRUE ) {
+            after { lf@free = TRUE ; }
+           }
+   > lf@out ;
+  }
+}
+)
+
+(
+connector EXCLUSIVE-COMM-FORK {
+ in port emf@in1 ;
+ in port emf@in2 ;
+ out port emf@out1 ;
+ out port emf@out2 ;
+
+ exclusive{ 
+  emf@in1 > emf@out1 ; 
+  emf@in2 > emf@out2 ; 
+ }
+}
+)
+

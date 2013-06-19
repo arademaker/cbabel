@@ -1,0 +1,29 @@
+(
+
+connector Controller-acc_disa {
+  staterequired int INACTIVE;
+  staterequired int ACTIVE;
+  staterequired int CRUISING;
+  staterequired int STANDBY;
+  staterequired int controlState;
+
+   // controles normais de um carro padrao
+  in port oneway accelerator;
+
+  // efeito produzido no cruise control
+  out port oneway disableControl;
+
+  interaction {
+
+    accelerator >
+      guard (controlState==CRUISING) {
+         alternative (ground);
+         before {controlState=STANDBY;} }
+    > disableControl;
+  }
+} // end Control
+
+)
+
+
+

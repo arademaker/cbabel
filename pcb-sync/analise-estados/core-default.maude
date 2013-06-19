@@ -1,0 +1,438 @@
+mod PCB-EXEC is
+  sorts Attribute AttributeSet BUFFER Bool CONSUMER Cid Configuration DEFAULT
+    Int Interaction Msg Nat NzInt NzNat Object Oid PRODUCER PortId PortInId
+    PortOutId PortStatus StateRequired Status Zero .
+  subsort Attribute < AttributeSet .
+  subsort BUFFER < Cid .
+  subsort CONSUMER < Cid .
+  subsort DEFAULT < Cid .
+  subsort Msg < Configuration .
+  subsort Nat < Int .
+  subsort NzInt < Int .
+  subsort NzNat < Nat .
+  subsort NzNat < NzInt .
+  subsort Object < Configuration .
+  subsort PRODUCER < Cid .
+  subsort PortInId < PortId .
+  subsort PortOutId < PortId .
+  subsort Zero < Nat .
+  op <_:_|`> : Oid Cid -> Object .
+  op BUFFER : -> BUFFER .
+  op CONSUMER : -> CONSUMER .
+  op DEFAULT : -> DEFAULT .
+  op PRODUCER : -> PRODUCER .
+  op `[_`,_`] : Oid PortOutId -> Interaction .
+  op ack : Interaction -> Msg .
+  op after : Object -> Object .
+  op before : Object -> Object .
+  op buff : -> Oid .
+  op class : Object -> Cid .
+  op cons1 : -> Oid .
+  op cons2 : -> Oid .
+  op default1 : -> Oid .
+  op default2 : -> Oid .
+  op do : Oid PortId Interaction -> Msg .
+  op done : Oid PortId Interaction -> Msg .
+  op get-items : Object -> Int .
+  op get-maxitems : Object -> Int .
+  op initial : -> Configuration .
+  op instantiate : Oid Cid -> Object .
+  op none : -> AttributeSet .
+  op none : -> Configuration .
+  op none : -> Interaction .
+  op open? : Object -> Bool .
+  op prod1 : -> Oid .
+  op prod2 : -> Oid .
+  op send : Oid PortId Interaction -> Msg .
+  op set-items : Object Int -> Object .
+  op set-maxitems : Object Int -> Object .
+  op topology : -> Configuration .
+  op -_ : Int -> Int
+    [special(id-hook MinusSymbol op-hook succSymbol(s_ : Nat ~> NzNat)op-hook
+    minusSymbol(-_ : NzNat ~> NzInt))] .
+  op -_ : NzInt -> NzInt
+    [special(id-hook MinusSymbol op-hook succSymbol(s_ : Nat ~> NzNat)op-hook
+    minusSymbol(-_ : NzNat ~> NzInt))] .
+  op -_ : NzNat -> NzInt
+    [ctor special(id-hook MinusSymbol op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op 0 : -> Zero
+    [ctor] .
+  op <_:_|_> : Oid Cid AttributeSet -> Object
+    [ctor object] .
+  op _&_ : Int Int -> Int
+    [assoc comm prec 53 special(id-hook ACU_NumberOpSymbol(&)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _&_ : Nat Nat -> Nat
+    [assoc comm prec 53 special(id-hook ACU_NumberOpSymbol(&)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _*_ : Int Int -> Int
+    [assoc comm prec 31 special(id-hook ACU_NumberOpSymbol(*)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _*_ : Nat Nat -> Nat
+    [assoc comm prec 31 special(id-hook ACU_NumberOpSymbol(*)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _*_ : NzInt NzInt -> NzInt
+    [assoc comm prec 31 special(id-hook ACU_NumberOpSymbol(*)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _*_ : NzNat NzNat -> NzNat
+    [assoc comm prec 31 special(id-hook ACU_NumberOpSymbol(*)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _+_ : Int Int -> Int
+    [assoc comm prec 33 special(id-hook ACU_NumberOpSymbol(+)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _+_ : Nat Nat -> Nat
+    [assoc comm prec 33 special(id-hook ACU_NumberOpSymbol(+)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _+_ : NzNat Nat -> NzNat
+    [assoc comm prec 33 special(id-hook ACU_NumberOpSymbol(+)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _-_ : Int Int -> Int
+    [prec 33 gather(E e)special(id-hook NumberOpSymbol(-)op-hook succSymbol(s_
+    : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _::_ : Interaction Interaction -> Interaction
+    [assoc id:(none).Interaction prec 13 gather(e E)] .
+  op _<<_ : Int Nat -> Int
+    [prec 35 gather(E e)special(id-hook NumberOpSymbol(<<)op-hook succSymbol(s_
+    : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _<<_ : Nat Nat -> Nat
+    [prec 35 gather(E e)special(id-hook NumberOpSymbol(<<)op-hook succSymbol(s_
+    : Nat ~> NzNat))] .
+  op _<=_ : Int Int -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(<=)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt)term-hook trueTerm(
+    true)term-hook falseTerm(false))] .
+  op _<=_ : Nat Nat -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(<=)op-hook succSymbol(s_ : Nat ~>
+    NzNat)term-hook trueTerm(true)term-hook falseTerm(false))] .
+  op _<_ : Int Int -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(<)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt)term-hook trueTerm(
+    true)term-hook falseTerm(false))] .
+  op _<_ : Nat Nat -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(<)op-hook succSymbol(s_ : Nat ~>
+    NzNat)term-hook trueTerm(true)term-hook falseTerm(false))] .
+  op _=/=_ : Universal Universal -> Bool
+    [poly(1 2)prec 51 special(id-hook EqualitySymbol term-hook equalTerm(
+    false)term-hook notEqualTerm(true))] .
+  op _==_ : Universal Universal -> Bool
+    [poly(1 2)prec 51 special(id-hook EqualitySymbol term-hook equalTerm(
+    true)term-hook notEqualTerm(false))] .
+  op _>=_ : Int Int -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(>=)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt)term-hook trueTerm(
+    true)term-hook falseTerm(false))] .
+  op _>=_ : Nat Nat -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(>=)op-hook succSymbol(s_ : Nat ~>
+    NzNat)term-hook trueTerm(true)term-hook falseTerm(false))] .
+  op _>>_ : Int Nat -> Int
+    [prec 35 gather(E e)special(id-hook NumberOpSymbol(>>)op-hook succSymbol(s_
+    : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _>>_ : Nat Nat -> Nat
+    [prec 35 gather(E e)special(id-hook NumberOpSymbol(>>)op-hook succSymbol(s_
+    : Nat ~> NzNat))] .
+  op _>_ : Int Int -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(>)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt)term-hook trueTerm(
+    true)term-hook falseTerm(false))] .
+  op _>_ : Nat Nat -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(>)op-hook succSymbol(s_ : Nat ~>
+    NzNat)term-hook trueTerm(true)term-hook falseTerm(false))] .
+  op _^_ : Int Nat -> Int
+    [prec 29 gather(E e)special(id-hook NumberOpSymbol(^)op-hook succSymbol(s_
+    : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _^_ : Nat Nat -> Nat
+    [prec 29 gather(E e)special(id-hook NumberOpSymbol(^)op-hook succSymbol(s_
+    : Nat ~> NzNat))] .
+  op _^_ : NzInt Nat -> NzInt
+    [prec 29 gather(E e)special(id-hook NumberOpSymbol(^)op-hook succSymbol(s_
+    : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _^_ : NzNat Nat -> NzNat
+    [prec 29 gather(E e)special(id-hook NumberOpSymbol(^)op-hook succSymbol(s_
+    : Nat ~> NzNat))] .
+  op __ : Configuration Configuration -> Configuration
+    [assoc comm id:(none).Configuration format(o n o)ctor config] .
+  op _`,_ : AttributeSet AttributeSet -> AttributeSet
+    [assoc comm id:(none).AttributeSet ctor] .
+  op _and_ : Bool Bool -> Bool
+    [assoc comm prec 55] .
+  op _divides_ : NzInt Int -> Bool
+    [prec 51 special(id-hook NumberOpSymbol(divides)op-hook succSymbol(s_ : Nat
+    ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt)term-hook trueTerm(
+    true)term-hook falseTerm(false))] .
+  op _divides_ : NzNat Nat -> Bool
+    [prec 51 special(id-hook NumberOpSymbol(divides)op-hook succSymbol(s_ : Nat
+    ~> NzNat)term-hook trueTerm(true)term-hook falseTerm(false))] .
+  op _implies_ : Bool Bool -> Bool
+    [prec 61 gather(e E)] .
+  op _or_ : Bool Bool -> Bool
+    [assoc comm prec 59] .
+  op _quo_ : Int NzInt -> Int
+    [prec 31 gather(E e)special(id-hook NumberOpSymbol(quo)op-hook succSymbol(
+    s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _quo_ : Nat NzNat -> Nat
+    [prec 31 gather(E e)special(id-hook NumberOpSymbol(quo)op-hook succSymbol(
+    s_ : Nat ~> NzNat))] .
+  op _rem_ : Int NzInt -> Int
+    [prec 31 gather(E e)special(id-hook NumberOpSymbol(rem)op-hook succSymbol(
+    s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _rem_ : Nat NzNat -> Nat
+    [prec 31 gather(E e)special(id-hook NumberOpSymbol(rem)op-hook succSymbol(
+    s_ : Nat ~> NzNat))] .
+  op _xor_ : Bool Bool -> Bool
+    [assoc comm prec 57] .
+  op _xor_ : Int Int -> Int
+    [assoc comm prec 55 special(id-hook ACU_NumberOpSymbol(xor)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _xor_ : Nat Nat -> Nat
+    [assoc comm prec 55 special(id-hook ACU_NumberOpSymbol(xor)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _|_ : Int Int -> Int
+    [assoc comm prec 57 special(id-hook ACU_NumberOpSymbol(|)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _|_ : Nat Nat -> Nat
+    [assoc comm prec 57 special(id-hook ACU_NumberOpSymbol(|)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _|_ : NzInt Int -> NzInt
+    [assoc comm prec 57 special(id-hook ACU_NumberOpSymbol(|)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _|_ : NzNat Nat -> NzNat
+    [assoc comm prec 57 special(id-hook ACU_NumberOpSymbol(|)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op abs : Int -> Nat
+    [special(id-hook NumberOpSymbol(abs)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op abs : NzInt -> NzNat
+    [special(id-hook NumberOpSymbol(abs)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op buffer@get : -> PortInId
+    [ctor] .
+  op buffer@put : -> PortInId
+    [ctor] .
+  op changed : -> Status
+    [ctor] .
+  op consumer@get : -> PortOutId
+    [ctor] .
+  op consumer@get-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op default@in : -> PortInId
+    [ctor] .
+  op default@out : -> PortOutId
+    [ctor] .
+  op false : -> Bool
+    [ctor special(id-hook SystemFalse)] .
+  op gcd : Int Int -> Nat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(gcd)op-hook succSymbol(s_ :
+    Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op gcd : Nat Nat -> Nat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(gcd)op-hook succSymbol(s_ :
+    Nat ~> NzNat))] .
+  op gcd : NzInt Int -> NzNat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(gcd)op-hook succSymbol(s_ :
+    Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op gcd : NzNat Nat -> NzNat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(gcd)op-hook succSymbol(s_ :
+    Nat ~> NzNat))] .
+  op ground : -> PortOutId
+    [ctor] .
+  op if_then_else_fi : Bool Universal Universal -> Universal
+    [poly(2 3 0)special(id-hook BranchSymbol term-hook 1(true)term-hook 2(
+    false))] .
+  op iset : Interaction Interaction -> Interaction
+    [assoc id:(none).Interaction] .
+  op items`:_ : Int -> Attribute
+    [gather(&)] .
+  op lcm : Int Int -> Nat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(lcm)op-hook succSymbol(s_ :
+    Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op lcm : Nat Nat -> Nat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(lcm)op-hook succSymbol(s_ :
+    Nat ~> NzNat))] .
+  op lcm : NzInt NzInt -> NzNat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(lcm)op-hook succSymbol(s_ :
+    Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op lcm : NzNat NzNat -> NzNat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(lcm)op-hook succSymbol(s_ :
+    Nat ~> NzNat))] .
+  op locked : -> PortStatus
+    [ctor] .
+  op maxitems`:_ : Int -> Attribute
+    [gather(&)] .
+  op modExp :[Nat][Nat][Nat]->[Nat]
+    [special(id-hook NumberOpSymbol(modExp)op-hook succSymbol(s_ : Nat ~>
+    NzNat))] .
+  op not_ : Bool -> Bool
+    [prec 53] .
+  op producer@put : -> PortOutId
+    [ctor] .
+  op producer@put-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op s_ : Nat -> NzNat
+    [ctor iter special(id-hook SuccSymbol term-hook zeroTerm(0))] .
+  op sd : Nat Nat -> Nat
+    [comm special(id-hook CUI_NumberOpSymbol(sd)op-hook succSymbol(s_ : Nat ~>
+    NzNat))] .
+  op st : Bool Status -> StateRequired
+    [ctor] .
+  op st : Int Status -> StateRequired
+    [ctor] .
+  op true : -> Bool
+    [ctor special(id-hook SystemTrue)] .
+  op unchanged : -> Status
+    [ctor] .
+  op unlocked : -> PortStatus
+    [ctor] .
+  op ~_ : Int -> Int
+    [special(id-hook NumberOpSymbol(~)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  eq initial
+    = topology
+do(cons1,consumer@get,none)
+do(prod1,producer@put,none)
+do(cons2,consumer@get,none)
+do(prod2,producer@put,none) .
+  eq topology
+    = instantiate(buff,BUFFER)
+instantiate(cons1,CONSUMER)
+instantiate(cons2,CONSUMER)
+instantiate(default1,DEFAULT)
+instantiate(default2,DEFAULT)
+instantiate(prod1,PRODUCER)
+instantiate(prod2,PRODUCER)
+none .
+  eq < O:Oid : C:Cid | >
+    = < O:Oid : C:Cid | none > .
+  eq A:Bool and A:Bool
+    = A:Bool .
+  eq A:Bool and(B:Bool xor C:Bool)
+    = A:Bool and B:Bool xor A:Bool and C:Bool .
+  eq false and A:Bool
+    = false .
+  eq true and A:Bool
+    = A:Bool .
+  eq A:Bool implies B:Bool
+    = not(A:Bool xor A:Bool and B:Bool) .
+  eq A:Bool or B:Bool
+    = A:Bool and B:Bool xor A:Bool xor B:Bool .
+  eq A:Bool xor A:Bool
+    = false .
+  eq false xor A:Bool
+    = A:Bool .
+  eq ack(none)
+    = (none).Configuration .
+  eq class(< O:Oid : C:Cid | A:AttributeSet >)
+    = C:Cid .
+  eq get-items(< O:Oid : V#0:BUFFER | maxitems : V#1:Int,items : V:Int,none,
+    V#2:AttributeSet >)
+    = V:Int .
+  eq get-maxitems(< O:Oid : V#3:BUFFER | items : V#4:Int,maxitems : V:Int,none,
+    V#5:AttributeSet >)
+    = V:Int .
+  eq instantiate(O:Oid,BUFFER)
+    = < O:Oid : BUFFER |(none,items : 0),maxitems : 1 > .
+  eq instantiate(O:Oid,CONSUMER)
+    = < O:Oid : CONSUMER | none,consumer@get-status : unlocked > .
+  eq instantiate(O:Oid,DEFAULT)
+    = < O:Oid : DEFAULT | none > .
+  eq instantiate(O:Oid,PRODUCER)
+    = < O:Oid : PRODUCER | none,producer@put-status : unlocked > .
+  eq not A:Bool
+    = true xor A:Bool .
+  eq send(O:Oid,ground,IT:Interaction)
+    = (none).Configuration .
+  eq set-items(< O:Oid : V#6:BUFFER | maxitems : V#7:Int,items : V:Int,none,
+    V#8:AttributeSet >,V':Int)
+    = < O:Oid : V#6:BUFFER | items : V':Int,maxitems : V#7:Int,V#8:AttributeSet
+    > .
+  eq set-maxitems(< O:Oid : V#9:BUFFER | items : V#10:Int,maxitems : V:Int,
+    none,V#11:AttributeSet >,V':Int)
+    = < O:Oid : V#9:BUFFER | maxitems : V':Int,items : V#10:Int,
+    V#11:AttributeSet > .
+  eq send(cons1,consumer@get,IT:Interaction)
+    = send(default2,default@in,IT:Interaction) [label
+    consumer@get-linking-default@in] .
+  eq send(cons2,consumer@get,IT:Interaction)
+    = send(default2,default@in,IT:Interaction) [label
+    consumer@get-linking-default@in] .
+  eq send(default1,default@out,IT:Interaction)
+    = send(buff,buffer@put,IT:Interaction) [label
+    default@out-linking-buffer@put] .
+  eq send(default2,default@out,IT:Interaction)
+    = send(buff,buffer@get,IT:Interaction) [label
+    default@out-linking-buffer@get] .
+  eq send(prod1,producer@put,IT:Interaction)
+    = send(default1,default@in,IT:Interaction) [label
+    producer@put-linking-default@in] .
+  eq send(prod2,producer@put,IT:Interaction)
+    = send(default1,default@in,IT:Interaction) [label
+    producer@put-linking-default@in] .
+  rl < O:Oid : V#12:BUFFER | maxitems : V#14:Int,items : V#13:Int,none,
+    V#15:AttributeSet >
+done(O:Oid,buffer@get,IT:Interaction)
+    => < O:Oid : V#12:BUFFER | items : V#13:Int,maxitems : V#14:Int,
+    V#15:AttributeSet >
+ack(IT:Interaction) [label BUFFER-doneAndAcking-buffer@get] .
+  rl < O:Oid : V#16:BUFFER | maxitems : V#18:Int,items : V#17:Int,none,
+    V#19:AttributeSet >
+done(O:Oid,buffer@put,IT:Interaction)
+    => < O:Oid : V#16:BUFFER | items : V#17:Int,maxitems : V#18:Int,
+    V#19:AttributeSet >
+ack(IT:Interaction) [label BUFFER-doneAndAcking-buffer@put] .
+  rl < O:Oid : V#20:BUFFER | maxitems : V#22:Int,items : V#21:Int,none,
+    V#23:AttributeSet >
+send(O:Oid,buffer@get,IT:Interaction)
+    => < O:Oid : V#20:BUFFER | items : V#21:Int,maxitems : V#22:Int,
+    V#23:AttributeSet >
+do(O:Oid,buffer@get,IT:Interaction) [label BUFFER-recevingAndDo-buffer@get] .
+  rl < O:Oid : V#24:BUFFER | maxitems : V#26:Int,items : V#25:Int,none,
+    V#27:AttributeSet >
+send(O:Oid,buffer@put,IT:Interaction)
+    => < O:Oid : V#24:BUFFER | items : V#25:Int,maxitems : V#26:Int,
+    V#27:AttributeSet >
+do(O:Oid,buffer@put,IT:Interaction) [label BUFFER-recevingAndDo-buffer@put] .
+  rl (ack([O:Oid,default@out]:: V#0:Interaction)
+none)
+< O:Oid : V#0:DEFAULT | none,V#1:AttributeSet >
+    => < O:Oid : V#0:DEFAULT | V#1:AttributeSet >
+ack(V#0:Interaction) [label DEFAULT-acking] .
+  rl ack([O:Oid,consumer@get])
+< O:Oid : V#0:CONSUMER | consumer@get-status : locked,none,V#1:AttributeSet >
+    => done(O:Oid,consumer@get,none)
+< O:Oid : V#0:CONSUMER | consumer@get-status : unlocked,V#1:AttributeSet > [
+    label CONSUMER-receivingAck-consumer@get] .
+  rl ack([O:Oid,producer@put])
+< O:Oid : V#0:PRODUCER | producer@put-status : locked,none,V#1:AttributeSet >
+    => done(O:Oid,producer@put,none)
+< O:Oid : V#0:PRODUCER | producer@put-status : unlocked,V#1:AttributeSet > [
+    label PRODUCER-receivingAck-producer@put] .
+  rl do(O:Oid,buffer@get,IT:Interaction)
+< O:Oid : V#0:BUFFER | maxitems : V#1:Int,items : N:Int,none,V#2:AttributeSet >
+    => < O:Oid : V#0:BUFFER | items : if N:Int - 1 < -1 then -1 else N:Int - 1
+    fi,maxitems : V#1:Int,V#2:AttributeSet >
+done(O:Oid,buffer@get,IT:Interaction) [label buffer-do-get] .
+  rl do(O:Oid,buffer@put,IT:Interaction)
+< O:Oid : V#3:BUFFER | maxitems : M:Int,items : N:Int,none,V#4:AttributeSet >
+    => < O:Oid : V#3:BUFFER | items : if N:Int + 1 > M:Int + 1 then M:Int + 1
+    else N:Int + 1 fi,maxitems : M:Int,V#4:AttributeSet >
+done(O:Oid,buffer@put,IT:Interaction) [label buffer-do-put] .
+  rl do(O:Oid,consumer@get,none)
+< O:Oid : V#2:CONSUMER | consumer@get-status : unlocked,none,V#3:AttributeSet >
+    => send(O:Oid,consumer@get,[O:Oid,consumer@get])
+< O:Oid : V#2:CONSUMER | consumer@get-status : locked,V#3:AttributeSet > [label
+    CONSUMER-sending-consumer@get] .
+  rl do(O:Oid,producer@put,none)
+< O:Oid : V#2:PRODUCER | producer@put-status : unlocked,none,V#3:AttributeSet >
+    => send(O:Oid,producer@put,[O:Oid,producer@put])
+< O:Oid : V#2:PRODUCER | producer@put-status : locked,V#3:AttributeSet > [label
+    PRODUCER-sending-producer@put] .
+  rl send(O:Oid,default@in,V#0:Interaction)
+< O:Oid : V#2:DEFAULT | none,V#3:AttributeSet >
+    => < O:Oid : V#2:DEFAULT | V#3:AttributeSet >
+send(O:Oid,default@out,[O:Oid,default@out]:: V#0:Interaction)
+none [label DEFAULT-sending] .
+  rl done(O:Oid,consumer@get,IT:Interaction)
+    => do(O:Oid,consumer@get,none) [label consumer-do] .
+  rl done(O:Oid,producer@put,IT:Interaction)
+    => do(O:Oid,producer@put,none) [label producer-do] .
+endm
+

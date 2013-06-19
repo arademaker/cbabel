@@ -1,0 +1,28 @@
+(
+
+connector SpeedControl-disa_ground {
+  staterequired int DISABLED;      //speed control states
+  staterequired int ENABLED;
+  staterequired int state;         //initial state
+  staterequired int setSpeed;      //target cruise control speed
+
+  staterequired int speed;         // vem do modulo engine
+
+  in port oneway  disableControl;
+
+  interaction {
+    disableControl >
+       guard (state==ENABLED) {
+         before {state=DISABLED};
+	 alternative (ground);
+       }
+    > ground;
+
+  }
+}
+
+)
+
+
+
+

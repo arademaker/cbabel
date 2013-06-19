@@ -1,0 +1,65 @@
+(
+connector MUTEX {
+ in port mutex@in1 ;
+ in port mutex@in2 ;
+ out port mutex@out1 ;
+ out port mutex@out2 ;
+
+ exclusive{ 
+  mutex@in1 > mutex@out1 ; 
+  mutex@in2 > mutex@out2 ; 
+ }
+}
+)
+
+(
+application PC-MUTEX {
+ instantiate BUFFER as buff ;
+ instantiate PRODUCER as prod1 ;
+ instantiate PRODUCER as prod2 ;
+ instantiate PRODUCER as prod3 ;
+ instantiate PRODUCER as prod4 ;
+ instantiate PRODUCER as prod5 ;
+ instantiate PRODUCER as prod6 ;
+ instantiate PRODUCER as prod7 ;
+ instantiate PRODUCER as prod8 ;
+ instantiate PRODUCER as prod9 ;
+ instantiate PRODUCER as prod10 ;
+ instantiate CONSUMER as cons1 ;
+ instantiate CONSUMER as cons2 ;
+ instantiate CONSUMER as cons3 ;
+ instantiate CONSUMER as cons4 ;
+ instantiate CONSUMER as cons5 ;
+ instantiate CONSUMER as cons6 ;
+ instantiate CONSUMER as cons7 ;
+ instantiate CONSUMER as cons8 ;
+ instantiate CONSUMER as cons9 ;
+ instantiate CONSUMER as cons10 ;
+ instantiate MUTEX as mutx ;
+
+ link prod1.producer@put to mutx.mutex@in1 ;
+ link prod2.producer@put to mutx.mutex@in1 ;
+ link prod3.producer@put to mutx.mutex@in1 ;
+ link prod4.producer@put to mutx.mutex@in1 ;
+ link prod5.producer@put to mutx.mutex@in1 ;
+ link prod6.producer@put to mutx.mutex@in1 ;
+ link prod7.producer@put to mutx.mutex@in1 ;
+ link prod8.producer@put to mutx.mutex@in1 ;
+ link prod9.producer@put to mutx.mutex@in1 ;
+ link prod10.producer@put to mutx.mutex@in1 ;
+ link cons1.consumer@get to mutx.mutex@in2 ;
+ link cons2.consumer@get to mutx.mutex@in2 ;
+ link cons3.consumer@get to mutx.mutex@in2 ;
+ link cons4.consumer@get to mutx.mutex@in2 ;
+ link cons5.consumer@get to mutx.mutex@in2 ;
+ link cons6.consumer@get to mutx.mutex@in2 ;
+ link cons7.consumer@get to mutx.mutex@in2 ;
+ link cons8.consumer@get to mutx.mutex@in2 ;
+ link cons9.consumer@get to mutx.mutex@in2 ;
+ link cons10.consumer@get to mutx.mutex@in2 ;
+
+ link mutx.mutex@out1 to buff.buffer@put ;
+ link mutx.mutex@out2 to buff.buffer@get ;
+}
+)
+

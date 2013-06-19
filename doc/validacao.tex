@@ -1,0 +1,1255 @@
+\documentclass[a4paper,11pt,draft]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{a4wide,url,fancyvrb}
+
+\RecustomVerbatimCommand{\VerbatimInput}{VerbatimInput}{fontsize=\scriptsize}
+\RecustomVerbatimEnvironment{Verbatim}{Verbatim}{fontsize=\scriptsize}
+
+\begin{document}
+
+\title{Validação do mapeamento de CBabel para Lógica de Reescrita}
+\author{Alexandre Rademaker} 
+\maketitle
+
+
+\section{Introdução}\label{sec:intro}
+
+Neste trabalho, com o objetivo de validar o mapeamento proposto em
+\cite{RademakerSbmf04} da linguagem \mbox{CBabel}~\cite{Sztaj02} em
+lógica de reescrita~\cite{oliet93} (LR), iremos implementar em CBabel,
+e realizar verificações em Maude~\cite{clavel03}, de algumas
+aplicações clássicas de concorrência encontradas na literatura.
+
+A importação dos módulos CBabel em Maude será feita com o auxílio da
+ferramenta CBabel-Tool~\cite{RademakerSbmf04}, uma implementação do
+mapeamento proposto em Maude.
+
+Considerando o mapeamento de CBabel para LR com uma semântica de
+CBabel em LR, procuraremos demostrar através dos exemplos: 
+
+\begin{itemize}
+ \item que todas as construções elementares da linguagem foram
+capturadas pelo mapeamento e, desta forma, tiveram sua semântica
+definida; 
+ \item que a semântica dada a cada construção elementar é preservada
+quando na composição destas construções;
+ \item que o conjunto de construções elementares ao qual foi dado
+ semântica é suficiente e completo;
+\end{itemize}
+
+Este trabalho esta organizado a seguinte forma. Na seção~\ref{sec:tec}
+serão apresentadas as técnicas de validação que serão usadas. Na
+seção~\ref{sec:examples} serão apresentadas as aplicações e suas
+verificações. Finalmente, na seção~\ref{sec:perf}, iremos descrever
+alguns aspectos relacionados a performace das verificações.
+
+
+\section{Técnicas de verificação}\label{sec:tec}
+
+Maude é uma implementação de alta performance de lógica de reescrita
+que oferece, em adição a capacidade de meta-programação, uma grande
+variedade de ferramentas de verificação. 
+
+As técnicas de verificação comumente encontradas na literatura podem
+ser organizadas em basicamente duas categorias: técnicas
+``light-weight'' e técnicas ``heavy-weight''. Maude oferece
+ferramentas para ambas as abordagens. 
+
+Na categoria de técnicas ``light-weight'' enquadram-se: simulação,
+exploração de estados e verificação do modelo. Estas técnicas
+constituem abordagens ``operacionais'' em que a especificação do
+sistema é de fato executa para garantir que o comportamento
+especificado satisfaz determinada propriedade.
+
+Na categoria de técnicas ``heavy-weight'' enquadram-se: provas
+matemáticas informais ou provas rigorosamente formais. 
+
+Como neste trabalho utilizaremos as técnicas ``light-weight'', é
+conveniente apresentarmos as ferramentas que Maude oferece para cada
+tipo de verificação desta categoria.
+
+
+\subsection{Simulação}
+
+A forma mais simples de verificar se a especificação de um sistema
+está correta é exibir um (dentre os possíveis ou talvez infinitos)
+comportamento a partir de um estado inicial.
+
+Em Maude, os comandos $rewrite$ e $frewrite$ (``fair rewrite'')
+executam {\em um} arbitrário comportamento do sistema a partir de
+escolhas ``arbitrárias'' para as regras a serem aplicadas nas
+reescritas do termo inicial, que representa o estado inicial do
+sistema.
+
+Considerando que a especificação de um sistema pode ser tal que o
+sistema não termine, o processo de reescrita do termo inicial pode
+então não terminar. Neste caso, ambos os comandos aceitam,
+opcionalmente, receber um limite máximo de passos de reescrita a ser
+executado. Após a execução dos comandos ``rew''e ``frew'' sobre um
+termo, pode-se continuar o processo de reescrita com o comando $cont\
+[n]$.
+
+
+\subsection{Exploração de estados}
+
+Em sistemas não derterminísticos, a exploração de apenas um
+comportamento dentre todos os possíveis nem sempre é suficiente para
+garantir que uma determinada propriedade. Para explorar todos os
+possíveis comportamentos a partir de um estado inicial, Maude oferece
+o comando $search$.
+
+O comando ``search'' em Maude busca por todos os estados alcançaveis a
+partir de um estado inicial, que satisfaçam uma determinada
+condição. A busca é realizada em largura sobre a árvore de computação,
+isto é, a partir do termo inicial são visitados primeiramente os
+termos alcançaveis com um passo de reescrita, em seguida, os termos
+alcançaveis em dois passos de reescrita etc.
+
+Devemos considerar que o número de estados alcançáveis na simulação de
+uma arquitetura pode tornar inviável sua verificação. Maude implementa
+um sofisticado mecanismos de ``cache'' dos estados visitados durante
+uma busca para evitar que durante o procedimento um mesmo estado seja
+visitado mais de uma vez, desta forma, o número de estados armazenados
+no ``cache'' é limitado à capacidade de memória o equipamento sendo
+utilizado. Além disso, caso a partir do estado inicial o sistema
+alcance um infinito número de estados, uma busca pode não terminar.
+
+Desta forma, o desempenho de uma verificação está relacionado ao
+número de estados que precisam ser verificados.
+
+
+\subsection{Verificação de Modelo}
+
+A exploração de todos os estados alcançaveis a partir de um estado
+inicial não é sempre suficiente para análise de uma
+especificação. Quase sempre é necessário verificar propriedades
+relacionadas ao comportamento e não a existência ou não de estados com
+uma determinada propriedade. Além disso, pode ser conveniente guiar a
+verificação considerando certas propriedades como hipótese para
+verificação de outras.
+
+Maude dispõe de um verificador de modelos para propriedades descritas
+em lógica temporal linear~\cite{EMSltl_2002}. É importante, no
+entanto, garantir que o número de estados da aplicação é finito para
+utilização do verificador de modelos de Maude.
+
+% model cheching.... estados infinitos.. abstracao?!
+% modelCheck com sistema sendo realimentado
+
+
+\subsection{Observações}
+
+Em alguns dos exemplos apresentados nas próximas seções, os módulos
+CBabel com portas de saída são deixados em ``loop'', ou seja, tão logo
+recebam a resposta de uma requisição encaminhada pelas suas portas de
+saída, geram nova requisição reiniciando o processo. Para verificações
+arquiteturais em CBabel, esta abordagem sugere garantir que todas as
+possíveis seqüencias de interações entre os módulos serão
+consideradas. Esta também é a abordagem adotada por Meseguer em
+\cite{pv}. Nesta abordagem, uma reescrita a partir do estado inicial
+não termina.
+
+No entanto, em alguns exemplos encontrados na literatura de
+verificações de protocolos em Maude, os autores costumam empregar uma
+abordagem diferente. Na implementação dos protocolos
+Sectrace~\cite{sectrace} e L3A~\cite{l3a} e nas verificações de
+protocolos propostas em \cite{PeterCompendium}, são determinados
+estados iniciais para um ou mais passos de execução do protocolo, as
+verificações propostas então, procuram obter com estes passos exemplos
+suficientes de estados que garantam um comportamento desejado ou
+demonstrem a existência de um comportamento indesejado. O sistema
+resultante desta forma é finito, isto é, uma reescrita a partir do
+estado inicial sempre termina.
+
+Não podemos comparar estas abordagens e garantir que a adoção de uma
+delas poderia resultar em uma melhor eficiência da verificação sem
+considerar cada tipo de aplicação e o método de verificação empregado.
+
+Algumas aplicações que veremos, como a ceia de filósofos, apresentam
+um número finito de diferentes estados, independente do número de
+interações. Neste caso, manter a aplicação com realimentação de
+mensagens ou não, terá o mesmo efeito no número total de estados
+percorridos durante uma busca, graças ao mecanismo de ``cache'' de
+estados visitados empregado pelo Maude.
+
+No entanto, algumas aplicações constituem-se sistemas com infinito
+número de estados. Nestes casos, para reduzir o número de estados
+considerados durante a verificação, pode-se adotar a abordagem de
+manter a arquitetura sem realimentação de mensagens ou aplicar
+técnicas de abstrações~\cite{MPMea2-03} que eliminem estados
+indesejados do espaço de busca.
+
+Outra possível abordagem para controlar o número de estados a serem
+verificados é apresentada em \cite{DMTprotocol_1998}. Neste trabalho,
+utilizando as características reflexivas de Maude, definem-se
+estratégias de reescritas para simulação das especificações e
+realização das verificações. Com a definição de estratégias é possível
+reduzir o número de estados da aplicação a serem considerados. Nas
+verificações de arquiteturas descritas em CBabel, por exemplo, pode-se
+definir estratégicas que garantam justiça na execução de cada módulo
+da arquitetura, dando a cada módulo igual chance de evolução a ciclo
+de execução da arquitetura.
+
+
+\section{Verificação das aplicações}\label{sec:examples}
+
+Nas seções seguintes, serão apresentadas descrições CBabel e
+verificações arquiteturais para alguns exemplos clássicos de
+concorrência encontrados na literatura. A cada exemplo procuraremos
+apresentar uma motivação para seu uso em nossa validação.
+
+Para tornar as descrições arquiteturas de CBabel executáveis, e assim
+verificáveis pelos métodos apresentados na seção~\ref{sec:tec},
+definiremos para cada aplicação um módulo Maude denominado ``módulo de
+verificação''. Este módulo implementa o comportamento interno dos
+módulos CBabel, declara o estado inicial da aplicação e, quando
+necessário, as propriedades da aplicação que desejamos verificar com o
+verificador de modelos de Maude.
+
+
+\subsection{Produtor, Consumidor e Buffer}\label{sec:pcb}
+
+A aplicação produtor-consumidor é comumente utilizada para descrição
+de aspectos de coordenação entre módulos concorrentes que disputam
+acesso a um recurso comum.
+
+Esta aplicação pode assim ser descrita. Um ou mais módulos
+``produtores'' e ``consumidores'' disputam acesso a um mesmo módulo
+``buffer'', limitado ou ilimitado, para depositar (produtores) ou
+retirar (consumidores) itens. 
+
+Nesta seção estaremos implementando e verificação a versão da
+aplicação com buffer limitado. Neste caso, algumas das propriedades
+que devem ser garantidas pela arquitetura são:
+
+\begin{itemize}
+ \item que não existam acessos concorrentes ao buffer;
+ \item que o número de itens depositados não ultrapasse o limite
+estabelecido (upperflow); 
+ \item que não sejam removidos itens quando o buffer estiver vazio
+ (underflow);
+ \item ausência de ``deadlock'' e ``starvation''.
+\end{itemize}
+
+A implementação desta aplicação em CBabel é apresentada no
+apêndice~\ref{sec:app-pcb}. Foram definidos três módulos: PRODUCER,
+CONSUMER e BUFFER para representar cada um dos módulos funcionais da
+aplicação. Os conectores GUARD-GET e GUARD-PUT implementam um monitor
+garantindo: (1) exclusão mútua no acesso ao buffer; (2) colocação de
+itens apenas até o limite máximo permitido; e (3) retirada de itens
+apenas quando o buffer não está vazio.
+
+O módulo de verificação utilizado é listado na
+figura~\ref{fig:ver-pcb}. O comportamento interno dos módulos PRODUCER
+e CONSUMER é continuamente colocar e retirar itens do buffer. O BUFFER
+deve incrementar o número de itens armazenados quando recebe um pedido
+do PRODUCER e decrementar quando recebe um pedido do CONSUMER. Para
+tornar finito o número de estados alcançaveis na execução da
+especificação, o número de itens armazenados é mantido no intervalo
+$[-1,MAXITENS+1]$.
+
+\begin{figure}
+\begin{Verbatim}
+(omod S-VER-PCB is
+ inc APP . 
+ inc MODEL-CHECKER .
+
+ var C : Configuration . var O : Oid .
+ var IT IT1 IT2 : Interaction .
+
+ op initial : -> Configuration .
+ eq initial = topology 
+              do(cons, consumer@get, none) do(prod, producer@put, none) .
+
+ rl [producer-do] : done(O, producer@put, IT) => do(O, producer@put, none) .
+ rl [consumer-do] : done(O, consumer@get, IT) => do(O, consumer@get, none) .
+
+ vars M N : Int .
+
+ rl [buffer-do-put] :
+    do(O, buffer@put, IT) < O : BUFFER | buffer@items : N, buffer@maxitems : M > 
+    => 
+    done(O, buffer@put, IT) 
+    < O : BUFFER | buffer@maxitems : M , 
+                   buffer@items : 
+                   (if (N + 1) > (M + 1) then (M + 1) else (N + 1) fi) > .
+
+ rl [buffer-do-get] : 
+    do(O, buffer@get, IT) < O : BUFFER | buffer@items : N, buffer@maxitems : M > 
+    => 
+    done(O, buffer@get, IT)
+    < O : BUFFER | buffer@items : (if (N - 1) < -1 then -1 else (N - 1) fi),
+                   buffer@maxitems : M > .
+
+ subsort Configuration < State .
+
+ ops putting getting : -> Prop .
+ eq send(O, buffer@put, IT) C |= putting = true .
+ eq send(O, buffer@get, IT) C |= getting = true .
+
+ op raceCond : -> Formula .
+ eq raceCond = (putting /\ getting) .
+
+ ops upperflow underflow : -> Prop .
+ ceq < O : BUFFER | buffer@items : N, buffer@maxitems : M >
+     C |= upperflow = true if N > M .
+
+ ceq < O : BUFFER | buffer@items : N > C |= underflow = true
+  if N < 0 .
+endom)
+\end{Verbatim}
+\caption{Módulo de verificação para a aplicação produtor-consumidor}
+\label{fig:ver-pcb}
+\end{figure}
+
+As proposições ``putting'' e ``getting'' se verificam nos estados onde
+o buffer está recebendo, respectivamente, mensagens de ``put'' ou
+``get'', e são utilizadas na declaração da proposição ``raceCond''
+(``race condition''). A figura~\ref{fig:pcb-1} mostra o verificador de
+modelos de Maude validando a inesistência de acessos concorrentes do
+produtor e consumidor ao buffer.
+
+\begin{figure}
+\begin{Verbatim}
+Maude> (red modelCheck(initial , [] ~(raceCond)) .)
+rewrites: 5859 in 100ms cpu (100ms real) (58590 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ raceCond)
+result Bool :
+  true
+\end{Verbatim}
+\caption{Verificação de ``race condition'' na aplicação produtor-consumidor}
+\label{fig:pcb-1}
+\end{figure}
+
+Na figura~\ref{fig:pcb-2}, mostramos que a arquitetura evita o
+``upperflow'', impedindo a colocação de itens quando o buffer está
+cheio, e o ``underflow'', limitando a retirada de itens do buffer
+vazio.
+
+\begin{figure}
+\begin{Verbatim}
+Maude> (red modelCheck(initial, [] ~ underflow) .)
+rewrites: 6020 in 130ms cpu (130ms real) (46307 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ underflow)
+result Bool :
+  true
+
+Maude> (red modelCheck(initial, [] ~ upperflow) .)
+rewrites: 6020 in 100ms cpu (110ms real) (60200 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ upperflow)
+result Bool :
+  true
+\end{Verbatim}
+\caption{Verificação do ``upperflow'' e ``underflow'' na aplicação
+produtor-consumidor}
+\label{fig:pcb-2}
+\end{figure}
+
+Todas as verificações realizadas até o momento referem-se a existência
+ou não de estados com determinadas caracteristicas e, por isso,
+poderiam ter sido também executadas com o comando ``search'' de
+Maude. No entanto, a ausência de ``deadlock'' e de ``starvation'', são
+caracteristicas do comportamento, não de estados determinados. Por
+esta razão, apenas com o verificador de modelos podemos garantir que a
+aplicação não apresenta estas propriedades, figura~\ref{fig:pcb-3}.
+
+\begin{figure}
+\begin{Verbatim}
+rewrites: 5952 in 110ms cpu (100ms real) (54109 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[] <> putting /\ [] <> getting)
+result Bool :
+  true
+\end{Verbatim}
+\caption{``deadlock free'' e ``starvation free'' na aplicação
+produtor-consumidor}
+\label{fig:pcb-3}
+\end{figure}
+
+
+\subsection{Leitores e escritores}
+
+Na aplicação leitores e escritores, existe um único banco de dados que
+é compartilhado entre processos leitores e escritores. Os processos
+leitores apenas lêem informações do banco de dados, os processos
+escritores apenas escrevem no banco de dados.
+
+As seguintes propriedades devem ser garantidas nesta aplicação:
+
+\begin{itemize}
+ \item Os processos leitores devem poder acessar concorrentemente o
+ banco de dados;
+ \item apenas um processo escritor pode acessar o banco de dados por
+ vez;
+ \item se existe um escritor escrevendo no banco de dados, nenhum
+ leitor pode estar lendo simultaneamente;
+ \item a arquitetura deve garantir que todos os leitores e escritores
+ sempre terão chance de acesso ao banco de dados. Ou seja, não deve
+ haver ``starvation'' ou ``deadlock''.
+\end{itemize}
+
+É importante distinguir o problema dos leitores e escritores do
+problema tratado na seção~\ref{sec:pcb}. Os produtores não são apenas
+leitores, eles precisam ler a posição livre no buffer para incluir um
+novo item e precisam determinar se o buffer tem espaço livre para uma
+nova inclusão. Analogamente, os consumidores não são apenas leitores,
+ao remover um item eles precisam ajustar as posições livres do buffer
+para permitir novas inclusões.
+
+Como neste caso os leitores não escrevem no banco de dados e os
+escritores não leem do banco de dados, podemos permitir acessos
+simulatâneos de leitores, o que nos permite mais eficiência na
+utilização do banco de dados. Em um caso mais geral, onde qualquer
+processo pudesse ler ou escrever no banco, haveria a necessidade de
+empregarmos exclusão mútua nos acessos, como no exemplo da
+seção~\ref{sec:pcb}.
+
+Para implementar esta aplicação em CBabel foram declarados três
+modulos: READER, WRITER e DATABASE. Os conectores WANT-WRITE e
+WANT-READ controlam o número de escritores e leitores que desejam
+acessar o banco de dados. Os connectores COUNT-READ e COUNT-WRITE
+permitem o acesso concorrente de leitores e garantem o acesso
+exclusivo dos escritores impondo a seguinte política de prioridade nos
+acessos: a prioridade no acesso é dos leitores até que não existam
+mais leitores interessados em ler, neste caso a prioridade é passada
+para os escritores; sempre que os escritores recebem a prioridade, ou
+não existam leitores interessados em ler, um escritor pode acessar o
+banco de dados, em seguida, a prioridade é retornada aos leitores. O
+apêndice~\ref{sec:app-rw} apresenta a descrição CBabel da arquitetura
+com dois leitores e dois escritores.
+
+A figura~\ref{fig:ver-rw} apresenta o módulo de verificação da
+aplicação com a declaração do comportamento dos módulos e propriedades
+que serão utilizadas para as verificações da arquitetura.
+
+\begin{figure}[htp]
+\begin{Verbatim}
+(omod VER-RW is
+ inc READERS-WRITERS .
+ inc MODEL-CHECKER .
+ inc LTL-SIMPLIFIER .
+
+ var C : Configuration .
+ vars O O' : Oid .
+ vars P P' : PortOutId .
+ var IT IT1 IT2 : Interaction .
+ vars N : Int .
+
+ op initial : -> Configuration .
+ eq initial = topology
+              do(writer1, w@write, none) do(writer2, w@write, none)
+              do(reader1, r@read, none) do(reader2, r@read, none) .
+
+ rl [reading] :
+    < O : READER | > done(O, r@read, IT)  => < O : READER | > do(O, r@read, none) .
+
+ rl [writing] :
+    < O : WRITER | > done(O, w@write, IT) => < O : WRITER | > do(O, w@write, none) .
+
+ rl [db-write] :
+    < O : DATABASE | > do(O, db@write, IT) => < O : DATABASE | > done(O, db@write, IT) .
+
+ rl [db-read] :
+    < O : DATABASE | > do(O, db@read, IT)  => < O : DATABASE | > done(O, db@read, IT) .
+
+ subsort Configuration < State .
+ ops writing reading : Oid -> Prop .
+ ops two-writers writers&readers : -> Formula .
+
+ eq C < O : DATABASE | > send(O, db@write, IT :: [O, P])
+    |= writing(O) = true .
+ eq C < O : DATABASE | > send(O, db@read, IT :: [O, P])
+    |= reading(O) = true .
+
+ eq two-writers = writing(writer1) /\ writing(writer2) .
+ eq writers&readers =
+    (writing(writer1) \/ writing(writer2)) /\ (reading(reader1) \/ reading(reader2)) .
+endom)
+\end{Verbatim}
+\caption{Módulo de verificação dos Leitores e Escritores}
+\label{fig:ver-rw}
+\end{figure}
+
+Para verificarmos a primeira propriedade desejada, qual seja, a
+possibilidade de acesso concorrente dos leitores, realizamos uma busca
+por estados onde o módulo DATABASE receba concorrentemente duas
+mensagens de leitura, figura~\ref{fig:rw-1}.
+
+\begin{figure}[htp]
+\begin{Verbatim}
+rewrites: 94632 in 2950ms cpu (2960ms real) (32078 rewrites/second)
+
+search in VER-RW : initial =>* C:Configuration send(db,db@read,
+    IT1:Interaction)send(db,db@read,IT2:Interaction).
+
+Solution 1
+C:Configuration <- < cr : COUNT-READ | cr@want-read : st(0,unchanged),
+    cr@want-write : st(0,unchanged),cr@writing : st(false,unchanged),readers :
+    2,status : unlocked,turn : 1 > < cw : COUNT-WRITE | cw@readers : st(2,
+    unchanged),cw@turn : st(1,unchanged),cw@want-read : st(0,unchanged),
+    cw@want-write : st(0,unchanged),status : unlocked,writing : false > < db :
+    DATABASE | none > < reader1 : READER | r@read-status : locked > < reader2 :
+    READER | r@read-status : locked > < wr : WANT-READ | status : unlocked,
+    want-read : 0 > < writer1 : WRITER | w@write-status : unlocked > < writer2
+    : WRITER | w@write-status : unlocked > < ww : WANT-WRITE | status :
+    unlocked,want-write : 0 > do(writer1,w@write,none)do(writer2,w@write,none);
+IT1:Interaction <- [cr,out-count-read]::[wr,out-want-read]::[reader1, r@read]; 
+IT2:Interaction <- [cr,out-count-read]::[wr,out-want-read]::[reader2,r@read]
+\end{Verbatim}
+\caption{Busca por acessos concorrentes de leitores}
+\label{fig:rw-1}
+\end{figure}
+
+Na figura~\ref{fig:rw-2}, com auxílio do verificador de modelos de
+Maude e das fórmulas em LTL declaradas no módulo de verificação,
+mostramos que o acesso exclusivo do módulo WRITER ao módulo DATABASE é
+garantido.
+
+\begin{figure}[htp]
+\begin{Verbatim}
+rewrites: 1872298 in 54290ms cpu (54410ms real) (34486 rewrites/second)
+reduce in VER-RW :
+  modelCheck(initial,[]~ writers&readers)
+result Bool :
+  true
+
+rewrites: 1872248 in 51740ms cpu (51710ms real) (36185 rewrites/second)
+reduce in VER-RW :
+  modelCheck(initial,[]~ two-writers)
+result Bool :
+  true
+\end{Verbatim}
+\caption{Acesso exclusivo dos escritores}
+\label{fig:rw-2}
+\end{figure}
+
+A garantia de que a arquitetura está livre de um estado de
+``deadlock'', onde todos os módulos estão bloqueados, é comprovada
+pela busca apresentada na figura~\ref{fig:rw-3}. Nesta busca, não
+foram localizados estados finais de computação.
+
+\begin{figure}[htp]
+\begin{Verbatim}
+rewrites: 1868387 in 46870ms cpu (46940ms real) (39863 rewrites/second)
+search in VER-RW : initial =>! C:Configuration .
+
+No solution.
+\end{Verbatim}
+\caption{aplicação livre de ``deadlock''}
+\label{fig:rw-3}
+\end{figure}
+
+A última propriedade desejável da arquitetura é a garantia de justiça
+no acesso ao módulo DATABASE, ou seja, todos os módulos leitores e
+escritores devem ter chance de eventualmente acessar o banco de
+dados. Na figura~\ref{fig:rw-4} mostramos que esta propriedade não é
+garantida. Na primeira verificação, um contra-exemplo~\footnote{O
+contra-exemplo foi removido para preservação da legibilidade. O
+primeiro contra-exemplo tem 500 linhas e o segundo 1700 linhas.}
+mostra que existe a possibilidade do leitor $reader1$ não conseguir
+acesso ao DATABASE. Da mesma forma, na segunda verificação, obtemos a
+comprovação de que também o escritor $writer1$ também pode não
+conseguir ao DATABASE.
+
+\begin{figure}[htp]
+\begin{Verbatim}
+rewrites: 28049 in 1030ms cpu (1030ms real) (27232 rewrites/second)
+reduce in VER-RW :
+  modelCheck(initial,[]<> reading(reader1))
+result ModelCheckResult :
+  counterexample(...)
+
+rewrites: 28043 in 980ms cpu (990ms real) (28615 rewrites/second)
+reduce in VER-RW :
+  modelCheck(initial,[]<> writing(writer1))
+result ModelCheckResult :
+  counterexample(...)
+\end{Verbatim}
+\caption{Justiça nos acessos ao DATABASE}
+\label{fig:rw-4}
+\end{figure}
+
+A razão pela qual a justiça do acesso ao DATABASE não é preservada é
+explicada pela semântica dada ao contrato de sequenciamento guardado
+de CBabel. Um guarda em CBabel, ao bloquear mensagens, não impõe
+nenhuma particular politica na liberação posterior destas
+mensagens~\footnote{A estrutura de dados utilizada para armazenar as
+mensagens bloqueadas é o próprio multiset de objetos e mensagens que
+constitui o estado do sistema}. Desta forma, a escolha da próxima
+mensagem a ser desbloqueada não considera a ordem de chegada das
+mesmas e, consequentemente, algumas mensagens podem permanecer
+indefinidamente bloqueadas.
+
+Meseguer mostra em \cite{pv} como executar verificações em
+especificações a partir da suposição de justiça entre objetos
+concorrentes. Infelizmente, para aplicar a abordagem de Meseguer ao
+nosso mapeamento, precisaríamos definir uma ou mais proposições para
+cada porta de cada módulo da arquitetura. Em \cite{PeterCompendium},
+encontra-se uma análise sobre a existência de ``starvation'' em
+especificações em Maude. Pretendemos explorar estas questões
+futuramente.
+
+
+\subsection{Ceia de Filósofos}
+
+Tratamos, nas seções anteriores, de dois casos onde processos
+distribuidos concorrem para acessar um mesmo recurso. No caso dos
+produtores e consumidores, todos os acessos ocorrem de forma
+exclusiva. No caso dos leitores e escritores, é permitido o acesso
+simultâneo apenas dos leitores.
+
+O problema da ceia de filósofos pode ser entendido com um caso geral
+de compartilhamento de recursos onde, ao invés de termos apenas um
+recurso compartilhado entre vários processos, temos conjuntos de
+recursos compartilhados, cada um, por um grupo determinado de
+processos.
+
+O problema pode assim ser descrito.  Um grupo de filósofos permanece
+indefinidamente alternando entre as atividades de pensar, ter fome e
+comer. Para comer um filósofo precisa sentar à mesa, pegar o garfo a
+sua esquerda e pegar o garfo a sua direita. Após comer o filósofo
+larga os garfos, levanta da mesa e volta a pensar. Uma vez sentado à
+mesa, um filósofo só largará os garfos e volta a pensar após comer.
+
+Nossa especificação em CBabel tratará do exemplo considerando quatro
+filósofos. Como nas aplicações vistas anteriormente, algumas
+propriedades devem ser garantidas:
+
+\begin{itemize}
+ \item Cada garfo só poderá estar sendo utilizado por um filósofo a
+ cada instante. Ou seja, a exclusão mútua no acesso a cada garfo deve
+ ser garantida;
+ \item Ausência de ``deadlock'' e ``starvation'';
+\end{itemize}
+
+A arquitetura em CBabel para a aplicação ceia de filósofos está
+listada no apêndice~\ref{sec:app-filo}. Foram declarados três módulos:
+FORK, TABLE e PHILOSOPHER. O módulo TABLE representa a mesa onde os
+filósofos devem sentar para comer, e o módulo FORK representa os
+garfos. Em ambos os módulos são declaradas duas portas de entrada,
+$request$ e $release$, para alocação do recurso e liberação do
+recurso, respectivamente.
+
+Os connectores REQUEST-TABLE e LEAVE-TABLE implementam um monitor que
+deve garantir que apenas três filósofos sentem a mesa
+simultaneamente. A utilização da mesa é uma das soluções possíveis
+para evitarmos o ``deadlock'' do sistema~\cite{Sztaj02,pv}. Com a mesa
+evitamos a clássica situação de ``deadlock'' onde os quatro filósofos
+pegam o garfo da esquerda (ou direita) e permanecem bloqueados
+aguardando o guarfo da direita (ou esquerda).
+
+Os connectores REQUEST-FORK e LEAVE-FORK também implementam um monitor
+para garantir exclusão mútua no acesso a cada garfo.
+
+O módulo de verificação para esta arquitetura é mostrado na
+figura~\ref{fig:ver-filo}. O comportamento interno dos filósofos é
+definido como uma máquina de estados. Os garfos simplesmente respondem
+as requisições recebidas. A mesa deve incrementar o número de
+filósofos sentados ao receber uma mensagem de $request$ e decrementar
+o número de filósofos ao receber uma mensagem de $release$.
+
+\begin{figure}
+\begin{Verbatim}
+(omod VER-DP is
+ inc DINING-PHILOSOPHERS .
+ inc MODEL-CHECKER .
+
+ var C : Configuration . var O : Oid .
+ var IT IT1 IT2 : Interaction . vars N : Int .
+
+ op initial : -> Configuration .
+ eq initial = topology init(phi1) init(phi2) init(phi3) init(phi4) .
+
+ op init : Oid -> Configuration .
+ eq init(O) < O : PHILOSOPHER | state : 0 > =
+    < O : PHILOSOPHER | state : 1 > .
+
+ eq < O : PHILOSOPHER | state : 1 > =
+    < O : PHILOSOPHER | state : 2 > do(O, get-table, none) .
+
+ eq done(O, get-table, IT1) < O : PHILOSOPHER | state : 2 > =
+    < O : PHILOSOPHER | state : 3 > do(O, get-lfork, none) do(O, get-rfork, none)  .
+
+ eq done(O, get-lfork, IT1) done(O, get-rfork, IT2)
+    < O : PHILOSOPHER | state : 3 > =
+    < O : PHILOSOPHER | state : 4 > do(O, rel-lfork, none) do(O, rel-rfork, none) .
+
+ eq done(O, rel-lfork, IT1) done(O, rel-rfork, IT2)
+    < O : PHILOSOPHER | state : 4 > =
+    < O : PHILOSOPHER | state : 5 > do(O, rel-table, none) .
+
+ eq done(O, rel-table, IT) < O : PHILOSOPHER | state : 5 > =
+    < O : PHILOSOPHER | state : 0 > .
+
+ eq < O : FORK | > do(O, fork@request, IT) = < O : FORK | > done(O, fork@request, IT) .
+ eq < O : FORK | > do(O, fork@release, IT) = < O : FORK | > done(O, fork@release, IT) .
+
+ eq < O : TABLE | table@used-places : N > do(O, table@request, IT) =
+    < O : TABLE | table@used-places : (N + 1) > done(O, table@request, IT) .
+
+ eq < O : TABLE | table@used-places : N > do(O, table@release, IT) =
+    < O : TABLE | table@used-places : (N - 1) > done(O, table@release, IT) .
+
+ subsort Configuration < State .
+ op eating : Oid -> Prop .
+ eq < O : PHILOSOPHER | state : 4 > C |= eating(O) = true .
+endom)
+\end{Verbatim}
+\caption{Módulo de verificação da aplicação ceia de filósofos}
+\label{fig:ver-filo}
+\end{figure}
+
+{\bf PENDENTE: VERIFICACOES POSSIVEIS?}. Transformar a arquitetura, de
+portas como serviços parciais para completos (ex: get-lfork e
+get-rfork serao comer)?
+
+
+\subsection{Vending Machine}
+
+Em CBabel os módulos componentes de uma aplicação são executados de
+forma concorrente. Da mesma forma, os estímulos as portas destes
+módulos também podem ser executados concorrentemente entre si. Nesta
+seção apresentaremos a aplicação ``vending machine'' para demonstrar
+como a semântica de CBabel preserva as caracteristicas de concorrência
+da linguagem~\footnote{O exemplo da ``vending machine'' é normalmente
+utilizado na literatura para apresentar o conceito de
+concorrência~\cite{pv,clavel03}.}.
+
+Obviamente, nos exemplos anteriores, os módulos das aplicações também
+executavam de forma concorrente. Na realidade, sem concorrência,
+algumas das verificações executadas não teriam sentido. No entanto,
+nesta seção, estaremos concentrando nossa atenção nos aspectos de
+concorrência.
+
+A ``vending machine'' é uma máquina como as máquinas de refrigerantes
+que, ao invés de vender apenas refrigerantes, vende bolos e maças. Uma
+maça custa quatro {\em quarters} e um bolo, um {\em
+dolar}~\footnote{Optamos por manter a moeda americana na descrição dos
+valores das mercadorias da máquina.}. A máquina foi contruída para
+aceitar dolares e quarters mas, infelizmente, a maquina só é capaz de
+contar dolares na venda das mercadorias. Para resolver este problema,
+os quarters carregados são primeiramente convertidos em dolares. Ou
+seja, para venda de uma maça, não é possível fornecer para a máquina
+apenas três quarters. Se for fornecido um dolar, a maça será entregue
+e um quarter devolvido. Se forem fornecidos quatro quarters, estes
+serão convertidos para um dolar, a maça entregue, e um quarter
+devolvido.
+
+No apêndice~\ref{sec:app-vm} é listada a descrição CBabel da
+aplicação. Os módulos representam cada botão da máquina e a bandeja de
+saída das mercadorias. Como os botões da máquina podem ser
+pressionados simultaneamente, o que queremos demonstrar são as saídas
+possiveis para quando determinados botões são pressionados. Os
+conectores COUNT-DOLLAR e COUNT-QUARTER contabilizam o dinheiro
+depositado. Os conectores SOLD-APPLE e SOLD-CAKE realizam a venda: (1)
+caso o dinheiro depositado seja suficiente e, (2) existam itens
+disponíveis para venda. O conector SPLIT é responsável por gerar o
+troco na venda de maças. Para simplificar o modelo, o troco é
+representado pelas quantidades de dolares e quarters restantes nos
+conectores COUNT-DOLAR e COUNT-QUARTER, respectivamente.
+
+O módulo de verificação para a arquitetura é mostrado na
+figura~\ref{fig:ver-vm}. Ao contrário dos exemplos anteriores, nesta
+aplicação os módulos CBabel que iniciam as interações, isto é, os
+botões, não são deixados em ``loop'' indefinidamente. Definimos como
+estado inicial da aplicação a existência de dois estímulos (apertos de
+botões) para cada módulo. O comportamento do módulo SLOT é
+simplesmente incrementar a quantidade de maças ou bolos depositados.
+
+\begin{figure}
+\begin{Verbatim}
+(omod VER-VM is
+ inc VM .
+
+ var C : Configuration .
+ var O : Oid .
+ var IT IT1 IT2 : Interaction .
+ vars N : Int .
+ var P : PortId .
+ var MSG : Msg .
+
+ op initial : -> Configuration .
+ eq initial = topology init(do(ad, add-$, none), 2) init(do(aq, add-q, none), 2)
+                       init(do(bc, buy-c, none), 2) init(do(ba, buy-a, none), 2) .
+
+ op init : Msg Nat -> Configuration .
+ eq init(MSG, N) = MSG init(MSG, N - 1) .
+ eq init(MSG, 0) = none .
+ 
+ rl [slot-put-apple] : 
+    do(O, put-a, IT) < O : SLOT | slot@apples : N > => 
+    done(O, put-a, IT) < O : SLOT | slot@apples : (N + 1) >  .
+
+ rl [slot-put-cake] : 
+    do(O, put-c, IT) < O : SLOT | slot@cakes : N > => 
+    done(O, put-c, IT) < O : SLOT | slot@cakes : (N + 1) >  .
+endom)
+\end{Verbatim}
+%$
+\caption{Módulo de verificação da ``vending-machine''}
+\label{fig:ver-vm} 
+\end{figure}
+
+Para analisar o comportamento de nossa máquina, na
+figura~\ref{fig:vm-1} realizamos uma busca por todos os estados finais
+de computação a partir do estado inicial. A primeira solução
+corresponde a venda de dois bolos e um troco de dois quarters. A
+terceira opção maximiza a utilização do dinheiro, são compradas duas
+maças e um bolo e nenhum troco é fornecido. Em relação a segunda
+solução, comprovamos o impacto do infeliz design da máquina em não ser
+capaz de contar os quarters disponíveis para compra de maças. Nesta
+solução, é vendida uma maça e um bolo mas como a troca de dolares por
+quarters só ocorre durante a compra de maças, temos o seguinte caso:
+primeiro é processado o pedido de um bolo e consumindo um dolar;
+depois o pedido de uma maça, consumo do dolar restante e devolução de
+quarter; e finalmente, restam três quarters que não poderão ser
+trocados pois o pedido de maças restante está bloqueado pela falta de
+dolares.
+
+\begin{figure}
+\begin{Verbatim}
+Maude> (search initial =>! C:Configuration .)
+rewrites: 1991797 in 24420ms cpu (24400ms real) (81564 rewrites/second)
+search in VER-VM : initial =>! C:Configuration .
+
+Solution 1
+C:Configuration <- < ad : ADD-DOLLAR | none > < aq : ADD-QUARTER | none > < ba
+    : BUY-APPLE | none > < bc : BUY-CAKE | none > < cd : COUNT-DOLLAR | dollars
+    : 0,status : unlocked > < cq : COUNT-QUARTER | quarters : 2,status :
+    unlocked > < sa : SOLD-APPLE | apples : 10,sa@dollars : st(0,unchanged),
+    status : unlocked > < sc : SOLD-CAKE | cakes : 8,sc@dollars : st(0,
+    unchanged),status : unlocked > < slot : SLOT | slot@apples : 0,slot@cakes :
+    2 > < split : SPLIT | status : unlocked > send(sa,ack-a,[ba,buy-a])send(sa,
+    ack-a,[ba,buy-a])
+
+Solution 2
+C:Configuration <- < ad : ADD-DOLLAR | none > < aq : ADD-QUARTER | none > < ba
+    : BUY-APPLE | none > < bc : BUY-CAKE | none > < cd : COUNT-DOLLAR | dollars
+    : 0,status : unlocked > < cq : COUNT-QUARTER | quarters : 3,status :
+    unlocked > < sa : SOLD-APPLE | apples : 9,sa@dollars : st(0,unchanged),
+    status : unlocked > < sc : SOLD-CAKE | cakes : 9,sc@dollars : st(0,
+    unchanged),status : unlocked > < slot : SLOT | slot@apples : 1,slot@cakes :
+    1 > < split : SPLIT | status : unlocked > send(sa,ack-a,[ba,buy-a])send(sc,
+    ack-c,[bc,buy-c])
+
+Solution 3
+C:Configuration <- < ad : ADD-DOLLAR | none > < aq : ADD-QUARTER | none > < ba
+    : BUY-APPLE | none > < bc : BUY-CAKE | none > < cd : COUNT-DOLLAR | dollars
+    : 0,status : unlocked > < cq : COUNT-QUARTER | quarters : 0,status :
+    unlocked > < sa : SOLD-APPLE | apples : 8,sa@dollars : st(0,unchanged),
+    status : unlocked > < sc : SOLD-CAKE | cakes : 9,sc@dollars : st(0,
+    unchanged),status : unlocked > < slot : SLOT | slot@apples : 2,slot@cakes :
+    1 > < split : SPLIT | status : unlocked > send(sc,ack-c,[bc,buy-c])
+
+No more solutions.
+\end{Verbatim}
+\caption{Estados finais da ``vending-machine''}
+\label{fig:vm-1} 
+\end{figure}
+
+Observamos nos estados finais, mensagens bloqueadas, correspondentes a
+estímulos de portas que foram bloqueados pelos guardas devido a falta
+de recurso, neste caso dinheiro, para completar a requisição. Por
+exemplo, no terceiro estado encontrado, uma requisição do módulo
+BUY-CAKE foi bloqueada no guarda SOLD-CAKE.
+
+Certamente um comportamento desejado para uma máquina de venda é
+garantir que um item só será vendidos mediante o pagamento do valor
+especificado para este. Na figura~\ref{fig:vm-2} verificamos que não
+existem estados finais possíveis de venda de uma maça quando apenas
+três quarters são inseridos na máquina.
+
+\begin{figure}
+\begin{Verbatim}
+rewrites: 3903 in 120ms cpu (120ms real) (32525 rewrites/second)
+search in VER-VM : topology init(do(aq,add-q,none),3) 
+  init(do(bc,buy-c,none),1) =>* 
+  < slot : SLOT | slot@cakes : N:Int,AS:AttributeSet > such that N:Int >= 1 .
+
+No solution.
+\end{Verbatim}
+\caption{Verificando funcionamento da ``vending-machine''}
+\label{fig:vm-2} 
+\end{figure}
+
+
+\section{Performance}\label{sec:perf}
+
+Considerando relatos na literatura de que Maude é capaz de atingir
+milhões de reescritas por segundo~\cite{clavel99}, e que nas
+verificações dos exemplos citados obtivemos, em geral, apenas dezenas
+de milhares de reescritas por segundo, era imperativa uma análise que
+justificasse tal diferença. Nesta seção iremos apresentar os testes
+executados e conclusões obtidas para justificar tal diferença de
+performance.
+
+Nossa primeira hipótese para justificar o baixo número de reescritas
+era de que o sistema Maude estaria tendo baixo desempenho na execução
+do casamento de padrões (``pattern maching'') dos operadores
+associativos e comutativos. Ou seja, quando na execução de buscas ou
+reescritas, o sistema estaria consumindo a maior parte do tempo na
+escolha da regra a ser aplicada em cada passo de reescrita.
+
+Esta hipótese seria sustentada, em primeiro lugar, pela sintaxe de
+Maude para objetos e mensagens, que faz uso de dois operadores
+comutativos e associativos. Em segundo lugar, os números de reescritas
+por segundo correspondiam as análises observadas em \cite{EkerAC:03}
+da performace do algoritmo usado pelo sistema Maude 2.0 para reescrita
+de operadores associativos e comutativos.
+
+Esta hipótese foi descartadas após não obtermos nenhuma mudança
+significativa na ordem de grandeza do número de reescritas para os
+seguintes experimentos.
+
+Dado a característica da aplicação ceia de filósofos, experimentamos
+execuções dos comandos ``rewrite'' e ``search'' a partir da topologia
+com quatro filósofos e apenas um módulo filósofo sendo iniciado após
+remoção das regras de reescrita desnecessárias. Com a remoção de
+aproximadamente 50\% das regras de reescrita da teoria original gerada
+pelo mapeamento, não observamos variação na ordem de grandeza do
+número de reescritas por segundo.
+
+%% Para simplificar o cálculo dos estados removendo as reescritas
+%% alinhadas, removemos a possibilidade de aplicação da regra de
+%% congruência. Para isso, modificamos a teoria gerada pelo mapeamento
+%% original incluindo um sort denominado {\em SystemState} e o operador
+%% \verb|op {_} : Configuration -> SystemState .|, e modificando todas as
+%% regras de reescrita para reescrita de termos do sort {\em SystemState}
+%% e não mais do sort {\em Configuration}. Desta forma, uma regra de
+%% reescrita como:
+
+%% \begin{verbatim}
+%%   rl send(phi1,get-lfork,IT:Interaction) => 
+%%      send(mutx1,mutx@in,IT:Interaction) [label ...] .
+%% \end{verbatim}
+
+%% Foi transformada em:
+
+%% \begin{verbatim}
+%%   rl {send(phi1,get-lfork,IT:Interaction) C:Configuration} => 
+%%      {send(mutx1,mutx@in,IT:Interaction) C:Configuration} [label ...] .
+%% \end{verbatim}
+
+%% A variável {\em C} do sort {\em Configuration} capturaria o restante
+%% do termo em todos os passos de reescrita evitando a utilização da
+%% regra de congruência durante as reescritas.
+
+Outro teste efetuado foi a mudança dos operadores construtores de
+mensagens. Na versão do mapeamento, mensagens padronizadas como
+``send'' e ``ack'' são parametrizadas por identificadores de portas e
+objetos remetentes, na versão modificada introduzimos um construtor de
+mensagem para cada porta como, por exemplo, ``phi-get-lfork'',
+parametrizado pelo identificador do objeto remetente.
+
+Descartada a hipótese do baixo desempenho estar relacionado ao pattern
+maching, ainda não havia uma explicação para o baixo número de
+reescritas que observfamos. Compilando o código fonte de Maude com a
+diretiva para geração de código de gravação de ``profile'', foi
+possível observarmos o comportamento exato da máquina de reescrita de
+Maude e observar números como: total de chamadas de cada função e
+porcentagem do tempo total de execução do programa gasto por cada
+função.
+
+Para avaliarmos o funcionamento de Maude com as teorias geradas a
+partir de descrições CBabel, precisávamos comparar o comportamento de
+Maude com outras especificações que apresentassem maior número de
+rew/sec. Para representar uma teoria gerada pelo mapeamento elegemos
+uma versão simplificada da ``ceia de filósofos'',
+apêndice~\ref{sec:app-mfilo}. Como exemplo de aplicações em Maude que
+apresentam maior número de rew/sec foram escolhidas: a implementação
+do protocolo Sectrace e a implementação da ``ceia de filósofos''
+proposta pelo professor Meseguer em \cite{pv}.
+
+Como todos os exemplos escolhidos foram implementados em ``Full
+Maude''. Para considerarmos apenas o comportamento do sistema na
+aplicação de reescritas das teorias, todos os módulos foram
+convertidos para suas respectivas versões ``Flat'', e carregados no
+Maude sem o arquivo ``prelude.maude''. Em todos os exemplos foram
+executados os comandos \verb|rew [1000] initial .| e
+\verb|search initial =>! C:Configuration .|.
+
+A análise dos relatórios gerados só foi possível a partir da intuição
+dos nomes de cada função, dado a inexistência de uma documentação
+sobre o código fonte do Maude ou de comentários no próprio código.
+
+%% Com base no número de chamadas de funções e tempo gasto em cada
+%% chamada de função foi possível comprovar que não existe gargalo nas
+%% operações de casamento de padrões ou escolha de regras a serem
+%% aplicadas na execução do exemplo ceia de filósofos gerado pela
+%% ferramenta CBabel-Tool.
+
+%% Como esperado, as funções mais chamadas e que mais consumiram tempo de
+%% processamento, foram as funções provavelmente relacionadas a
+%% construções das estruturas de dados e manuseio de memória.
+
+%% Na comparação do comportamento das funções de alto-nível como escolha
+%% da próxima regra de reescrita a ser usada ou execução de um passo de
+%% reescrita, observamos que em alguns casos o desempenho da aplicação
+%% ceia de filósofos foi superior a aplicação Sectrace, como mostra a
+%% figura~\ref{fig:cmp-ceiasec}.
+
+%% \begin{figure}
+%% {\tiny
+%% \begin{verbatim}
+%% Each sample counts as 0.01 seconds.
+%%   %   cumulative   self              self     total
+%%  time   seconds   seconds    calls  ms/call  ms/call  name
+%% SECTRACE:
+%%   0.00      0.31     0.00    55529     0.00     0.00  RuleTable::getRules(void) const
+%%   0.00      0.31     0.00        3     0.00     0.00  Module::getRules(void) const
+%% FILOSOFOS:
+%%   0.00      0.07     0.00   794860     0.00     0.00  RuleTable::getRules(void) const
+%%   0.00      0.07     0.00        3     0.00     0.00  Module::getRules(void) const
+%% \end{verbatim}}
+%% \caption{Comparação de funções de escolha de regras em buscas na ceia
+%% de filósofos e Sectrace}
+%% \label{fig:cmp-ceiasec}
+%% \end{figure}
+
+%% No entanto, procuramos nos concentrar nos números de chamadas
+%% (``calls'') de cada função, dado que os tempos de execução de cada
+%% função, ``cumulative seconds'', são capturados por amostragem a partir
+%% do tempo de execução do programa.
+
+A figura~\ref{fig:compara-ceia-sec} mostra o trecho de dois relatórios
+gerados pela execução de buscas nas aplicações ceia de filósofos e
+Sectrace.
+
+\begin{figure}
+\begin{Verbatim}[fontsize=\tiny]
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total
+ time   seconds   seconds    calls  ms/call  ms/call  name
+FILOSOFOS:
+  0.00      0.07     0.00   210001     0.00     0.00  SearchState::findFirstSolution(PreEquation const *, LhsAutomaton *)
+  0.00      0.07     0.00   210001     0.00     0.00  SearchState::initSubstitution(VariableInfo const &)
+  0.00      0.07     0.00    58501     0.00     0.00  SearchState::getContext(void) const
+  0.00      0.07     0.00    51000     0.00     0.00  RewriteSearchState::getRule(void) const
+  0.00      0.07     0.00    33002     0.00     0.00  SearchState::transferCount(RewritingContext &)
+  0.00      0.07     0.00    33000     0.00     0.00  RewriteSearchState::findNextRewrite(void)
+  0.00      0.07     0.00    25501     0.00     0.00  SearchState::findNextSolution(void)
+  0.00      0.07     0.00    25500     0.00     0.00  RewriteSearchState::getReplacement(void) const
+  0.00      0.07     0.00     7501     0.00     0.00  SearchState::~SearchState(void)
+  0.00      0.07     0.00     7501     0.00     0.00  SearchState::SearchState(RewritingContext *, int, int, int)
+SECTRACE:
+  0.00      0.31     0.00     2837     0.00     0.00  SearchState::findFirstSolution(PreEquation const *, LhsAutomaton *)
+  0.00      0.31     0.00     2837     0.00     0.00  SearchState::initSubstitution(VariableInfo const &)
+  0.00      0.31     0.00      314     0.00     0.00  SearchState::getContext(void) const
+  0.00      0.31     0.00      211     0.00     0.00  SearchState::transferCount(RewritingContext &)
+  0.00      0.31     0.00      209     0.00     0.06  RewriteSearchState::findNextRewrite(void)
+  0.00      0.31     0.00      208     0.00     0.00  RewriteSearchState::getRule(void) const
+  0.00      0.31     0.00      106     0.00     0.00  SearchState::~SearchState(void)
+  0.00      0.31     0.00      106     0.00     0.00  SearchState::SearchState(RewritingContext *, int, int, int)
+  0.00      0.31     0.00      105     0.00     0.00  RewriteSearchState::~RewriteSearchState(void)
+  0.00      0.31     0.00      105     0.00     0.00  RewriteSearchState::RewriteSearchState(...)
+\end{Verbatim}
+\caption{Comportamento de buscas na ceia de filósofos e Sectrace}
+\label{fig:compara-ceia-sec}
+\end{figure}
+
+O número de chamadas a funções como ``findNextRewrite'' ou
+``findFirstSolution'' comprovam a diferença no número de estados de
+cada aplicação. Enquanto os exemplos de verificação da aplicação
+Sectrace percorrem entre 100 a 300 estados, figura~\ref{fig:estados},
+uma verificação da aplicação ceia de filósofos com dois filósofos em
+execução alcançam 7500 estados.
+
+\begin{figure}
+\begin{Verbatim}
+SECTRACE: 
+
+search in TESTE : initial =>! S:State .
+
+Solution 1 (state 104)
+states: 105  rewrites: 36956 in 2250ms cpu (2250ms real) (16424 rewrites/second)
+S:State --> ...
+
+FILOSOFOS:
+
+search in VER-DP : topology init(phi1) init(phi2) =>! C:Configuration .
+
+Solution 1 (state 7499)
+states: 7500  rewrites: 25915 in 17760ms cpu (17780ms real) (1459 rewrites/second)
+C:Configuration --> ...
+\end{Verbatim}
+\caption{Número de estados na ceia de filósofos e Sectrace}
+\label{fig:estados}
+\end{figure}
+
+%% Após descartarmos o casamento de padrões como justificativa para o
+%% baixo número de reescritas por segundo, voltamos nossa atenção para a
+%% relação do número de estados da aplicação com o número de reescritas
+%% por segundo atingidas pelo sistema Maude.
+
+%% \section{Número de estados versus número de reescritas por segundo}\label{sec:num}
+%% Na seção anterior comprovamos a necessidade de investigar a relação
+%% entre o número de estados da aplicação e número de reescritas por
+%% segundo na execução de comandos como ``search'' e ``rewrite''.
+
+Ou seja, os números da figura~\ref{fig:compara-ceia-sec} comprovam os
+números da figura~\ref{fig:estados}. Podemos concluír então que a
+especificação da ``ceia de filósofos simplificada'' contém um número
+muito superior de estados que a especificação do protocolo
+Sectrace. No entanto, o número de reescritas entre cada estado no
+Sectrace é, em média, bastante superior ao número de reescritas entre
+cada estado da ``ceia de filósofos simplificada''.
+
+%% \begin{table}
+%% \centering
+%% \begin{tabular}{ccc}
+%% \hline
+%% Filósofos &  & Sectrace \\ 
+%% \hline
+%% estados & $>$ & estados \\
+%% reescritas & $<$ & reescritas \\ 
+%% \hline
+%% \end{tabular}
+%% \caption{comparação de estados e número de reescritas}
+%% \label{tab:compare}
+%% \end{table}
+
+Desta forma, o maior número de reescritas por segundo maior na
+especificação do Sectrace está relacionado ao fato de que um maior
+número de reescritas é necessário em cada passo das buscas efetuadas
+nestas aplicações. O número de reescritas por segundo é calculado pela
+divisão do número de reescritas efetuadas (equações ou regras) divido
+pelo tempo total gasto para o execução do comando. Um maior tempo
+gasto na busca de estados com menor reescritas entre cada estado
+resulta em um número baixo de reescritas por segundo.
+
+Cabe lembrar como funcionam os comandos ``rewrite'' e ``search'' do
+Maude antes de continuarmos esta argumentação.
+
+O comando $rewrite\ [n]\ Term$ realiza até $n$ aplicações de regras de
+reescrita sobre o termo $Term$ passado. As reescritas são aplicadas
+módulo as equações, em outras palavras, a cada passo do comando
+``rewrite'', primeiramente o termo é reduzido a sua forma canônica, em
+relação as equações ($E$) módulo axiomas ($A$), e depois um passo de
+reescrita é aplicado com o uso de alguma das regras do conjunto $R$
+de regras de reescrita da teoria. Este método garante a propriedade
+necessária aos módulos de sistema de Maude, denominada,
+``coherent''~\cite{clavel03}. Cabe destacar, desta forma, que um passo
+do comando ``rewrite'' pode resultar em várias aplicação de equações,
+que são também contabilizadas pelo sistema Maude como reescritas
+efetuadas.
+
+O comando ``rewrite'' consegue explorar apenas um possível
+comportamento, seqüencia de reescritas, de um sistema descrito por um
+conjunto de regras de reescritas e um estado inicial. O comando
+``search'', em contrapartida, permite explorar diferentes estados
+alcançáveis a partir de um estado inicial. Este comando efetua uma
+busca em largura na árvore de reescritas, a partir de um estado
+inicial, por um estado que ``case'' com um padrão informado.
+
+As aplicações Sectrace e L3A executam mais reescritas entre cada
+estado devido ao número de funções auxiliares declaradas e,
+conseqüente, maior número de reescritas de equações em cada
+estado. Esta afirmação pode ainda ser facilmente comprovada com a
+execução do comando $rew\ [1]\ initial$ seguido de algumas execuções
+do comando $cont\ 1$. O primeiro comando executa um passo de reescrita
+sobre o termo $initial$, e o comando seguinte executa um passo de
+reescrita sobre o termo resultante da última reescrita.
+
+O número exato de reescritas efetuadas a cada passo do comando
+``rewrite'' varia em função de cada aplicação e de cada termo
+resultante em cada reescrita. Nas aplicações L3A e Sectrace observamos
+alguns passos onde foram executadas até 900 reescritas equacionais em
+um passo do comando ``rewrite'', na implementação da ceia de filósofos
+proposta pelo professor Meseguer o número médio observado foi de 4
+reescritas a cada passo. Em contrapartida, na aplicação ceia de
+filósofos gerada pelo CBabel-Tool, na maioria dos passos de reescrita
+é executa apenas uma reescrita, ou seja, nenhuma reescrita
+equacional. O baixo número de reescritas por estado explica o baixo
+número de reescritas por segundo da aplicação que gasta assim, mais
+tempo buscando novos estados que executando reescritas entre estados.
+
+
+\section{Conclusão}
+
+Neste relatório, apresentamos as principais técnicas de verificações
+utilizadas em Maude comparando os benefícios de cada uma.
+
+Validamos o mapeamento de CBabel em lógica de reescrita a partir da
+especificação e verificação de exemplos clássicos de aplicações
+concorrentes encontrados na literatura.
+
+Mostramos que o número baixo de reescritas por segundo observado nas
+verificações de arquiteturas implementadas em Maude com o CBabel-Tool
+não está relacionado a nenhum falha no mapeamento ou mau desempenho do
+algoritmo de reescrita de operadores associativos e comutativos
+utilizado no Maude.
+
+Por fim, durante os testes de performance, comprovamos que o número de
+estados na execução de uma especificação limita a capacidade de
+verificação. Na aplicação ceia de filósofos, descrita em CBabel,
+identificamos que alguns estados da computação poderiam tornar-se não
+observáveis reduzindo assim o número de estados a serem visitados na
+execução de buscas ou simulações. Desta forma, sugerimos as seguintes
+modificações no mapeamento original.
+
+\begin{itemize}
+ \item Transformar em equações as regras de reescrita que reescrevem
+as mensagens $do$ em $done$;
+ \item Transformar em equações as regras de reescrita que reescrevem
+ as mensagens $done$ em $ack$ geradas pelas declarações de portas de
+ entrada dos módulos CBabel;
+ \item Transformar em equações as regras de reescrita que reescrevem
+ as mensagens $do$ em $send$ geradas pelas declarações de portas de
+ saida dos módulos CBabel;
+ \item Transformar em equações as regras de consumem ou transformam as
+ mensagens $done$ em novas mensagens $do$.
+\end{itemize}
+
+
+\clearpage
+\appendix
+
+\section{Descrição CBabel da aplicação produtor-consumidor}
+\label{sec:app-pcb}
+
+\VerbatimInput{../cbabel-tool-2.2/pcb/s-modules.cbabel}
+\VerbatimInput{../cbabel-tool-2.2/pcb/guard-get-monitor.cbabel}
+\VerbatimInput{../cbabel-tool-2.2/pcb/guard-put-monitor.cbabel}
+\VerbatimInput{../cbabel-tool-2.2/pcb/pc-monitor.cbabel}
+
+%% Verificações executadas na arquitetura:
+%% \VerbatimInput{../cbabel-tool-2.2/pcb/searches.maude}
+
+\section{Descrição CBabel da aplicação leitores e escritores}
+\label{sec:app-rw}
+
+\VerbatimInput{../cbabel-tool-2.2/readers-writers/modules.cbabel}
+\VerbatimInput{../cbabel-tool-2.2/readers-writers/connectors.cbabel}
+\VerbatimInput{../cbabel-tool-2.2/readers-writers/readers-writers.cbabel}
+
+
+\section{Descrição CBabel da aplicação Ceia de Filósofos}
+\label{sec:app-filo}
+
+\VerbatimInput{../cbabel-tool-2.2/filosofos/modules.cbabel}
+\VerbatimInput{../cbabel-tool-2.2/filosofos/fork-guard.cbabel}
+\VerbatimInput{../cbabel-tool-2.2/filosofos/table-guard.cbabel}
+\VerbatimInput{../cbabel-tool-2.2/filosofos/phi-fork-table.cbabel}
+
+\section{Descrição CBabel da aplicação ``vending machine''}
+\label{sec:app-vm}
+
+\VerbatimInput{../cbabel-tool-2.2/vm/vm.cbabel}
+
+
+\section{Descrição CBabel da aplicação Ceia de Filósofos simplificada}
+\label{sec:app-mfilo}
+
+\VerbatimInput{../cbabel-tool-2.2/filosofos/phi-fork-mutex.cbabel}
+
+
+
+\small \bibliographystyle{abbrv}
+\bibliography{alexandre,component,maude,rewriting,soft-arch,adm}
+
+\end{document}
+

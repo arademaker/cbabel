@@ -1,0 +1,1057 @@
+mod DP-EXEC is
+  sorts Attribute AttributeSet Bool Cid Configuration EXCLUSIVE-COMM-TABLE FORK
+    Int Interaction LEAVE-FORK LEAVE-TABLE Msg Nat NzInt NzNat Object Oid
+    PHILOSOPHER PortId PortInId PortOutId PortStatus REQUEST-FORK REQUEST-TABLE
+    StateRequired Status TABLE Zero .
+  subsort Attribute < AttributeSet .
+  subsort EXCLUSIVE-COMM-TABLE < Cid .
+  subsort FORK < Cid .
+  subsort LEAVE-FORK < Cid .
+  subsort LEAVE-TABLE < Cid .
+  subsort Msg < Configuration .
+  subsort Nat < Int .
+  subsort NzInt < Int .
+  subsort NzNat < Nat .
+  subsort NzNat < NzInt .
+  subsort Object < Configuration .
+  subsort PHILOSOPHER < Cid .
+  subsort PortInId < PortId .
+  subsort PortOutId < PortId .
+  subsort REQUEST-FORK < Cid .
+  subsort REQUEST-TABLE < Cid .
+  subsort TABLE < Cid .
+  subsort Zero < Nat .
+  op <_:_|`> : Oid Cid -> Object .
+  op EXCLUSIVE-COMM-TABLE : -> EXCLUSIVE-COMM-TABLE .
+  op FORK : -> FORK .
+  op LEAVE-FORK : -> LEAVE-FORK .
+  op LEAVE-TABLE : -> LEAVE-TABLE .
+  op PHILOSOPHER : -> PHILOSOPHER .
+  op REQUEST-FORK : -> REQUEST-FORK .
+  op REQUEST-TABLE : -> REQUEST-TABLE .
+  op TABLE : -> TABLE .
+  op `[_`,_`] : Oid PortOutId -> Interaction .
+  op ack : Interaction -> Msg .
+  op after : Object -> Object .
+  op before : Object -> Object .
+  op class : Object -> Cid .
+  op do : Oid PortId Interaction -> Msg .
+  op done : Oid PortId Interaction -> Msg .
+  op et : -> Oid .
+  op fork1 : -> Oid .
+  op fork2 : -> Oid .
+  op fork3 : -> Oid .
+  op fork4 : -> Oid .
+  op get-free : Object -> Bool .
+  op get-lf@free : Object -> Bool .
+  op get-lt@place-available : Object -> Bool .
+  op get-max-places : Object -> Int .
+  op get-place-available : Object -> Bool .
+  op get-rf@free : Object -> Bool .
+  op get-rt@used-places : Object -> Int .
+  op get-state : Object -> Int .
+  op get-used-places : Object -> Int .
+  op init : Oid -> Msg .
+  op initial : -> Configuration .
+  op instantiate : Oid Cid -> Object .
+  op lfc1 : -> Oid .
+  op lfc2 : -> Oid .
+  op lfc3 : -> Oid .
+  op lfc4 : -> Oid .
+  op lt : -> Oid .
+  op none : -> AttributeSet .
+  op none : -> Configuration .
+  op none : -> Interaction .
+  op open? : Object -> Bool .
+  op phi1 : -> Oid .
+  op phi2 : -> Oid .
+  op phi3 : -> Oid .
+  op phi4 : -> Oid .
+  op rfc1 : -> Oid .
+  op rfc2 : -> Oid .
+  op rfc3 : -> Oid .
+  op rfc4 : -> Oid .
+  op rt : -> Oid .
+  op send : Oid PortId Interaction -> Msg .
+  op set-free : Object Bool -> Object .
+  op set-lf@free : Object Bool -> Object .
+  op set-lt@place-available : Object Bool -> Object .
+  op set-max-places : Object Int -> Object .
+  op set-place-available : Object Bool -> Object .
+  op set-rf@free : Object Bool -> Object .
+  op set-rt@used-places : Object Int -> Object .
+  op set-state : Object Int -> Object .
+  op set-used-places : Object Int -> Object .
+  op table : -> Oid .
+  op topology : -> Configuration .
+  op -_ : Int -> Int
+    [special(id-hook MinusSymbol op-hook succSymbol(s_ : Nat ~> NzNat)op-hook
+    minusSymbol(-_ : NzNat ~> NzInt))] .
+  op -_ : NzInt -> NzInt
+    [special(id-hook MinusSymbol op-hook succSymbol(s_ : Nat ~> NzNat)op-hook
+    minusSymbol(-_ : NzNat ~> NzInt))] .
+  op -_ : NzNat -> NzInt
+    [ctor special(id-hook MinusSymbol op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op 0 : -> Zero
+    [ctor] .
+  op <_:_|_> : Oid Cid AttributeSet -> Object
+    [ctor object] .
+  op _&_ : Int Int -> Int
+    [assoc comm prec 53 special(id-hook ACU_NumberOpSymbol(&)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _&_ : Nat Nat -> Nat
+    [assoc comm prec 53 special(id-hook ACU_NumberOpSymbol(&)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _*_ : Int Int -> Int
+    [assoc comm prec 31 special(id-hook ACU_NumberOpSymbol(*)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _*_ : Nat Nat -> Nat
+    [assoc comm prec 31 special(id-hook ACU_NumberOpSymbol(*)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _*_ : NzInt NzInt -> NzInt
+    [assoc comm prec 31 special(id-hook ACU_NumberOpSymbol(*)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _*_ : NzNat NzNat -> NzNat
+    [assoc comm prec 31 special(id-hook ACU_NumberOpSymbol(*)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _+_ : Int Int -> Int
+    [assoc comm prec 33 special(id-hook ACU_NumberOpSymbol(+)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _+_ : Nat Nat -> Nat
+    [assoc comm prec 33 special(id-hook ACU_NumberOpSymbol(+)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _+_ : NzNat Nat -> NzNat
+    [assoc comm prec 33 special(id-hook ACU_NumberOpSymbol(+)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _-_ : Int Int -> Int
+    [prec 33 gather(E e)special(id-hook NumberOpSymbol(-)op-hook succSymbol(s_
+    : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _::_ : Interaction Interaction -> Interaction
+    [assoc id:(none).Interaction prec 13 gather(e E)] .
+  op _<<_ : Int Nat -> Int
+    [prec 35 gather(E e)special(id-hook NumberOpSymbol(<<)op-hook succSymbol(s_
+    : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _<<_ : Nat Nat -> Nat
+    [prec 35 gather(E e)special(id-hook NumberOpSymbol(<<)op-hook succSymbol(s_
+    : Nat ~> NzNat))] .
+  op _<=_ : Int Int -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(<=)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt)term-hook trueTerm(
+    true)term-hook falseTerm(false))] .
+  op _<=_ : Nat Nat -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(<=)op-hook succSymbol(s_ : Nat ~>
+    NzNat)term-hook trueTerm(true)term-hook falseTerm(false))] .
+  op _<_ : Int Int -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(<)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt)term-hook trueTerm(
+    true)term-hook falseTerm(false))] .
+  op _<_ : Nat Nat -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(<)op-hook succSymbol(s_ : Nat ~>
+    NzNat)term-hook trueTerm(true)term-hook falseTerm(false))] .
+  op _=/=_ : Universal Universal -> Bool
+    [poly(1 2)prec 51 special(id-hook EqualitySymbol term-hook equalTerm(
+    false)term-hook notEqualTerm(true))] .
+  op _==_ : Universal Universal -> Bool
+    [poly(1 2)prec 51 special(id-hook EqualitySymbol term-hook equalTerm(
+    true)term-hook notEqualTerm(false))] .
+  op _>=_ : Int Int -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(>=)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt)term-hook trueTerm(
+    true)term-hook falseTerm(false))] .
+  op _>=_ : Nat Nat -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(>=)op-hook succSymbol(s_ : Nat ~>
+    NzNat)term-hook trueTerm(true)term-hook falseTerm(false))] .
+  op _>>_ : Int Nat -> Int
+    [prec 35 gather(E e)special(id-hook NumberOpSymbol(>>)op-hook succSymbol(s_
+    : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _>>_ : Nat Nat -> Nat
+    [prec 35 gather(E e)special(id-hook NumberOpSymbol(>>)op-hook succSymbol(s_
+    : Nat ~> NzNat))] .
+  op _>_ : Int Int -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(>)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt)term-hook trueTerm(
+    true)term-hook falseTerm(false))] .
+  op _>_ : Nat Nat -> Bool
+    [prec 37 special(id-hook NumberOpSymbol(>)op-hook succSymbol(s_ : Nat ~>
+    NzNat)term-hook trueTerm(true)term-hook falseTerm(false))] .
+  op _^_ : Int Nat -> Int
+    [prec 29 gather(E e)special(id-hook NumberOpSymbol(^)op-hook succSymbol(s_
+    : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _^_ : Nat Nat -> Nat
+    [prec 29 gather(E e)special(id-hook NumberOpSymbol(^)op-hook succSymbol(s_
+    : Nat ~> NzNat))] .
+  op _^_ : NzInt Nat -> NzInt
+    [prec 29 gather(E e)special(id-hook NumberOpSymbol(^)op-hook succSymbol(s_
+    : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _^_ : NzNat Nat -> NzNat
+    [prec 29 gather(E e)special(id-hook NumberOpSymbol(^)op-hook succSymbol(s_
+    : Nat ~> NzNat))] .
+  op __ : Configuration Configuration -> Configuration
+    [assoc comm id:(none).Configuration ctor config] .
+  op _`,_ : AttributeSet AttributeSet -> AttributeSet
+    [assoc comm id:(none).AttributeSet ctor] .
+  op _and_ : Bool Bool -> Bool
+    [assoc comm prec 55] .
+  op _divides_ : NzInt Int -> Bool
+    [prec 51 special(id-hook NumberOpSymbol(divides)op-hook succSymbol(s_ : Nat
+    ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt)term-hook trueTerm(
+    true)term-hook falseTerm(false))] .
+  op _divides_ : NzNat Nat -> Bool
+    [prec 51 special(id-hook NumberOpSymbol(divides)op-hook succSymbol(s_ : Nat
+    ~> NzNat)term-hook trueTerm(true)term-hook falseTerm(false))] .
+  op _implies_ : Bool Bool -> Bool
+    [prec 61 gather(e E)] .
+  op _or_ : Bool Bool -> Bool
+    [assoc comm prec 59] .
+  op _quo_ : Int NzInt -> Int
+    [prec 31 gather(E e)special(id-hook NumberOpSymbol(quo)op-hook succSymbol(
+    s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _quo_ : Nat NzNat -> Nat
+    [prec 31 gather(E e)special(id-hook NumberOpSymbol(quo)op-hook succSymbol(
+    s_ : Nat ~> NzNat))] .
+  op _rem_ : Int NzInt -> Int
+    [prec 31 gather(E e)special(id-hook NumberOpSymbol(rem)op-hook succSymbol(
+    s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _rem_ : Nat NzNat -> Nat
+    [prec 31 gather(E e)special(id-hook NumberOpSymbol(rem)op-hook succSymbol(
+    s_ : Nat ~> NzNat))] .
+  op _xor_ : Bool Bool -> Bool
+    [assoc comm prec 57] .
+  op _xor_ : Int Int -> Int
+    [assoc comm prec 55 special(id-hook ACU_NumberOpSymbol(xor)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _xor_ : Nat Nat -> Nat
+    [assoc comm prec 55 special(id-hook ACU_NumberOpSymbol(xor)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _|_ : Int Int -> Int
+    [assoc comm prec 57 special(id-hook ACU_NumberOpSymbol(|)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _|_ : Nat Nat -> Nat
+    [assoc comm prec 57 special(id-hook ACU_NumberOpSymbol(|)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op _|_ : NzInt Int -> NzInt
+    [assoc comm prec 57 special(id-hook ACU_NumberOpSymbol(|)op-hook
+    succSymbol(s_ : Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op _|_ : NzNat Nat -> NzNat
+    [assoc comm prec 57 special(id-hook ACU_NumberOpSymbol(|)op-hook
+    succSymbol(s_ : Nat ~> NzNat))] .
+  op abs : Int -> Nat
+    [special(id-hook NumberOpSymbol(abs)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op abs : NzInt -> NzNat
+    [special(id-hook NumberOpSymbol(abs)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op changed : -> Status
+    [ctor] .
+  op et@in1 : -> PortInId
+    [ctor] .
+  op et@in2 : -> PortInId
+    [ctor] .
+  op et@out1 : -> PortOutId
+    [ctor] .
+  op et@out2 : -> PortOutId
+    [ctor] .
+  op false : -> Bool
+    [ctor special(id-hook SystemFalse)] .
+  op fork@release : -> PortInId
+    [ctor] .
+  op fork@request : -> PortInId
+    [ctor] .
+  op free`:_ : Bool -> Attribute
+    [gather(&)] .
+  op gcd : Int Int -> Nat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(gcd)op-hook succSymbol(s_ :
+    Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op gcd : Nat Nat -> Nat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(gcd)op-hook succSymbol(s_ :
+    Nat ~> NzNat))] .
+  op gcd : NzInt Int -> NzNat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(gcd)op-hook succSymbol(s_ :
+    Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op gcd : NzNat Nat -> NzNat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(gcd)op-hook succSymbol(s_ :
+    Nat ~> NzNat))] .
+  op get-lfork : -> PortOutId
+    [ctor] .
+  op get-lfork-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op get-rfork : -> PortOutId
+    [ctor] .
+  op get-rfork-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op get-table : -> PortOutId
+    [ctor] .
+  op get-table-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op ground : -> PortOutId
+    [ctor] .
+  op if_then_else_fi : Bool Universal Universal -> Universal
+    [poly(2 3 0)special(id-hook BranchSymbol term-hook 1(true)term-hook 2(
+    false))] .
+  op iset : Interaction Interaction -> Interaction
+    [assoc id:(none).Interaction] .
+  op lcm : Int Int -> Nat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(lcm)op-hook succSymbol(s_ :
+    Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op lcm : Nat Nat -> Nat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(lcm)op-hook succSymbol(s_ :
+    Nat ~> NzNat))] .
+  op lcm : NzInt NzInt -> NzNat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(lcm)op-hook succSymbol(s_ :
+    Nat ~> NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  op lcm : NzNat NzNat -> NzNat
+    [assoc comm special(id-hook ACU_NumberOpSymbol(lcm)op-hook succSymbol(s_ :
+    Nat ~> NzNat))] .
+  op lf@free`:_ : StateRequired -> Attribute
+    [gather(&)] .
+  op lf@in : -> PortInId
+    [ctor] .
+  op lf@out : -> PortOutId
+    [ctor] .
+  op locked : -> PortStatus
+    [ctor] .
+  op lt@in : -> PortInId
+    [ctor] .
+  op lt@out : -> PortOutId
+    [ctor] .
+  op lt@place-available`:_ : StateRequired -> Attribute
+    [gather(&)] .
+  op max-places`:_ : Int -> Attribute
+    [gather(&)] .
+  op modExp :[Nat][Nat][Nat]->[Nat]
+    [special(id-hook NumberOpSymbol(modExp)op-hook succSymbol(s_ : Nat ~>
+    NzNat))] .
+  op not_ : Bool -> Bool
+    [prec 53] .
+  op place-available`:_ : Bool -> Attribute
+    [gather(&)] .
+  op rel-lfork : -> PortOutId
+    [ctor] .
+  op rel-lfork-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op rel-rfork : -> PortOutId
+    [ctor] .
+  op rel-rfork-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op rel-table : -> PortOutId
+    [ctor] .
+  op rel-table-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op rf@free`:_ : StateRequired -> Attribute
+    [gather(&)] .
+  op rf@in : -> PortInId
+    [ctor] .
+  op rf@out : -> PortOutId
+    [ctor] .
+  op rt@in : -> PortInId
+    [ctor] .
+  op rt@out : -> PortOutId
+    [ctor] .
+  op rt@used-places`:_ : StateRequired -> Attribute
+    [gather(&)] .
+  op s_ : Nat -> NzNat
+    [ctor iter special(id-hook SuccSymbol term-hook zeroTerm(0))] .
+  op sd : Nat Nat -> Nat
+    [comm special(id-hook CUI_NumberOpSymbol(sd)op-hook succSymbol(s_ : Nat ~>
+    NzNat))] .
+  op st : Bool Status -> StateRequired
+    [ctor] .
+  op st : Int Status -> StateRequired
+    [ctor] .
+  op state`:_ : Int -> Attribute
+    [gather(&)] .
+  op status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op table@release : -> PortInId
+    [ctor] .
+  op table@request : -> PortInId
+    [ctor] .
+  op true : -> Bool
+    [ctor special(id-hook SystemTrue)] .
+  op unchanged : -> Status
+    [ctor] .
+  op unlocked : -> PortStatus
+    [ctor] .
+  op used-places`:_ : Int -> Attribute
+    [gather(&)] .
+  op ~_ : Int -> Int
+    [special(id-hook NumberOpSymbol(~)op-hook succSymbol(s_ : Nat ~>
+    NzNat)op-hook minusSymbol(-_ : NzNat ~> NzInt))] .
+  eq initial
+    = topology init(phi1)init(phi2)init(phi3)init(phi4) .
+  eq topology
+    = instantiate(et,EXCLUSIVE-COMM-TABLE)instantiate(fork1,FORK)instantiate(
+    fork2,FORK)instantiate(fork3,FORK)instantiate(fork4,FORK)instantiate(lfc1,
+    LEAVE-FORK)instantiate(lfc2,LEAVE-FORK)instantiate(lfc3,
+    LEAVE-FORK)instantiate(lfc4,LEAVE-FORK)instantiate(lt,
+    LEAVE-TABLE)instantiate(phi1,PHILOSOPHER)instantiate(phi2,
+    PHILOSOPHER)instantiate(phi3,PHILOSOPHER)instantiate(phi4,
+    PHILOSOPHER)instantiate(rfc1,REQUEST-FORK)instantiate(rfc2,
+    REQUEST-FORK)instantiate(rfc3,REQUEST-FORK)instantiate(rfc4,
+    REQUEST-FORK)instantiate(rt,REQUEST-TABLE)instantiate(table,TABLE)none .
+  eq < O:Oid : C:Cid | >
+    = < O:Oid : C:Cid | none > .
+  eq < lfc1 : V#0:LEAVE-FORK | lf@free : st(V1:Bool,changed),none,
+    V#1:AttributeSet > < fork1 : V#2:FORK | free : V2:Bool,none,
+    V#3:AttributeSet >
+    = < lfc1 : V#0:LEAVE-FORK | lf@free : st(V1:Bool,unchanged),
+    V#1:AttributeSet > < fork1 : V#2:FORK | free : V1:Bool,V#3:AttributeSet > .
+  eq < lfc2 : V#4:LEAVE-FORK | lf@free : st(V1:Bool,changed),none,
+    V#5:AttributeSet > < fork2 : V#6:FORK | free : V2:Bool,none,
+    V#7:AttributeSet >
+    = < lfc2 : V#4:LEAVE-FORK | lf@free : st(V1:Bool,unchanged),
+    V#5:AttributeSet > < fork2 : V#6:FORK | free : V1:Bool,V#7:AttributeSet > .
+  eq < lfc3 : V#8:LEAVE-FORK | lf@free : st(V1:Bool,changed),none,
+    V#9:AttributeSet > < fork3 : V#10:FORK | free : V2:Bool,none,
+    V#11:AttributeSet >
+    = < lfc3 : V#8:LEAVE-FORK | lf@free : st(V1:Bool,unchanged),
+    V#9:AttributeSet > < fork3 : V#10:FORK | free : V1:Bool,V#11:AttributeSet >
+    .
+  eq < lfc4 : V#12:LEAVE-FORK | lf@free : st(V1:Bool,changed),none,
+    V#13:AttributeSet > < fork4 : V#14:FORK | free : V2:Bool,none,
+    V#15:AttributeSet >
+    = < lfc4 : V#12:LEAVE-FORK | lf@free : st(V1:Bool,unchanged),
+    V#13:AttributeSet > < fork4 : V#14:FORK | free : V1:Bool,V#15:AttributeSet
+    > .
+  eq < lt : V#16:LEAVE-TABLE | lt@place-available : st(V1:Bool,changed),none,
+    V#17:AttributeSet > < rt : V#18:REQUEST-TABLE | rt@used-places :
+    V#20:StateRequired,max-places : V#19:Int,place-available : V2:Bool,none,
+    V#21:AttributeSet >
+    = < lt : V#16:LEAVE-TABLE | lt@place-available : st(V1:Bool,unchanged),
+    V#17:AttributeSet > < rt : V#18:REQUEST-TABLE | place-available : V1:Bool,
+    max-places : V#19:Int,rt@used-places : V#20:StateRequired,V#21:AttributeSet
+    > .
+  eq < rfc1 : V#22:REQUEST-FORK | rf@free : st(V1:Bool,changed),none,
+    V#23:AttributeSet > < fork1 : V#24:FORK | free : V2:Bool,none,
+    V#25:AttributeSet >
+    = < rfc1 : V#22:REQUEST-FORK | rf@free : st(V1:Bool,unchanged),
+    V#23:AttributeSet > < fork1 : V#24:FORK | free : V1:Bool,V#25:AttributeSet
+    > .
+  eq < rfc2 : V#26:REQUEST-FORK | rf@free : st(V1:Bool,changed),none,
+    V#27:AttributeSet > < fork2 : V#28:FORK | free : V2:Bool,none,
+    V#29:AttributeSet >
+    = < rfc2 : V#26:REQUEST-FORK | rf@free : st(V1:Bool,unchanged),
+    V#27:AttributeSet > < fork2 : V#28:FORK | free : V1:Bool,V#29:AttributeSet
+    > .
+  eq < rfc3 : V#30:REQUEST-FORK | rf@free : st(V1:Bool,changed),none,
+    V#31:AttributeSet > < fork3 : V#32:FORK | free : V2:Bool,none,
+    V#33:AttributeSet >
+    = < rfc3 : V#30:REQUEST-FORK | rf@free : st(V1:Bool,unchanged),
+    V#31:AttributeSet > < fork3 : V#32:FORK | free : V1:Bool,V#33:AttributeSet
+    > .
+  eq < rfc4 : V#34:REQUEST-FORK | rf@free : st(V1:Bool,changed),none,
+    V#35:AttributeSet > < fork4 : V#36:FORK | free : V2:Bool,none,
+    V#37:AttributeSet >
+    = < rfc4 : V#34:REQUEST-FORK | rf@free : st(V1:Bool,unchanged),
+    V#35:AttributeSet > < fork4 : V#36:FORK | free : V1:Bool,V#37:AttributeSet
+    > .
+  eq < rt : V#38:REQUEST-TABLE | place-available : V#40:Bool,max-places :
+    V#39:Int,rt@used-places : st(V1:Int,changed),none,V#41:AttributeSet > <
+    table : V#42:TABLE | used-places : V2:Int,none,V#43:AttributeSet >
+    = < rt : V#38:REQUEST-TABLE | rt@used-places : st(V1:Int,unchanged),
+    max-places : V#39:Int,place-available : V#40:Bool,V#41:AttributeSet > <
+    table : V#42:TABLE | used-places : V1:Int,V#43:AttributeSet > .
+  eq A:Bool and A:Bool
+    = A:Bool .
+  eq A:Bool and(B:Bool xor C:Bool)
+    = A:Bool and B:Bool xor A:Bool and C:Bool .
+  eq false and A:Bool
+    = false .
+  eq true and A:Bool
+    = A:Bool .
+  eq A:Bool implies B:Bool
+    = not(A:Bool xor A:Bool and B:Bool) .
+  eq A:Bool or B:Bool
+    = A:Bool and B:Bool xor A:Bool xor B:Bool .
+  eq A:Bool xor A:Bool
+    = false .
+  eq false xor A:Bool
+    = A:Bool .
+  eq ack(none)
+    = (none).Configuration .
+  eq class(< O:Oid : C:Cid | A:AttributeSet >)
+    = C:Cid .
+  eq get-free(< O:Oid : V#0:FORK | free : V:Bool,none,V#1:AttributeSet >)
+    = V:Bool .
+  eq get-lf@free(< O:Oid : V#0:LEAVE-FORK | lf@free : st(V:Bool,S:Status),none,
+    V#1:AttributeSet >)
+    = V:Bool .
+  eq get-lt@place-available(< O:Oid : V#0:LEAVE-TABLE | lt@place-available :
+    st(V:Bool,S:Status),none,V#1:AttributeSet >)
+    = V:Bool .
+  eq get-max-places(< O:Oid : V#0:REQUEST-TABLE | rt@used-places :
+    V#2:StateRequired,place-available : V#1:Bool,max-places : V:Int,none,
+    V#3:AttributeSet >)
+    = V:Int .
+  eq get-place-available(< O:Oid : V#4:REQUEST-TABLE | rt@used-places :
+    V#6:StateRequired,max-places : V#5:Int,place-available : V:Bool,none,
+    V#7:AttributeSet >)
+    = V:Bool .
+  eq get-rf@free(< O:Oid : V#0:REQUEST-FORK | rf@free : st(V:Bool,S:Status),
+    none,V#1:AttributeSet >)
+    = V:Bool .
+  eq get-rt@used-places(< O:Oid : V#8:REQUEST-TABLE | place-available :
+    V#10:Bool,max-places : V#9:Int,rt@used-places : st(V:Int,S:Status),none,
+    V#11:AttributeSet >)
+    = V:Int .
+  eq get-state(< O:Oid : V#0:PHILOSOPHER | rel-table-status : V#6:PortStatus,
+    rel-rfork-status : V#5:PortStatus,rel-lfork-status : V#4:PortStatus,
+    get-table-status : V#3:PortStatus,get-rfork-status : V#2:PortStatus,
+    get-lfork-status : V#1:PortStatus,state : V:Int,none,V#7:AttributeSet >)
+    = V:Int .
+  eq get-used-places(< O:Oid : V#0:TABLE | used-places : V:Int,none,
+    V#1:AttributeSet >)
+    = V:Int .
+  eq instantiate(O:Oid,EXCLUSIVE-COMM-TABLE)
+    = < O:Oid : EXCLUSIVE-COMM-TABLE | none,status : unlocked > .
+  eq instantiate(O:Oid,FORK)
+    = < O:Oid : FORK | none,free : true > .
+  eq instantiate(O:Oid,LEAVE-FORK)
+    = < O:Oid : LEAVE-FORK | none,lf@free : st(true,unchanged)> .
+  eq instantiate(O:Oid,LEAVE-TABLE)
+    = < O:Oid : LEAVE-TABLE | none,lt@place-available : st(true,unchanged)> .
+  eq instantiate(O:Oid,PHILOSOPHER)
+    = < O:Oid : PHILOSOPHER |((((((none,get-lfork-status : unlocked),
+    get-rfork-status : unlocked),get-table-status : unlocked),rel-lfork-status
+    : unlocked),rel-rfork-status : unlocked),rel-table-status : unlocked),state
+    : 0 > .
+  eq instantiate(O:Oid,REQUEST-FORK)
+    = < O:Oid : REQUEST-FORK | none,rf@free : st(true,unchanged)> .
+  eq instantiate(O:Oid,REQUEST-TABLE)
+    = < O:Oid : REQUEST-TABLE |((none,max-places : 3),place-available : true),
+    rt@used-places : st(0,unchanged)> .
+  eq instantiate(O:Oid,TABLE)
+    = < O:Oid : TABLE | none,used-places : 0 > .
+  eq not A:Bool
+    = true xor A:Bool .
+  eq send(O:Oid,ground,IT:Interaction)
+    = (none).Configuration .
+  eq set-free(< O:Oid : V#2:FORK | free : V:Bool,none,V#3:AttributeSet >,
+    V':Bool)
+    = < O:Oid : V#2:FORK | free : V':Bool,V#3:AttributeSet > .
+  eq set-lf@free(< O:Oid : V#2:LEAVE-FORK | lf@free : st(V:Bool,S:Status),none,
+    V#3:AttributeSet >,V':Bool)
+    = < O:Oid : V#2:LEAVE-FORK | lf@free : st(V':Bool,changed),V#3:AttributeSet
+    > .
+  eq set-lt@place-available(< O:Oid : V#2:LEAVE-TABLE | lt@place-available :
+    st(V:Bool,S:Status),none,V#3:AttributeSet >,V':Bool)
+    = < O:Oid : V#2:LEAVE-TABLE | lt@place-available : st(V':Bool,changed),
+    V#3:AttributeSet > .
+  eq set-max-places(< O:Oid : V#12:REQUEST-TABLE | rt@used-places :
+    V#14:StateRequired,place-available : V#13:Bool,max-places : V:Int,none,
+    V#15:AttributeSet >,V':Int)
+    = < O:Oid : V#12:REQUEST-TABLE | max-places : V':Int,place-available :
+    V#13:Bool,rt@used-places : V#14:StateRequired,V#15:AttributeSet > .
+  eq set-place-available(< O:Oid : V#16:REQUEST-TABLE | rt@used-places :
+    V#18:StateRequired,max-places : V#17:Int,place-available : V:Bool,none,
+    V#19:AttributeSet >,V':Bool)
+    = < O:Oid : V#16:REQUEST-TABLE | place-available : V':Bool,max-places :
+    V#17:Int,rt@used-places : V#18:StateRequired,V#19:AttributeSet > .
+  eq set-rf@free(< O:Oid : V#2:REQUEST-FORK | rf@free : st(V:Bool,S:Status),
+    none,V#3:AttributeSet >,V':Bool)
+    = < O:Oid : V#2:REQUEST-FORK | rf@free : st(V':Bool,changed),
+    V#3:AttributeSet > .
+  eq set-rt@used-places(< O:Oid : V#20:REQUEST-TABLE | place-available :
+    V#22:Bool,max-places : V#21:Int,rt@used-places : st(V:Int,S:Status),none,
+    V#23:AttributeSet >,V':Int)
+    = < O:Oid : V#20:REQUEST-TABLE | rt@used-places : st(V':Int,changed),
+    max-places : V#21:Int,place-available : V#22:Bool,V#23:AttributeSet > .
+  eq set-state(< O:Oid : V#8:PHILOSOPHER | rel-table-status : V#14:PortStatus,
+    rel-rfork-status : V#13:PortStatus,rel-lfork-status : V#12:PortStatus,
+    get-table-status : V#11:PortStatus,get-rfork-status : V#10:PortStatus,
+    get-lfork-status : V#9:PortStatus,state : V:Int,none,V#15:AttributeSet >,
+    V':Int)
+    = < O:Oid : V#8:PHILOSOPHER | state : V':Int,get-lfork-status :
+    V#9:PortStatus,get-rfork-status : V#10:PortStatus,get-table-status :
+    V#11:PortStatus,rel-lfork-status : V#12:PortStatus,rel-rfork-status :
+    V#13:PortStatus,rel-table-status : V#14:PortStatus,V#15:AttributeSet > .
+  eq set-used-places(< O:Oid : V#2:TABLE | used-places : V:Int,none,
+    V#3:AttributeSet >,V':Int)
+    = < O:Oid : V#2:TABLE | used-places : V':Int,V#3:AttributeSet > .
+  ceq < lfc1 : V#44:LEAVE-FORK | lf@free : st(V1:Bool,unchanged),none,
+    V#45:AttributeSet > < fork1 : V#46:FORK | free : V2:Bool,none,
+    V#47:AttributeSet >
+    = < lfc1 : V#44:LEAVE-FORK | lf@free : st(V2:Bool,unchanged),
+    V#45:AttributeSet > < fork1 : V#46:FORK | free : V2:Bool,V#47:AttributeSet
+    >
+    if V1:Bool =/= V2:Bool = true .
+  ceq < lfc2 : V#48:LEAVE-FORK | lf@free : st(V1:Bool,unchanged),none,
+    V#49:AttributeSet > < fork2 : V#50:FORK | free : V2:Bool,none,
+    V#51:AttributeSet >
+    = < lfc2 : V#48:LEAVE-FORK | lf@free : st(V2:Bool,unchanged),
+    V#49:AttributeSet > < fork2 : V#50:FORK | free : V2:Bool,V#51:AttributeSet
+    >
+    if V1:Bool =/= V2:Bool = true .
+  ceq < lfc3 : V#52:LEAVE-FORK | lf@free : st(V1:Bool,unchanged),none,
+    V#53:AttributeSet > < fork3 : V#54:FORK | free : V2:Bool,none,
+    V#55:AttributeSet >
+    = < lfc3 : V#52:LEAVE-FORK | lf@free : st(V2:Bool,unchanged),
+    V#53:AttributeSet > < fork3 : V#54:FORK | free : V2:Bool,V#55:AttributeSet
+    >
+    if V1:Bool =/= V2:Bool = true .
+  ceq < lfc4 : V#56:LEAVE-FORK | lf@free : st(V1:Bool,unchanged),none,
+    V#57:AttributeSet > < fork4 : V#58:FORK | free : V2:Bool,none,
+    V#59:AttributeSet >
+    = < lfc4 : V#56:LEAVE-FORK | lf@free : st(V2:Bool,unchanged),
+    V#57:AttributeSet > < fork4 : V#58:FORK | free : V2:Bool,V#59:AttributeSet
+    >
+    if V1:Bool =/= V2:Bool = true .
+  ceq < lt : V#60:LEAVE-TABLE | lt@place-available : st(V1:Bool,unchanged),
+    none,V#61:AttributeSet > < rt : V#62:REQUEST-TABLE | rt@used-places :
+    V#64:StateRequired,max-places : V#63:Int,place-available : V2:Bool,none,
+    V#65:AttributeSet >
+    = < lt : V#60:LEAVE-TABLE | lt@place-available : st(V2:Bool,unchanged),
+    V#61:AttributeSet > < rt : V#62:REQUEST-TABLE | place-available : V2:Bool,
+    max-places : V#63:Int,rt@used-places : V#64:StateRequired,V#65:AttributeSet
+    >
+    if V1:Bool =/= V2:Bool = true .
+  ceq < rfc1 : V#66:REQUEST-FORK | rf@free : st(V1:Bool,unchanged),none,
+    V#67:AttributeSet > < fork1 : V#68:FORK | free : V2:Bool,none,
+    V#69:AttributeSet >
+    = < rfc1 : V#66:REQUEST-FORK | rf@free : st(V2:Bool,unchanged),
+    V#67:AttributeSet > < fork1 : V#68:FORK | free : V2:Bool,V#69:AttributeSet
+    >
+    if V1:Bool =/= V2:Bool = true .
+  ceq < rfc2 : V#70:REQUEST-FORK | rf@free : st(V1:Bool,unchanged),none,
+    V#71:AttributeSet > < fork2 : V#72:FORK | free : V2:Bool,none,
+    V#73:AttributeSet >
+    = < rfc2 : V#70:REQUEST-FORK | rf@free : st(V2:Bool,unchanged),
+    V#71:AttributeSet > < fork2 : V#72:FORK | free : V2:Bool,V#73:AttributeSet
+    >
+    if V1:Bool =/= V2:Bool = true .
+  ceq < rfc3 : V#74:REQUEST-FORK | rf@free : st(V1:Bool,unchanged),none,
+    V#75:AttributeSet > < fork3 : V#76:FORK | free : V2:Bool,none,
+    V#77:AttributeSet >
+    = < rfc3 : V#74:REQUEST-FORK | rf@free : st(V2:Bool,unchanged),
+    V#75:AttributeSet > < fork3 : V#76:FORK | free : V2:Bool,V#77:AttributeSet
+    >
+    if V1:Bool =/= V2:Bool = true .
+  ceq < rfc4 : V#78:REQUEST-FORK | rf@free : st(V1:Bool,unchanged),none,
+    V#79:AttributeSet > < fork4 : V#80:FORK | free : V2:Bool,none,
+    V#81:AttributeSet >
+    = < rfc4 : V#78:REQUEST-FORK | rf@free : st(V2:Bool,unchanged),
+    V#79:AttributeSet > < fork4 : V#80:FORK | free : V2:Bool,V#81:AttributeSet
+    >
+    if V1:Bool =/= V2:Bool = true .
+  ceq < rt : V#82:REQUEST-TABLE | place-available : V#84:Bool,max-places :
+    V#83:Int,rt@used-places : st(V1:Int,unchanged),none,V#85:AttributeSet > <
+    table : V#86:TABLE | used-places : V2:Int,none,V#87:AttributeSet >
+    = < rt : V#82:REQUEST-TABLE | rt@used-places : st(V2:Int,unchanged),
+    max-places : V#83:Int,place-available : V#84:Bool,V#85:AttributeSet > <
+    table : V#86:TABLE | used-places : V2:Int,V#87:AttributeSet >
+    if V1:Int =/= V2:Int = true .
+  ceq after(OBJ:Object)
+    = OBJ:Object
+    if class(OBJ:Object)= REQUEST-FORK .
+  ceq after(OBJ:Object)
+    = if get-rt@used-places(OBJ:Object)== get-max-places(OBJ:Object)then
+    set-place-available(OBJ:Object,false)else OBJ:Object fi
+    if class(OBJ:Object)= REQUEST-TABLE .
+  ceq after(OBJ:Object)
+    = set-lf@free(OBJ:Object,true)
+    if class(OBJ:Object)= LEAVE-FORK .
+  ceq after(OBJ:Object)
+    = set-lt@place-available(OBJ:Object,true)
+    if class(OBJ:Object)= LEAVE-TABLE .
+  ceq before(OBJ:Object)
+    = OBJ:Object
+    if class(OBJ:Object)= LEAVE-FORK .
+  ceq before(OBJ:Object)
+    = OBJ:Object
+    if class(OBJ:Object)= LEAVE-TABLE .
+  ceq before(OBJ:Object)
+    = OBJ:Object
+    if class(OBJ:Object)= REQUEST-TABLE .
+  ceq before(OBJ:Object)
+    = set-rf@free(OBJ:Object,false)
+    if class(OBJ:Object)= REQUEST-FORK .
+  ceq open?(OBJ:Object)
+    = true
+    if class(OBJ:Object)= LEAVE-FORK .
+  ceq open?(OBJ:Object)
+    = true
+    if class(OBJ:Object)= LEAVE-TABLE .
+  ceq open?(OBJ:Object)
+    = get-place-available(OBJ:Object)
+    if class(OBJ:Object)= REQUEST-TABLE .
+  ceq open?(OBJ:Object)
+    = get-rf@free(OBJ:Object)
+    if class(OBJ:Object)= REQUEST-FORK .
+  eq send(et,et@out1,IT:Interaction)
+    = send(table,table@request,IT:Interaction) [label
+    et@out1-linking-table@request] .
+  eq send(et,et@out2,IT:Interaction)
+    = send(table,table@release,IT:Interaction) [label
+    et@out2-linking-table@release] .
+  eq send(lfc1,lf@out,IT:Interaction)
+    = send(fork1,fork@release,IT:Interaction) [label
+    lf@out-linking-fork@release] .
+  eq send(lfc2,lf@out,IT:Interaction)
+    = send(fork2,fork@release,IT:Interaction) [label
+    lf@out-linking-fork@release] .
+  eq send(lfc3,lf@out,IT:Interaction)
+    = send(fork3,fork@release,IT:Interaction) [label
+    lf@out-linking-fork@release] .
+  eq send(lfc4,lf@out,IT:Interaction)
+    = send(fork4,fork@release,IT:Interaction) [label
+    lf@out-linking-fork@release] .
+  eq send(phi1,get-lfork,IT:Interaction)
+    = send(rfc1,rf@in,IT:Interaction) [label get-lfork-linking-rf@in] .
+  eq send(phi1,get-rfork,IT:Interaction)
+    = send(rfc4,rf@in,IT:Interaction) [label get-rfork-linking-rf@in] .
+  eq send(phi1,get-table,IT:Interaction)
+    = send(et,et@in1,IT:Interaction) [label get-table-linking-et@in1] .
+  eq send(phi1,rel-lfork,IT:Interaction)
+    = send(lfc1,lf@in,IT:Interaction) [label rel-lfork-linking-lf@in] .
+  eq send(phi1,rel-rfork,IT:Interaction)
+    = send(lfc4,lf@in,IT:Interaction) [label rel-rfork-linking-lf@in] .
+  eq send(phi1,rel-table,IT:Interaction)
+    = send(et,et@in2,IT:Interaction) [label rel-table-linking-et@in2] .
+  eq send(phi2,get-lfork,IT:Interaction)
+    = send(rfc2,rf@in,IT:Interaction) [label get-lfork-linking-rf@in] .
+  eq send(phi2,get-rfork,IT:Interaction)
+    = send(rfc1,rf@in,IT:Interaction) [label get-rfork-linking-rf@in] .
+  eq send(phi2,get-table,IT:Interaction)
+    = send(et,et@in1,IT:Interaction) [label get-table-linking-et@in1] .
+  eq send(phi2,rel-lfork,IT:Interaction)
+    = send(lfc2,lf@in,IT:Interaction) [label rel-lfork-linking-lf@in] .
+  eq send(phi2,rel-rfork,IT:Interaction)
+    = send(lfc1,lf@in,IT:Interaction) [label rel-rfork-linking-lf@in] .
+  eq send(phi2,rel-table,IT:Interaction)
+    = send(et,et@in2,IT:Interaction) [label rel-table-linking-et@in2] .
+  eq send(phi3,get-lfork,IT:Interaction)
+    = send(rfc3,rf@in,IT:Interaction) [label get-lfork-linking-rf@in] .
+  eq send(phi3,get-rfork,IT:Interaction)
+    = send(rfc2,rf@in,IT:Interaction) [label get-rfork-linking-rf@in] .
+  eq send(phi3,get-table,IT:Interaction)
+    = send(et,et@in1,IT:Interaction) [label get-table-linking-et@in1] .
+  eq send(phi3,rel-lfork,IT:Interaction)
+    = send(lfc3,lf@in,IT:Interaction) [label rel-lfork-linking-lf@in] .
+  eq send(phi3,rel-rfork,IT:Interaction)
+    = send(lfc2,lf@in,IT:Interaction) [label rel-rfork-linking-lf@in] .
+  eq send(phi3,rel-table,IT:Interaction)
+    = send(et,et@in2,IT:Interaction) [label rel-table-linking-et@in2] .
+  eq send(phi4,get-lfork,IT:Interaction)
+    = send(rfc4,rf@in,IT:Interaction) [label get-lfork-linking-rf@in] .
+  eq send(phi4,get-rfork,IT:Interaction)
+    = send(rfc3,rf@in,IT:Interaction) [label get-rfork-linking-rf@in] .
+  eq send(phi4,get-table,IT:Interaction)
+    = send(et,et@in1,IT:Interaction) [label get-table-linking-et@in1] .
+  eq send(phi4,rel-lfork,IT:Interaction)
+    = send(lfc4,lf@in,IT:Interaction) [label rel-lfork-linking-lf@in] .
+  eq send(phi4,rel-rfork,IT:Interaction)
+    = send(lfc3,lf@in,IT:Interaction) [label rel-rfork-linking-lf@in] .
+  eq send(phi4,rel-table,IT:Interaction)
+    = send(et,et@in2,IT:Interaction) [label rel-table-linking-et@in2] .
+  eq send(rfc1,rf@out,IT:Interaction)
+    = send(fork1,fork@request,IT:Interaction) [label
+    rf@out-linking-fork@request] .
+  eq send(rfc2,rf@out,IT:Interaction)
+    = send(fork2,fork@request,IT:Interaction) [label
+    rf@out-linking-fork@request] .
+  eq send(rfc3,rf@out,IT:Interaction)
+    = send(fork3,fork@request,IT:Interaction) [label
+    rf@out-linking-fork@request] .
+  eq send(rfc4,rf@out,IT:Interaction)
+    = send(fork4,fork@request,IT:Interaction) [label
+    rf@out-linking-fork@request] .
+  rl < O:Oid : V#0:PHILOSOPHER | rel-table-status : V#6:PortStatus,
+    rel-rfork-status : V#5:PortStatus,rel-lfork-status : V#4:PortStatus,
+    get-table-status : V#3:PortStatus,get-rfork-status : V#2:PortStatus,
+    get-lfork-status : V#1:PortStatus,state : 1,none,V#7:AttributeSet >
+    => < O:Oid : V#0:PHILOSOPHER | state : 2,get-lfork-status : V#1:PortStatus,
+    get-rfork-status : V#2:PortStatus,get-table-status : V#3:PortStatus,
+    rel-lfork-status : V#4:PortStatus,rel-rfork-status : V#5:PortStatus,
+    rel-table-status : V#6:PortStatus,V#7:AttributeSet > do(O:Oid,get-table,
+    none) .
+  rl < O:Oid : V#10:TABLE | used-places : N:Int,none,V#11:AttributeSet > do(
+    O:Oid,table@request,IT:Interaction)
+    => < O:Oid : V#10:TABLE | used-places :(N:Int + 1),V#11:AttributeSet >
+    done(O:Oid,table@request,IT:Interaction) .
+  rl < O:Oid : V#12:FORK | free : V#13:Bool,none,V#14:AttributeSet > do(O:Oid,
+    fork@release,IT:Interaction)
+    => < O:Oid : V#12:FORK | free : V#13:Bool,V#14:AttributeSet > done(O:Oid,
+    fork@release,IT:Interaction) .
+  rl < O:Oid : V#15:FORK | free : V#16:Bool,none,V#17:AttributeSet > do(O:Oid,
+    fork@request,IT:Interaction)
+    => < O:Oid : V#15:FORK | free : V#16:Bool,V#17:AttributeSet > done(O:Oid,
+    fork@request,IT:Interaction) .
+  rl < O:Oid : V#8:TABLE | used-places : N:Int,none,V#9:AttributeSet > do(
+    O:Oid,table@release,IT:Interaction)
+    => < O:Oid : V#8:TABLE | used-places :(N:Int - 1),V#9:AttributeSet > done(
+    O:Oid,table@release,IT:Interaction) .
+  rl done(O:Oid,get-lfork,IT1:Interaction)done(O:Oid,get-rfork,
+    IT2:Interaction)< O:Oid : V#18:PHILOSOPHER | rel-table-status :
+    V#24:PortStatus,rel-rfork-status : V#23:PortStatus,rel-lfork-status :
+    V#22:PortStatus,get-table-status : V#21:PortStatus,get-rfork-status :
+    V#20:PortStatus,get-lfork-status : V#19:PortStatus,state : 3,none,
+    V#25:AttributeSet >
+    => < O:Oid : V#18:PHILOSOPHER | state : 4,get-lfork-status :
+    V#19:PortStatus,get-rfork-status : V#20:PortStatus,get-table-status :
+    V#21:PortStatus,rel-lfork-status : V#22:PortStatus,rel-rfork-status :
+    V#23:PortStatus,rel-table-status : V#24:PortStatus,V#25:AttributeSet > do(
+    O:Oid,rel-lfork,none)do(O:Oid,rel-rfork,none) .
+  rl done(O:Oid,get-table,IT1:Interaction)< O:Oid : V#26:PHILOSOPHER |
+    rel-table-status : V#32:PortStatus,rel-rfork-status : V#31:PortStatus,
+    rel-lfork-status : V#30:PortStatus,get-table-status : V#29:PortStatus,
+    get-rfork-status : V#28:PortStatus,get-lfork-status : V#27:PortStatus,state
+    : 2,none,V#33:AttributeSet >
+    => < O:Oid : V#26:PHILOSOPHER | state : 3,get-lfork-status :
+    V#27:PortStatus,get-rfork-status : V#28:PortStatus,get-table-status :
+    V#29:PortStatus,rel-lfork-status : V#30:PortStatus,rel-rfork-status :
+    V#31:PortStatus,rel-table-status : V#32:PortStatus,V#33:AttributeSet > do(
+    O:Oid,get-lfork,none)do(O:Oid,get-rfork,none) .
+  rl done(O:Oid,rel-lfork,IT1:Interaction)done(O:Oid,rel-rfork,
+    IT2:Interaction)< O:Oid : V#34:PHILOSOPHER | rel-table-status :
+    V#40:PortStatus,rel-rfork-status : V#39:PortStatus,rel-lfork-status :
+    V#38:PortStatus,get-table-status : V#37:PortStatus,get-rfork-status :
+    V#36:PortStatus,get-lfork-status : V#35:PortStatus,state : 4,none,
+    V#41:AttributeSet >
+    => < O:Oid : V#34:PHILOSOPHER | state : 5,get-lfork-status :
+    V#35:PortStatus,get-rfork-status : V#36:PortStatus,get-table-status :
+    V#37:PortStatus,rel-lfork-status : V#38:PortStatus,rel-rfork-status :
+    V#39:PortStatus,rel-table-status : V#40:PortStatus,V#41:AttributeSet > do(
+    O:Oid,rel-table,none) .
+  rl done(O:Oid,rel-table,IT:Interaction)< O:Oid : V#42:PHILOSOPHER |
+    rel-table-status : V#48:PortStatus,rel-rfork-status : V#47:PortStatus,
+    rel-lfork-status : V#46:PortStatus,get-table-status : V#45:PortStatus,
+    get-rfork-status : V#44:PortStatus,get-lfork-status : V#43:PortStatus,state
+    : 5,none,V#49:AttributeSet >
+    => < O:Oid : V#42:PHILOSOPHER | state : 0,get-lfork-status :
+    V#43:PortStatus,get-rfork-status : V#44:PortStatus,get-table-status :
+    V#45:PortStatus,rel-lfork-status : V#46:PortStatus,rel-rfork-status :
+    V#47:PortStatus,rel-table-status : V#48:PortStatus,V#49:AttributeSet > .
+  rl init(O:Oid)< O:Oid : V#50:PHILOSOPHER | rel-table-status :
+    V#56:PortStatus,rel-rfork-status : V#55:PortStatus,rel-lfork-status :
+    V#54:PortStatus,get-table-status : V#53:PortStatus,get-rfork-status :
+    V#52:PortStatus,get-lfork-status : V#51:PortStatus,state : 0,none,
+    V#57:AttributeSet >
+    => < O:Oid : V#50:PHILOSOPHER | state : 1,get-lfork-status :
+    V#51:PortStatus,get-rfork-status : V#52:PortStatus,get-table-status :
+    V#53:PortStatus,rel-lfork-status : V#54:PortStatus,rel-rfork-status :
+    V#55:PortStatus,rel-table-status : V#56:PortStatus,V#57:AttributeSet > .
+  rl < O:Oid : V#0:EXCLUSIVE-COMM-TABLE | status : locked,none,V#1:AttributeSet
+    > ack([O:Oid,et@out1]:: IT:Interaction)
+    => < O:Oid : V#0:EXCLUSIVE-COMM-TABLE | status : unlocked,V#1:AttributeSet
+    > ack(IT:Interaction) [label EXCLUSIVE-COMM-TABLE-acking-et@out1] .
+  rl < O:Oid : V#10:FORK | free : V#11:Bool,none,V#12:AttributeSet > send(
+    O:Oid,fork@release,IT:Interaction)
+    => < O:Oid : V#10:FORK | free : V#11:Bool,V#12:AttributeSet > do(O:Oid,
+    fork@release,IT:Interaction) [label FORK-recevingAndDo-fork@release] .
+  rl < O:Oid : V#10:TABLE | used-places : V#11:Int,none,V#12:AttributeSet >
+    send(O:Oid,table@release,IT:Interaction)
+    => < O:Oid : V#10:TABLE | used-places : V#11:Int,V#12:AttributeSet > do(
+    O:Oid,table@release,IT:Interaction) [label
+    TABLE-recevingAndDo-table@release] .
+  rl < O:Oid : V#13:FORK | free : V#14:Bool,none,V#15:AttributeSet > send(
+    O:Oid,fork@request,IT:Interaction)
+    => < O:Oid : V#13:FORK | free : V#14:Bool,V#15:AttributeSet > do(O:Oid,
+    fork@request,IT:Interaction) [label FORK-recevingAndDo-fork@request] .
+  rl < O:Oid : V#13:TABLE | used-places : V#14:Int,none,V#15:AttributeSet >
+    send(O:Oid,table@request,IT:Interaction)
+    => < O:Oid : V#13:TABLE | used-places : V#14:Int,V#15:AttributeSet > do(
+    O:Oid,table@request,IT:Interaction) [label
+    TABLE-recevingAndDo-table@request] .
+  rl < O:Oid : V#24:REQUEST-TABLE | rt@used-places : V#27:StateRequired,
+    place-available : V#26:Bool,max-places : V#25:Int,none,V#28:AttributeSet >
+    ack([O:Oid,rt@out]:: IT:Interaction)
+    => after(< O:Oid : V#24:REQUEST-TABLE | max-places : V#25:Int,
+    place-available : V#26:Bool,rt@used-places : V#27:StateRequired,
+    V#28:AttributeSet >)ack(IT:Interaction) [label REQUEST-TABLE-acking-rt@out]
+    .
+  rl < O:Oid : V#2:EXCLUSIVE-COMM-TABLE | status : locked,none,V#3:AttributeSet
+    > ack([O:Oid,et@out2]:: IT:Interaction)
+    => < O:Oid : V#2:EXCLUSIVE-COMM-TABLE | status : unlocked,V#3:AttributeSet
+    > ack(IT:Interaction) [label EXCLUSIVE-COMM-TABLE-acking-et@out2] .
+  rl < O:Oid : V#4:EXCLUSIVE-COMM-TABLE | status : unlocked,none,
+    V#5:AttributeSet > send(O:Oid,et@in1,IT:Interaction)
+    => < O:Oid : V#4:EXCLUSIVE-COMM-TABLE | status : locked,V#5:AttributeSet >
+    send(O:Oid,et@out1,[O:Oid,et@out1]:: IT:Interaction) [label
+    EXCLUSIVE-COMM-TABLE-sending-et@in1] .
+  rl < O:Oid : V#4:FORK | free : V#5:Bool,none,V#6:AttributeSet > done(O:Oid,
+    fork@release,IT:Interaction)
+    => < O:Oid : V#4:FORK | free : V#5:Bool,V#6:AttributeSet > ack(
+    IT:Interaction) [label FORK-doneAndAcking-fork@release] .
+  rl < O:Oid : V#4:LEAVE-FORK | lf@free : V#5:StateRequired,none,
+    V#6:AttributeSet > ack([O:Oid,lf@out]:: IT:Interaction)
+    => after(< O:Oid : V#4:LEAVE-FORK | lf@free : V#5:StateRequired,
+    V#6:AttributeSet >)ack(IT:Interaction) [label LEAVE-FORK-acking-lf@out] .
+  rl < O:Oid : V#4:LEAVE-TABLE | lt@place-available : V#5:StateRequired,none,
+    V#6:AttributeSet > ack([O:Oid,lt@out]:: IT:Interaction)
+    => after(< O:Oid : V#4:LEAVE-TABLE | lt@place-available :
+    V#5:StateRequired,V#6:AttributeSet >)ack(IT:Interaction) [label
+    LEAVE-TABLE-acking-lt@out] .
+  rl < O:Oid : V#4:REQUEST-FORK | rf@free : V#5:StateRequired,none,
+    V#6:AttributeSet > ack([O:Oid,rf@out]:: IT:Interaction)
+    => after(< O:Oid : V#4:REQUEST-FORK | rf@free : V#5:StateRequired,
+    V#6:AttributeSet >)ack(IT:Interaction) [label REQUEST-FORK-acking-rf@out] .
+  rl < O:Oid : V#4:TABLE | used-places : V#5:Int,none,V#6:AttributeSet > done(
+    O:Oid,table@release,IT:Interaction)
+    => < O:Oid : V#4:TABLE | used-places : V#5:Int,V#6:AttributeSet > ack(
+    IT:Interaction) [label TABLE-doneAndAcking-table@release] .
+  rl < O:Oid : V#6:EXCLUSIVE-COMM-TABLE | status : unlocked,none,
+    V#7:AttributeSet > send(O:Oid,et@in2,IT:Interaction)
+    => < O:Oid : V#6:EXCLUSIVE-COMM-TABLE | status : locked,V#7:AttributeSet >
+    send(O:Oid,et@out2,[O:Oid,et@out2]:: IT:Interaction) [label
+    EXCLUSIVE-COMM-TABLE-sending-et@in2] .
+  rl < O:Oid : V#7:FORK | free : V#8:Bool,none,V#9:AttributeSet > done(O:Oid,
+    fork@request,IT:Interaction)
+    => < O:Oid : V#7:FORK | free : V#8:Bool,V#9:AttributeSet > ack(
+    IT:Interaction) [label FORK-doneAndAcking-fork@request] .
+  rl < O:Oid : V#7:TABLE | used-places : V#8:Int,none,V#9:AttributeSet > done(
+    O:Oid,table@request,IT:Interaction)
+    => < O:Oid : V#7:TABLE | used-places : V#8:Int,V#9:AttributeSet > ack(
+    IT:Interaction) [label TABLE-doneAndAcking-table@request] .
+  rl ack([O:Oid,get-lfork])< O:Oid : V#16:PHILOSOPHER | state : V#22:Int,
+    rel-table-status : V#21:PortStatus,rel-rfork-status : V#20:PortStatus,
+    rel-lfork-status : V#19:PortStatus,get-table-status : V#18:PortStatus,
+    get-rfork-status : V#17:PortStatus,get-lfork-status : locked,none,
+    V#23:AttributeSet >
+    => done(O:Oid,get-lfork,none)< O:Oid : V#16:PHILOSOPHER | get-lfork-status
+    : unlocked,get-rfork-status : V#17:PortStatus,get-table-status :
+    V#18:PortStatus,rel-lfork-status : V#19:PortStatus,rel-rfork-status :
+    V#20:PortStatus,rel-table-status : V#21:PortStatus,state : V#22:Int,
+    V#23:AttributeSet > [label PHILOSOPHER-receivingAck-get-lfork] .
+  rl ack([O:Oid,get-rfork])< O:Oid : V#24:PHILOSOPHER | state : V#30:Int,
+    rel-table-status : V#29:PortStatus,rel-rfork-status : V#28:PortStatus,
+    rel-lfork-status : V#27:PortStatus,get-table-status : V#26:PortStatus,
+    get-lfork-status : V#25:PortStatus,get-rfork-status : locked,none,
+    V#31:AttributeSet >
+    => done(O:Oid,get-rfork,none)< O:Oid : V#24:PHILOSOPHER | get-rfork-status
+    : unlocked,get-lfork-status : V#25:PortStatus,get-table-status :
+    V#26:PortStatus,rel-lfork-status : V#27:PortStatus,rel-rfork-status :
+    V#28:PortStatus,rel-table-status : V#29:PortStatus,state : V#30:Int,
+    V#31:AttributeSet > [label PHILOSOPHER-receivingAck-get-rfork] .
+  rl ack([O:Oid,get-table])< O:Oid : V#32:PHILOSOPHER | state : V#38:Int,
+    rel-table-status : V#37:PortStatus,rel-rfork-status : V#36:PortStatus,
+    rel-lfork-status : V#35:PortStatus,get-rfork-status : V#34:PortStatus,
+    get-lfork-status : V#33:PortStatus,get-table-status : locked,none,
+    V#39:AttributeSet >
+    => done(O:Oid,get-table,none)< O:Oid : V#32:PHILOSOPHER | get-table-status
+    : unlocked,get-lfork-status : V#33:PortStatus,get-rfork-status :
+    V#34:PortStatus,rel-lfork-status : V#35:PortStatus,rel-rfork-status :
+    V#36:PortStatus,rel-table-status : V#37:PortStatus,state : V#38:Int,
+    V#39:AttributeSet > [label PHILOSOPHER-receivingAck-get-table] .
+  rl ack([O:Oid,rel-lfork])< O:Oid : V#40:PHILOSOPHER | state : V#46:Int,
+    rel-table-status : V#45:PortStatus,rel-rfork-status : V#44:PortStatus,
+    get-table-status : V#43:PortStatus,get-rfork-status : V#42:PortStatus,
+    get-lfork-status : V#41:PortStatus,rel-lfork-status : locked,none,
+    V#47:AttributeSet >
+    => done(O:Oid,rel-lfork,none)< O:Oid : V#40:PHILOSOPHER | rel-lfork-status
+    : unlocked,get-lfork-status : V#41:PortStatus,get-rfork-status :
+    V#42:PortStatus,get-table-status : V#43:PortStatus,rel-rfork-status :
+    V#44:PortStatus,rel-table-status : V#45:PortStatus,state : V#46:Int,
+    V#47:AttributeSet > [label PHILOSOPHER-receivingAck-rel-lfork] .
+  rl ack([O:Oid,rel-rfork])< O:Oid : V#48:PHILOSOPHER | state : V#54:Int,
+    rel-table-status : V#53:PortStatus,rel-lfork-status : V#52:PortStatus,
+    get-table-status : V#51:PortStatus,get-rfork-status : V#50:PortStatus,
+    get-lfork-status : V#49:PortStatus,rel-rfork-status : locked,none,
+    V#55:AttributeSet >
+    => done(O:Oid,rel-rfork,none)< O:Oid : V#48:PHILOSOPHER | rel-rfork-status
+    : unlocked,get-lfork-status : V#49:PortStatus,get-rfork-status :
+    V#50:PortStatus,get-table-status : V#51:PortStatus,rel-lfork-status :
+    V#52:PortStatus,rel-table-status : V#53:PortStatus,state : V#54:Int,
+    V#55:AttributeSet > [label PHILOSOPHER-receivingAck-rel-rfork] .
+  rl ack([O:Oid,rel-table])< O:Oid : V#56:PHILOSOPHER | state : V#62:Int,
+    rel-rfork-status : V#61:PortStatus,rel-lfork-status : V#60:PortStatus,
+    get-table-status : V#59:PortStatus,get-rfork-status : V#58:PortStatus,
+    get-lfork-status : V#57:PortStatus,rel-table-status : locked,none,
+    V#63:AttributeSet >
+    => done(O:Oid,rel-table,none)< O:Oid : V#56:PHILOSOPHER | rel-table-status
+    : unlocked,get-lfork-status : V#57:PortStatus,get-rfork-status :
+    V#58:PortStatus,get-table-status : V#59:PortStatus,rel-lfork-status :
+    V#60:PortStatus,rel-rfork-status : V#61:PortStatus,state : V#62:Int,
+    V#63:AttributeSet > [label PHILOSOPHER-receivingAck-rel-table] .
+  rl do(O:Oid,get-lfork,none)< O:Oid : V#64:PHILOSOPHER | state : V#70:Int,
+    rel-table-status : V#69:PortStatus,rel-rfork-status : V#68:PortStatus,
+    rel-lfork-status : V#67:PortStatus,get-table-status : V#66:PortStatus,
+    get-rfork-status : V#65:PortStatus,get-lfork-status : unlocked,none,
+    V#71:AttributeSet >
+    => send(O:Oid,get-lfork,[O:Oid,get-lfork])< O:Oid : V#64:PHILOSOPHER |
+    get-lfork-status : locked,get-rfork-status : V#65:PortStatus,
+    get-table-status : V#66:PortStatus,rel-lfork-status : V#67:PortStatus,
+    rel-rfork-status : V#68:PortStatus,rel-table-status : V#69:PortStatus,state
+    : V#70:Int,V#71:AttributeSet > [label PHILOSOPHER-sending-get-lfork] .
+  rl do(O:Oid,get-rfork,none)< O:Oid : V#72:PHILOSOPHER | state : V#78:Int,
+    rel-table-status : V#77:PortStatus,rel-rfork-status : V#76:PortStatus,
+    rel-lfork-status : V#75:PortStatus,get-table-status : V#74:PortStatus,
+    get-lfork-status : V#73:PortStatus,get-rfork-status : unlocked,none,
+    V#79:AttributeSet >
+    => send(O:Oid,get-rfork,[O:Oid,get-rfork])< O:Oid : V#72:PHILOSOPHER |
+    get-rfork-status : locked,get-lfork-status : V#73:PortStatus,
+    get-table-status : V#74:PortStatus,rel-lfork-status : V#75:PortStatus,
+    rel-rfork-status : V#76:PortStatus,rel-table-status : V#77:PortStatus,state
+    : V#78:Int,V#79:AttributeSet > [label PHILOSOPHER-sending-get-rfork] .
+  rl do(O:Oid,get-table,none)< O:Oid : V#80:PHILOSOPHER | state : V#86:Int,
+    rel-table-status : V#85:PortStatus,rel-rfork-status : V#84:PortStatus,
+    rel-lfork-status : V#83:PortStatus,get-rfork-status : V#82:PortStatus,
+    get-lfork-status : V#81:PortStatus,get-table-status : unlocked,none,
+    V#87:AttributeSet >
+    => send(O:Oid,get-table,[O:Oid,get-table])< O:Oid : V#80:PHILOSOPHER |
+    get-table-status : locked,get-lfork-status : V#81:PortStatus,
+    get-rfork-status : V#82:PortStatus,rel-lfork-status : V#83:PortStatus,
+    rel-rfork-status : V#84:PortStatus,rel-table-status : V#85:PortStatus,state
+    : V#86:Int,V#87:AttributeSet > [label PHILOSOPHER-sending-get-table] .
+  rl do(O:Oid,rel-lfork,none)< O:Oid : V#88:PHILOSOPHER | state : V#94:Int,
+    rel-table-status : V#93:PortStatus,rel-rfork-status : V#92:PortStatus,
+    get-table-status : V#91:PortStatus,get-rfork-status : V#90:PortStatus,
+    get-lfork-status : V#89:PortStatus,rel-lfork-status : unlocked,none,
+    V#95:AttributeSet >
+    => send(O:Oid,rel-lfork,[O:Oid,rel-lfork])< O:Oid : V#88:PHILOSOPHER |
+    rel-lfork-status : locked,get-lfork-status : V#89:PortStatus,
+    get-rfork-status : V#90:PortStatus,get-table-status : V#91:PortStatus,
+    rel-rfork-status : V#92:PortStatus,rel-table-status : V#93:PortStatus,state
+    : V#94:Int,V#95:AttributeSet > [label PHILOSOPHER-sending-rel-lfork] .
+  rl do(O:Oid,rel-rfork,none)< O:Oid : V#96:PHILOSOPHER | state : V#102:Int,
+    rel-table-status : V#101:PortStatus,rel-lfork-status : V#100:PortStatus,
+    get-table-status : V#99:PortStatus,get-rfork-status : V#98:PortStatus,
+    get-lfork-status : V#97:PortStatus,rel-rfork-status : unlocked,none,
+    V#103:AttributeSet >
+    => send(O:Oid,rel-rfork,[O:Oid,rel-rfork])< O:Oid : V#96:PHILOSOPHER |
+    rel-rfork-status : locked,get-lfork-status : V#97:PortStatus,
+    get-rfork-status : V#98:PortStatus,get-table-status : V#99:PortStatus,
+    rel-lfork-status : V#100:PortStatus,rel-table-status : V#101:PortStatus,
+    state : V#102:Int,V#103:AttributeSet > [label
+    PHILOSOPHER-sending-rel-rfork] .
+  rl do(O:Oid,rel-table,none)< O:Oid : V#104:PHILOSOPHER | state : V#110:Int,
+    rel-rfork-status : V#109:PortStatus,rel-lfork-status : V#108:PortStatus,
+    get-table-status : V#107:PortStatus,get-rfork-status : V#106:PortStatus,
+    get-lfork-status : V#105:PortStatus,rel-table-status : unlocked,none,
+    V#111:AttributeSet >
+    => send(O:Oid,rel-table,[O:Oid,rel-table])< O:Oid : V#104:PHILOSOPHER |
+    rel-table-status : locked,get-lfork-status : V#105:PortStatus,
+    get-rfork-status : V#106:PortStatus,get-table-status : V#107:PortStatus,
+    rel-lfork-status : V#108:PortStatus,rel-rfork-status : V#109:PortStatus,
+    state : V#110:Int,V#111:AttributeSet > [label
+    PHILOSOPHER-sending-rel-table] .
+  crl < O:Oid : V#29:REQUEST-TABLE | rt@used-places : V#32:StateRequired,
+    place-available : V#31:Bool,max-places : V#30:Int,none,V#33:AttributeSet >
+    send(O:Oid,rt@in,IT:Interaction)
+    => before(< O:Oid : V#29:REQUEST-TABLE | max-places : V#30:Int,
+    place-available : V#31:Bool,rt@used-places : V#32:StateRequired,
+    V#33:AttributeSet >)send(O:Oid,rt@out,[O:Oid,rt@out]:: IT:Interaction)
+    if open?(< O:Oid : V#29:REQUEST-TABLE | max-places : V#30:Int,
+    place-available : V#31:Bool,rt@used-places : V#32:StateRequired,
+    V#33:AttributeSet >)= true [label REQUEST-TABLE-sending-rt@in] .
+  crl < O:Oid : V#7:LEAVE-FORK | lf@free : V#8:StateRequired,none,
+    V#9:AttributeSet > send(O:Oid,lf@in,IT:Interaction)
+    => before(< O:Oid : V#7:LEAVE-FORK | lf@free : V#8:StateRequired,
+    V#9:AttributeSet >)send(O:Oid,lf@out,[O:Oid,lf@out]:: IT:Interaction)
+    if open?(< O:Oid : V#7:LEAVE-FORK | lf@free : V#8:StateRequired,
+    V#9:AttributeSet >)= true [label LEAVE-FORK-sending-lf@in] .
+  crl < O:Oid : V#7:LEAVE-TABLE | lt@place-available : V#8:StateRequired,none,
+    V#9:AttributeSet > send(O:Oid,lt@in,IT:Interaction)
+    => before(< O:Oid : V#7:LEAVE-TABLE | lt@place-available :
+    V#8:StateRequired,V#9:AttributeSet >)send(O:Oid,lt@out,[O:Oid,lt@out]::
+    IT:Interaction)
+    if open?(< O:Oid : V#7:LEAVE-TABLE | lt@place-available :
+    V#8:StateRequired,V#9:AttributeSet >)= true [label
+    LEAVE-TABLE-sending-lt@in] .
+  crl < O:Oid : V#7:REQUEST-FORK | rf@free : V#8:StateRequired,none,
+    V#9:AttributeSet > send(O:Oid,rf@in,IT:Interaction)
+    => before(< O:Oid : V#7:REQUEST-FORK | rf@free : V#8:StateRequired,
+    V#9:AttributeSet >)send(O:Oid,rf@out,[O:Oid,rf@out]:: IT:Interaction)
+    if open?(< O:Oid : V#7:REQUEST-FORK | rf@free : V#8:StateRequired,
+    V#9:AttributeSet >)= true [label REQUEST-FORK-sending-rf@in] .
+endm

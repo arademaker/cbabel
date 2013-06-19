@@ -1,0 +1,575 @@
+\documentclass[10pt]{article}
+\usepackage{noweb}
+\noweboptions{smallcode,longchunks}
+
+\begin{document}
+% \pagestyle{noweb}
+
+\title{A aplicação produtores e consumidores}
+\author{Alexandre Rademaker}
+\maketitle
+
+\section{A aplicação}
+
+O problema dos produtores e consumidores é comumente utilizado na
+literatura, por exemplo em \cite{Tanenbaum1987}, para descrição de
+aspectos de coordenação entre processos concorrentes que disputam
+acesso a um recurso comum. Esta aplicação foi também extensamente
+utilizada em \cite{sztTese} para apresentação das primitivas da
+linguagem \cb{}.
+
+Nesta aplicação, um recurso denominado \ingles{buffer} é disputado
+entre processos produtores e consumidores. Os produtores acessam o
+\ingles{buffer} para depositar itens que eles acabaram de produzir. Os
+consumidores acessam o \ingles{buffer} para remover itens que eles
+consumirão. O \ingles{buffer} pode ser limitado ou ilimitado. Quando
+limitado, a aplicação deve garantir que não serão depositados mais
+itens que o limite máximo permitido, e não serão removidos itens
+quando o \ingles{buffer} estiver vazio. Nesta seção, estaremos
+implementando e analisando três diferentes arquiteturas para o
+problema dos produtores e consumidores. Estas arquiteturas foram
+inspiradas nas arquiteturas propostas por \szt{} em \cite{sztTese}.
+
+A primeira arquitetura, e sua respectiva representação gráfica, é
+apresentada na Figura~\ref{fig:pcb-1}. No diagrama os nomes das portas
+e módulos são destacados para facilitar a interpretação da descrição
+textual. São declarados três módulos, \code{PRODUCER}, \code{CONSUMER}
+e \code{BUFFER} para representar, respectivamente, os produtores,
+consumidores e \ingles{buffer}. O connector \code{DEFAULT} implementa
+o contrato de interação de \cb{}, descrito na
+Seção~\ref{sec:map-contratos}. O módulo da aplicação,
+\code{PC-DEFAULT}, declara duas instâncias de cada um dos módulos
+\code{PRODUCER} e \code{CONSUMER}, duas instâncias do conector
+\code{DEFAULT} e uma instância do módulo \code{BUFFER}. Em seguida, as
+portas de cada instância são ligadas. Na Figura~\ref{fig:pcb-1},
+\code{prod1} e \code{prod2}, instâncias do módulo \code{PRODUCER},
+acessam \code{buff}, instância do módulo \code{BUFFER}, através de
+\code{default1}, instância do connector \code{DEFAULT}. Da mesma
+forma, \code{cons1} e \code{cons2}, instâncias do módulo
+\code{CONSUMER}, acessam \code{buff} através de \code{default2}, outra
+instância do conector \code{DEFAULT}. Esta arquitetura não implementa
+qualquer controle de concorrência sobre as instâncias dos
+módulos. Assim sendo, acessos concorrentes à instância do módulo
+\code{BUFFER} poderão ocorrer.
+
+<<producer.maude>>=
+module PRODUCER { 
+ in port put ;
+}
+@
+
+%% Na Figura~\ref{fig:pcb-2}, apresentamos a segunda arquitetura para o
+%% problema. O conector \code{DEFAULT} foi substituído pelo conector
+%% \code{MUTEX} e um novo módulo da aplicação foi declarado,
+%% \code{PC-MUTEX}. As declarações dos demais módulos, \code{PRODUCER},
+%% \code{CONSUMER} e \code{BUFFER}, não são apresentadas por terem
+%% permanecido inalteradas em relação a Figura~\ref{fig:pcb-1}. Nesta
+%% nova arquitetura, os acessos concorrentes à instância do módulo
+%% \code{BUFFER} devem ser evitados pelo conector \code{MUTEX}, que
+%% implementa o contrato de exclusão mútua de \cb{}.
+
+%% % \input{figs/pcb-2.tex}
+
+%% Nas duas arquiteturas anteriores, os limites de armazenamento do
+%% \ingles{buffer} não são controlados. Na arquitetura apresentada na
+%% Figura~\ref{fig:pcb-3} este problema é resolvido. Os conectores
+%% \code{GUARD-GET} e \code{GUARD-PUT} controlam os acessos ao módulo
+%% \code{BUFFER} por meio dos contratos de interação guarda, que
+%% inspecionam as variáveis de estado \code{Full} e \code{Empty}. Tais
+%% variáveis correspondem a semáforos~\cite{BEN-ARI1990}. O incremento
+%% das variáveis pode ser interpretado com a primitiva {\em signal}, e o
+%% decremento como a primitiva {\em wait}. Nesta arquitetura, o conector
+%% \code{MUTEX} é mantido para continuar a impedir acessos concorrentes
+%% ao \ingles{buffer}.
+
+%% % \input{figs/pcb-3.tex}
+
+%% Importadas as arquiteturas em \cbt{}, devemos construir os módulos de
+%% verificação e análise. Como as três arquiteturas, cujos módulos de
+%% aplicaçao são \code{PC-DEFAULT}, \code{PC-MUTEX} e
+%% \code{PC-GUARDS-MUTEX}, compartilham os mesmos módulos, e em todas,
+%% desejamos verificar as mesmas propriedades, apenas um módulo de
+%% execução e um módulo de análise serão necessários.
+
+%% Na Figura~\ref{fig:pcb-exec} é apresentado o módulo de execução
+%% \code{PCB-EXEC}. Este módulo importa, inicialmente, o módulo
+%% \code{PC-DEFAULT}, módulo Maude gerado por \cbt{} para o módulo
+%% \code{PC-DEFAULT} em \cb{}. Para a análise das arquiteturas
+%% \code{PC-MUTEX} e \code{PC-MUTEX-GUARDS}, este módulo precisará ser
+%% redefinido de forma a importar a arquitetura correspondente. Em
+%% seguida, as regras \code{producer-do} e \code{consumer-do} definem que
+%% as instâncias de \code{PRODUCER} e \code{CONSUMER} serão deixadas em
+%% {\em loop}, continuamente enviando mensagens de \code{producer@put} e
+%% \code{producer-get}, respectivamente. As regras \code{buffer-do-put} e
+%% \code{buffer-do-get} definem o comportamento da instância do módulo
+%% \code{BUFFER}, quando no recebimento de mensagens \code{buffer@put} e
+%% \code{buffer@get}. O recebimento da mensagem \code{buffer@put} deverá
+%% gerar o incremento do valor do atributo \code{items}, que representa o
+%% número de itens armazenados no \ingles{buffer}, e o recebimento da
+%% mensagem \code{buffer@get} deverá gerar o decremento do valor de
+%% \code{items}. Para tornar finito o número de estados alcançáveis na
+%% execução da arquitetura, o número de itens armazenados é mantido no
+%% intervalo $[-1,maxitems+1]$. Na realidade, como estamos interessados
+%% apenas em determinar se o número de itens armazenados, em algum
+%% instante, ultrapassa o limite máximo, valor do atributo
+%% \code{maxitems}, ou torna-se negativo, poderíamos mesmo definir uma
+%% constante para representar o intervalo $[0,maxitems]$. No entanto,
+%% considerando que o número de estados de computação das arquiteturas é
+%% pequeno, tal simplificação não se faz necessária.
+
+%% % \input{figs/pcb-exec.tex}
+
+%% Em todas as três arquiteturas, estaremos considerando o caso do
+%% \ingles{buffer} limitado e analisando as seguintes propriedades.
+
+%% \begin{prop}\label{prop:pcb-deadlock}
+%% Em nenhum estado da computação deve ser verdade que todas as
+%% ins\-tân\-cias de módulos estão bloqueadas e a computação impedida de
+%% prosseguir. Isto é, a arquitetura deve estar livre de
+%% \ingles{deadlock}.
+%% \end{prop}
+
+%% \begin{prop}\label{prop:pcb-race}
+%% Em nenhum estado da computação, o objeto \code{buff}, instância do
+%% mó\-du\-lo \code{BUFFER} pode receber mensagens de \code{buffer@put} e
+%% \code{buffer@get} simultaneamente. Isto é, não devem existir acessos
+%% concorrentes de produtores e consumidores ao \ingles{buffer}
+%% (\ingles{race condition}).
+%% \end{prop}
+
+%% \begin{prop}\label{prop:pcb-overflow}
+%% Em nenhum estado da computação o valor do atributo \code{items} do
+%% objeto \code{buff} deve ser superior ao valor do atributo
+%% \code{maxitems}. Isto é, a arquitetura não deve permitir
+%% \ingles{overflow} do \ingles{buffer}, quando o número de itens
+%% armazenados no \ingles{buffer} ultrapassa o limite máximo estabelecido
+%% para o tamanho do \ingles{buffer}.
+%% \end{prop}
+
+%% \begin{prop}\label{prop:pcb-underflow}
+%% Em nenhum estado da computação o valor do atributo \code{items} do
+%% objeto \code{buff} deve ser negativo. Isto é, a arquitetura não deve
+%% permitir \ingles{underflow} do \ingles{buffer}, que ocorre quando o
+%% número de itens armazenados no \ingles{buffer} torna-se negativo.
+%% \end{prop}
+
+%% Todas as propriedades apresentadas acima referem-se a existência ou
+%% não de estados que satisfaçam determinada propriedade individualmente,
+%% isto é, são propriedades de estados. Recordando da
+%% Seção~\ref{sec:tecnicas}, este tipo de propriedade pode ser validada
+%% com uma busca pela árvore de estados que representa as possíveis
+%% computações na arquitetura. Ou seja, com o comando \emph{search} de
+%% Maude podemos analisar todas as propriedades acima.  No entanto, para
+%% ilustrar a utilização do verificador de modelos de Maude, estaremos
+%% definido algumas proposições e utilizando o verificador de modelos
+%% para análise das propriedades \ref{prop:pcb-race},
+%% \ref{prop:pcb-overflow} e \ref{prop:pcb-underflow}. Pretendemos assim
+%% mostrar que o verificador de modelos pode não só analisar propriedades
+%% relacionadas aos caminhos da árvore de estados, mas também
+%% propriedades de estados.
+
+%% Na Figura~\ref{fig:pcb-ver} é apresentado o módulo
+%% \code{PCB-VER}. Nele são declaradas as proposições e fórmulas
+%% temporais que serão utilizadas nas análises de cada arquitetura. As
+%% proposições \code{putting} e \code{getting}, definidas como constantes
+%% do \emph{sort} \code{Prop}, se verificam nos estados onde alguma
+%% instância de \code{BUFFER} esteja recebendo, respectivamente, as
+%% mensagens \code{buffer@put} ou \code{buffer@get}. As proposições
+%% \code{overflow} e \code{underflow}, também declaradas como constantes
+%% do \emph{sort} \code{Prop}, se verificam nos estados onde o número de
+%% itens armazenados em alguma instância de \code{BUFFER} tenha,
+%% respectivamente, ultrapassado o limite máximo ou se tornado
+%% negativo. Com auxílio destas proposições, podemos expressar as
+%% propriedades \ref{prop:pcb-race}, \ref{prop:pcb-overflow} e
+%% \ref{prop:pcb-underflow} através de fórmulas em LTL (vide
+%% Seção~\ref{sec:tecnicas}). A propriedade~\ref{prop:pcb-race} é
+%% expressa pela fórmula \code{[]\~{} (putting $\slash\backslash$
+%% getting)}, atribuída à constante \code{raceCond} (do inglês
+%% \ingles{race condition}), que define que em nenhum estado da árvore de
+%% estados das computações da arquitetura alguma instância de
+%% \code{BUFFER} estará recebendo, simultaneamente, as mensagens
+%% \code{buffer@put} e \code{buffer@get}.  A
+%% propriedade~\ref{prop:pcb-overflow} é expressa pela fórmula
+%% \code{[]\~{} overflow}, isto é, em nenhum estado da árvore de estados
+%% das computações da arquitetura a proposição \code{overflow} é
+%% válida. A propriedade~\ref{prop:pcb-underflow} é expressa pela fórmula
+%% \code{[]\~{} underflow}, isto é, em nenhum estado das árvores de
+%% estados das computações da arquitetura a proposição \code{underflow} é
+%% válida.
+
+%% % \input{figs/pcb-ver.tex}
+
+%% Após carregar no \cbt{} as arquiteturas e os módulos de execução e
+%% análise, podemos iniciar as análises. 
+
+%% %% A primeira técnica de análise que podemos utilizar para garantir que
+%% %% as arquiteturas estão corretamente implementadas é a simulação. Com a
+%% %% simulação podemos, por exemplo, confirmar se todas as ligações de
+%% %% portas dos componentes da arquitetura foram realizadas
+%% %% corretamente. No comando abaixo foram realizadas cinco reescritas a
+%% %% partir do estado inicial. O comando \code{set trace on} habilita a
+%% %% impressão na tela de cada passo de reescrita executado, permitindo
+%% %% assim o acompanhamento detalhado das regras que foram aplicadas para a
+%% %% reescrita do termo. Dado que o acompanhamento de um traço de execução
+%% %% de reescritas pode gerar um volume muito grande de informações,
+%% %% utilizamos os comandos \code{set trace X off}, onde \emph{X}
+%% %% representa a informação que desejamos suprimir do traço de reescritas
+%% %% que será impresso. Neste caso, a aplicação das equações, resolução das
+%% %% condições nas equações e regras condicionais e substituição das
+%% %% variáveis.
+%% %% \input{figs/pcb-def-simulation.tex}
+%% %% A simulação fornece alguma indicação de que o comportamento da
+%% %% arquitetura está adequado. No entanto, corresponde apenas a um dos
+%% %% possíveis caminhos na execução da arquitetura. Nas reescritas acima:
+%% %% \begin{enumerate}
+%% %%  \item O objeto \code{cons1} recebeu uma mensagem $\mathit{do}$
+%% %%  iniciando seu comportramento interno e encaminhou uma mensagem
+%% %%  \code{consumer@get};
+%% %%  \item O objeto \code{prod1} recebeu uma mensagem $\mathit{do}$
+%% %%  iniciando seu comportamento interno e encaminhou uma mensagem
+%% %%  \code{producer@put};
+%% %%  \item O objeto \code{default1} recebeu a mensagem encaminhada por
+%% %%  \code{prod1} e encaminhou uma mensagem para \code{buff};
+%% %%  \item O objeto \code{buff} recebeu uma mensagem \code{buffer@put} e
+%% %%  enviou uma mensagem $\mathit{do}$ para si mesmo sinalizando o início
+%% %%  de seu comportamento interno;
+%% %%  \item O objeto \code{buff} executou o comportamento definido para
+%% %%  quando recebesse uma mensagem \code{buffer@put}, qual seja,
+%% %%  incrementar seu atributo \code{items}.
+%% %% \end{enumerate}
+%% %% Para garantirmos que em qualquer execução da arquitetura as
+%% %% propriedades desejadas serão garantidas, a simulação não é
+%% %% suficiente. Precisamos garantir que as propriedades desejáveis da
+%% %% arquitetura sejam verificadas em todas as possíveis execuções da
+%% %% arquitetura, isto é, todos os possíveis caminhos de execução.
+
+%% Podemos garantir que a propriedade~\ref{prop:pcb-deadlock} é
+%% satisfeita pela arquitetura \code{PC-DEFAULT} com a execução de uma
+%% busca por estados {\em finais} em largura pela árvore de estados
+%% gerada na execução da arquitetura. Na busca abaixo, \code{initial} é o
+%% estado inicial declarado no módulo \code{PCB-EXEC}. O símbolo
+%% \code{=>!}  informa que desejamos localizar estados {\em finais}, ou
+%% seja, estados que não possam ser mais reescritos, ou seja, folhas da
+%% árvore de estados que representa as possíveis computações na
+%% arquitetura. O padrão do estado que buscamos é uma configuração
+%% qualquer, por isso utilizamos a variável \code{C:Configuration}.
+
+%% \begin{Verbatim}
+%% Maude> (search initial =>! C:Configuration .)
+
+%% No solution.
+%% \end{Verbatim}
+
+%% No módulo \code{PCB-EXEC} as regras \code{producer-do} e
+%% \code{consumer-do} especificam que as instâncias de \code{PRODUCER} e
+%% \code{CONSUMER} devem permanecer em {\em loop}, isto é, constantemente
+%% reenviando mensagens tão logo recebam uma resposta. Sendo assim, se a
+%% busca acima localizasse algum estado que não pudesse ser reescrito,
+%% este estado seria um estado de \ingles{deadlock}.
+
+%% Como já foi dito, para verificarmos a propriedade~\ref{prop:pcb-race}
+%% na arquitetura \code{PC-DEFAULT}, submetemos a fórmula
+%% \code{raceCond}, definida no módulo \code{PCB-VER} na
+%% Figura~\ref{fig:pcb-ver}, ao verificador de modelos de Maude. No
+%% comando abaixo, o verificador de modelos irá verificar a fórmula
+%% \code{raceCond} em todos os estados da árvore de estados das
+%% computações da arquitetura, alcançáveis a partir do estado inicial
+%% definido pela constante \code{initial}, declarada no módulo
+%% \code{PCB-EXEC} na Figura~\ref{fig:pcb-exec}:
+
+%% \begin{Verbatim}
+%% Maude> (red modelCheck(initial, raceCond) . )
+%% result ModelCheckResult :
+%%   counterexample({< buff : BUFFER | items : 0,maxitems : 2 >
+%% < cons1 : CONSUMER | consumer@get-status : unlocked >
+%% < cons2 : CONSUMER | consumer@get-status : unlocked >
+%% < default1 : DEFAULT | none >
+%% < default2 : DEFAULT | none >
+%% < prod1 : PRODUCER | producer@put-status : unlocked >
+%% < prod2 : PRODUCER | producer@put-status : unlocked >
+%% do(cons1,consumer@get,none)
+%% do(cons2,consumer@get,none)
+%% do(prod1,producer@put,none)
+%% do(prod2,producer@put,none),'CONSUMER-sending-consumer@get} 
+%% ...
+%% {< buff : BUFFER | items : -1,maxitems : 2 >
+%% < cons1 : CONSUMER | consumer@get-status : unlocked >
+%% < cons2 : CONSUMER | consumer@get-status : locked >
+%% < default1 : DEFAULT | none >
+%% < default2 : DEFAULT | none >
+%% < prod1 : PRODUCER | producer@put-status : locked >
+%% < prod2 : PRODUCER | producer@put-status : unlocked >
+%% done(cons1,consumer@get,none)
+%% done(prod2,producer@put,none)
+%% send(buff,buffer@get,[default2,default@out]::[cons2,consumer@get])
+%% send(buff,buffer@put,[default1,default@out]::[prod1,producer@put]),
+%%     'BUFFER-recevingAndDo-buffer@get}...)
+%% \end{Verbatim}
+
+%% O contra-exemplo acima mostra um caminho de execução onde existe um
+%% estado (o último estado exibido após ``$\ldots$'') em que o objeto
+%% \code{buff} recebe, simultaneamente, uma mensagem \code{buffer@put} e
+%% uma mensagem \code{buffer@get}, ou seja, a arquitetura
+%% \code{PC-DEFAULT} não garante exclusão mútua nos acessos ao
+%% \emph{buffer}. O verificador de modelos de Maude explora os estados da
+%% computação utilizando uma busca em profundidade, desta forma, um
+%% contra-exemplo pode ser bastante extenso. A saída acima foi editada
+%% para que apenas o estado inicial e o estado com as duas mensagens para
+%% o objeto \code{buff} fossem exibidos.
+
+%% O comando \emph{search} de Maude também pode ser utilizado para
+%% comprovar que a propriedade~\ref{prop:pcb-race} não é válida na
+%% arquitetura \code{PC-DEFAULT}. Na busca abaixo, desejamos localizar
+%% algum estado (apenas um, por isso o limite \code{[1]}), alcançável a
+%% partir do estado inicial definido pela constante \code{initial}, onde
+%% o objeto \code{buff} esteja recebendo, simultaneamente, mensagens de
+%% \code{buffer@put} e \code{buffer@get}. O símbolo \code{=>*},
+%% relembrando, indica que estamos interessados em estados que possam ser
+%% alcançados com zero ou mais passos de reescritas a partir do estado
+%% inicial.
+
+%% \begin{Verbatim}
+%% Maude> (search [1] initial =>* C:Configuration 
+%%                                send(buff, buffer@put, IT1:Interaction) 
+%%                                send(buff, buffer@get, IT2:Interaction) .)
+
+%% Solution 1
+%% C:Configuration <- < buff : BUFFER | items : 0,maxitems : 2 >
+%%  < cons1 : CONSUMER | consumer@get-status : locked >
+%%  < cons2 : CONSUMER | consumer@get-status : unlocked >
+%%  < default1 : DEFAULT | none > < default2 : DEFAULT | none >
+%%  < prod1 : PRODUCER | producer@put-status : locked >
+%%  < prod2 : PRODUCER | producer@put-status : unlocked >
+%%  do(cons2,consumer@get,none) do(prod2,producer@put,none); 
+%% IT1:Interaction <- [default1,default@out]::[prod1,producer@put]; 
+%% IT2:Interaction <- [default2,default@out]::[cons1,consumer@get]
+%% \end{Verbatim}
+
+%% Acima, o comando {\em search} encontrou um estado cujo padrão
+%% corresponde ao desejado. No estado localizado, o objeto \code{buff}
+%% está recebendo uma mensagem de \code{buffer@put}, produzida a partir
+%% da mensagem inicial de \code{prod1} e uma mensagem de
+%% \code{buffer@get}, produzida a partir da mensagem inicial de
+%% \code{cons1}, conforme mostra os ``valores'' atribuídos às variáveis
+%% \code{IT1} e \code{IT2}, variáveis para interações (do tipo
+%% \code{Interaction}). A existência de uma solução na busca acima é
+%% condição suficiente para garantir que a
+%% propriedade~\ref{prop:pcb-race} não é válida na arquitetura
+%% \code{PC-DEFAULT}.
+
+%% Na arquitetura \code{PC-DEFAULT} nenhum controle é implementado para
+%% evitar que os limites de armazenamento do \ingles{buffer} sejam
+%% ultrapassados. Logo, se submetermos a fórmula \code{[]\~{} underflow}
+%% ao verificador de modelos de Maude, encontramos um contra-exemplo para
+%% a propriedade~\ref{prop:pcb-underflow}:
+
+%% \begin{Verbatim}
+%% Maude> (red modelCheck(initial, [] ~ underflow) .)
+%% result ModelCheckResult :
+%%   counterexample({< buff : BUFFER | items : 0,maxitems : 2 >
+%% < cons1 : CONSUMER | consumer@get-status : unlocked >
+%% < cons2 : CONSUMER | consumer@get-status : unlocked >
+%% < default1 : DEFAULT | none >
+%% < default2 : DEFAULT | none >
+%% < prod1 : PRODUCER | producer@put-status : unlocked >
+%% < prod2 : PRODUCER | producer@put-status : unlocked >
+%% do(cons1,consumer@get,none)
+%% do(cons2,consumer@get,none)
+%% do(prod1,producer@put,none)
+%% do(prod2,producer@put,none),'CONSUMER-sending-consumer@get}
+%% ...
+%% {< buff : BUFFER | items : -1, maxitems : 2 >
+%% < cons1 : CONSUMER | consumer@get-status : locked >
+%% < cons2 : CONSUMER | consumer@get-status : unlocked >
+%% < default1 : DEFAULT | none > < default2 : DEFAULT | none >
+%% < prod1 : PRODUCER | producer@put-status : unlocked >
+%% < prod2 : PRODUCER | producer@put-status : unlocked >
+%% done(buff,buffer@get,[default2,default@out]::[cons1,consumer@get])
+%% done(cons2,consumer@get,none) done(prod1,producer@put,none)
+%% done(prod2,producer@put,none),'BUFFER-doneAndAcking-buffer@get} ...)
+%% \end{Verbatim}
+
+%% O contra-exemplo acima mostra um traço de execução onde existe um
+%% estado em que o valor do atributo \code{items} do objeto \code{buff} é
+%% negativo (o último após $\ldots$), isto é, em que a proposição
+%% \code{underflow}, definida no módulo de análise, é válida. A mesma
+%% análise pode ser feita para a propriedade~\ref{prop:pcb-overflow}. O
+%% verificador de modelos também encontra um conta-exemplo para a fórmula
+%% \code{[]\~{} overflow}:
+
+%% \begin{Verbatim}
+%% Maude> (red modelCheck(initial, [] ~ overflow) .)
+%% result ModelCheckResult :
+%%   counterexample({< buff : BUFFER | items : 0,maxitems : 2 >
+%% < cons1 : CONSUMER | consumer@get-status : unlocked >
+%% < cons2 : CONSUMER | consumer@get-status : unlocked >
+%% < default1 : DEFAULT | none >
+%% < default2 : DEFAULT | none >
+%% < prod1 : PRODUCER | producer@put-status : unlocked >
+%% < prod2 : PRODUCER | producer@put-status : unlocked >
+%% do(cons1,consumer@get,none)
+%% do(cons2,consumer@get,none)
+%% do(prod1,producer@put,none)
+%% do(prod2,producer@put,none),'CONSUMER-sending-consumer@get}
+%% ...
+%% {< buff : BUFFER | items : 3, maxitems : 2 >
+%% < cons1 : CONSUMER | consumer@get-status : unlocked >
+%% < cons2 : CONSUMER | consumer@get-status : unlocked >
+%% < default1 : DEFAULT | none > < default2 : DEFAULT | none >
+%% < prod1 : PRODUCER | producer@put-status : locked >
+%% < prod2 : PRODUCER | producer@put-status : unlocked >
+%% done(buff,buffer@put,[default1,default@out]::[prod1,producer@put])
+%% done(cons1,consumer@get,none) done(cons2,consumer@get,none)
+%% done(prod2,producer@put,none),'BUFFER-doneAndAcking-buffer@put} ...)
+%% \end{Verbatim}
+
+%% No contra-exemplo acima, no segundo estado exibido, o valor do
+%% atributo \code{items} do objeto \code{buff} é superior ao valor do
+%% atributo \code{maxitems}, isto é, este estado comprova que a
+%% propriedade~\ref{prop:pcb-overflow} não é válida na arquitetura
+%% \code{PC-DEFAULT}.
+
+%% Para a análise da arquitetura \code{PC-MUTEX}, precisamos primeiro
+%% editar e reimportar para \cbt{} o módulo \code{PCB-EXEC}. A importação
+%% do módulo \code{PC-DEFAULT} será substituída pela importação do módulo
+%% \code{PC-MUTEX}, permanecendo inalterado o restante do módulo:
+
+%% \begin{Verbatim}[samepage=true]
+%% (omod PCB-EXEC is
+%%   inc PC-MUTEX .
+%%   ...
+%% omod) 
+%% \end{Verbatim}
+
+%% A propriedade~\ref{prop:pcb-deadlock} também é válida na arquitetura
+%% \code{PC-MUTEX}:
+
+%% \begin{Verbatim}
+%% Maude> (search initial =>! C:Configuration .)
+
+%% No solution.
+%% \end{Verbatim}
+
+%% Na arquitetura \code{PC-MUTEX}, os acessos concorrentes ao
+%% \emph{buffer} são evitados com o conector \code{MUTEX}, que implementa
+%% o contrato de exclusão mútua. Ao submetermos a fórmula temporal
+%% \code{raceCond}, ao verificador de modelos, temos a comprovação de que
+%% a propriedade~\ref{prop:pcb-race} é válida em todos os caminhos de
+%% execução da arquitetura \code{PC-MUTEX}.
+
+%% \begin{Verbatim}
+%% Maude> (red modelCheck(initial, raceCond) .) 
+%% result Bool :
+%%   true
+%% \end{Verbatim}
+
+%% Da mesma forma, os limites de armazenamento do \emph{buffer} continuam
+%% a não ser controlados. Ao verificarmos a
+%% propriedade~\ref{prop:pcb-overflow}, encontramos um contra-exemplo
+%% para a fórmula \code{[]\~{}overflow}:
+
+%% \begin{Verbatim}
+%% Maude> (red modelCheck(initial, []~ overflow) .)
+%% result ModelCheckResult :
+%%   counterexample({< buff : BUFFER | items : 0,maxitems : 2 >
+%% < cons1 : CONSUMER | consumer@get-status : unlocked >
+%% < cons2 : CONSUMER | consumer@get-status : unlocked >
+%% < mutx : MUTEX | status : unlocked >
+%% < prod1 : PRODUCER | producer@put-status : unlocked >
+%% < prod2 : PRODUCER | producer@put-status : unlocked >
+%% do(cons1,consumer@get,none) do(cons2,consumer@get,none)
+%% do(prod1,producer@put,none)
+%% do(prod2,producer@put,none),'CONSUMER-sending-consumer@get}
+%% ...
+%% {< buff : BUFFER | items : 3, maxitems : 2 >
+%% < cons1 : CONSUMER | consumer@get-status : unlocked >
+%% < cons2 : CONSUMER | consumer@get-status : unlocked >
+%% < mutx : MUTEX | status : locked >
+%% < prod1 : PRODUCER | producer@put-status : locked >
+%% < prod2 : PRODUCER | producer@put-status : unlocked >
+%% done(buff,buffer@put,[mutx,mutex@out1]::[prod1,producer@put])
+%% done(cons1,consumer@get,none) done(cons2,consumer@get,none)
+%% done(prod2,producer@put,none),'BUFFER-doneAndAcking-buffer@put}...)
+%% \end{Verbatim}
+
+%% No contra-exemplo supra, no segundo estado listado, o valor do
+%% atributo \code{items} é superior ao valor do atributo \code{maxitems}
+%% do objeto \code{buff}, comprovando que a
+%% propriedade~\ref{prop:pcb-overflow} não é válida na arquitetura
+%% \code{PC-MUTEX}.
+
+%% Ao verificarmos a propriedade~\ref{prop:pcb-underflow}, o verificador
+%% de modelos encontra um contra-exemplo para a fórmula
+%% \code{[]\~{}underflow}:
+
+%% \begin{Verbatim}
+%% Maude> (red modelCheck(initial, []~ underflow) .) 
+%% result ModelCheckResult :
+%%   counterexample({< buff : BUFFER | items : 0,maxitems : 2 >
+%% < cons1 : CONSUMER | consumer@get-status : unlocked >
+%% < cons2 : CONSUMER | consumer@get-status : unlocked >
+%% < mutx : MUTEX | status : unlocked >
+%% < prod1 : PRODUCER | producer@put-status : unlocked >
+%% < prod2 : PRODUCER | producer@put-status : unlocked >
+%% do(cons1,consumer@get,none)
+%% do(cons2,consumer@get,none)
+%% do(prod1,producer@put,none)
+%% do(prod2,producer@put,none),'CONSUMER-sending-consumer@get}
+%% ...
+%% {< buff : BUFFER | items : -1, maxitems : 2 >
+%% < cons1 : CONSUMER | consumer@get-status : locked >
+%% < cons2 : CONSUMER | consumer@get-status : unlocked >
+%% < mutx : MUTEX | status : locked >
+%% < prod1 : PRODUCER | producer@put-status : unlocked >
+%% < prod2 : PRODUCER | producer@put-status : unlocked >
+%% do(cons2,consumer@get,none) do(prod1,producer@put,none)
+%% do(prod2,producer@put,none) 
+%% done(buff,buffer@get,[mutx,mutex@out2]::[cons1,consumer@get]),
+%%  'BUFFER-doneAndAcking-buffer@get}...)
+%% \end{Verbatim}
+
+%% No contra-exemplo acima, no segundo estado listado, o valor do
+%% atributo \code{items} do objeto \code{buff} é negativo, comprovando
+%% que na arquitetura \code{PC-MUTEX} a
+%% propriedade~\ref{prop:pcb-underflow} não é válida.
+
+%% Finalmente, na arquitetura \code{PC-MUTEX-GUARDS}, as
+%% propriedades~\ref{prop:pcb-deadlock}, \ref{prop:pcb-race},
+%% \ref{prop:pcb-overflow} e \ref{prop:pcb-underflow}, listadas no início
+%% da seção são atendidas. Com a mesma busca já realizada para as demais
+%% arquiteturas, comprovamos que a propriedade~\ref{prop:pcb-deadlock} é
+%% válida em \code{PC-MUTEX-GUARDS}:
+
+%% \begin{Verbatim}
+%% Maude> (search initial =>! C:Configuration .)
+
+%% No solution.
+%% \end{Verbatim}
+
+%% A propriedade~\ref{prop:pcb-race} continua a ser garantida pela
+%% presença do objeto \code{mutex} na topologia:
+
+%% \begin{Verbatim}
+%% Maude> (red modelCheck(initial, raceCond) .)
+%% result Bool :
+%%   true
+%% \end{Verbatim}
+
+%% Finalmente, as propriedades \ref{prop:pcb-overflow} e
+%% \ref{prop:pcb-underflow} também são garantidas na arquitetura
+%% \code{PC-GUARDS-MUTEX}. Os objetos \code{guard-put} e \code{guard-get}
+%% controlam os acessos ao objeto \code{buff}, garantindo que os limites
+%% de armazenamento do \ingles{buffer} não sejam ultrapassados.
+
+%% \begin{Verbatim}
+%% Maude> (red modelCheck(initial, []~ overflow) .) 
+%% result Bool :
+%%   true
+
+%% Maude> (red modelCheck(initial, []~ underflow) .) 
+%% result Bool :
+%%   true
+%% \end{Verbatim}
+
+
+\end{document}

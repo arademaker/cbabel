@@ -1,0 +1,102 @@
+in modules.cbabel
+in fork-guard.cbabel
+in table-guard.cbabel
+in phi-forks-table.cbabel
+
+(omod NCF-EXEC is
+ inc NOVA-CEIA-FILOSOFOS .
+
+ var C : Configuration . 
+ var O : Oid .
+ vars IT IT1 IT2 : Interaction . 
+ var N : Int .
+
+ rl [fork-request] :
+   < O : FORK | > do(O, fork@request, IT) =>
+   < O : FORK | > done(O, fork@request, IT) .
+
+ rl [fork-release] :
+    < O : FORK | > do(O, fork@release, IT) =>
+    < O : FORK | > done(O, fork@release, IT) .
+
+ rl [table-request] :
+    < O : TABLE | used-places : N > do(O, table@request, IT) =>
+    < O : TABLE | used-places : (N + 1) > done(O, table@request, IT) .
+
+ rl [table-release] :
+    < O : TABLE | used-places : N > do(O, table@release, IT) =>
+    < O : TABLE | used-places : (N - 1) > done(O, table@release, IT) .
+
+ op init : Oid -> Msg .
+ rl [phi-begining] :
+    init(O) < O : PHILOSOPHER | state : 0 > =>
+    < O : PHILOSOPHER | state : 1 > .
+
+ rl [phi-getting-table] :
+    < O : PHILOSOPHER | state : 1 > =>
+    < O : PHILOSOPHER | state : 2 > do(O, get-table, none) .
+
+ rl [phi-getting-forks] :
+    done(O, get-table, IT1) < O : PHILOSOPHER | state : 2 > =>
+    < O : PHILOSOPHER | state : 3 > 
+    do(O, get-lfork, none) do(O, get-rfork, none) .
+
+ rl [phi-eating-releasing-forks] :
+    done(O, get-lfork, IT1) done(O, get-rfork, IT2) 
+    < O : PHILOSOPHER | state : 3 > =>
+    < O : PHILOSOPHER | state : 4 > 
+    do(O, rel-lfork, none) do(O, rel-rfork, none) .
+
+ rl [phi-releasing-table] :
+    done(O, rel-lfork, IT1) done(O, rel-rfork, IT2) 
+    < O : PHILOSOPHER | state : 4 > =>
+    < O : PHILOSOPHER | state : 5 > do(O, rel-table, none) .
+
+ rl [phi-thinking] :
+    done(O, rel-table, IT) < O : PHILOSOPHER | state : 5 > =>
+    < O : PHILOSOPHER | state : 0 > init(O) .
+
+ op initial : -> Configuration .
+ eq initial = topology init(phi1) init(phi2) init(phi3) init(phi4) . 
+endom)
+
+(omod NCF-PROPS is 
+  ex NCF-EXEC .
+  inc MODEL-CHECKER .
+
+ subsort Configuration < State .
+
+ var C : Configuration .
+ var O : Oid .
+
+ op eating : Oid -> Prop .
+ eq < O : PHILOSOPHER | state : 5 > C |= eating(O) = true .
+
+ op hungry : Oid -> Prop .
+ eq < O : PHILOSOPHER | state : 1 > C |= hungry(O) = true .
+endom)
+
+eof
+
+(red modelCheck(initial, []<> (eating(phi1) \/ eating(phi2) \/ eating(phi3) \/ eating(phi4))) .)
+
+1. e se o controle de free dos garfos fosse feito por eles?!
+
+*** exclusao mutua do garfo 1
+(red modelCheck(initial, [] ~ (eating(phi1) /\ eating(phi2))) .)
+
+*** exclusao mutua do garfo 1 
+(red modelCheck(initial, [] eating(phi1) -> ~ eating(phi2)) .)
+
+*** phi1 sempre tem chance de comer
+(red modelCheck(initial, hungry(phi1) |-> eating(phi1)) .)
+
+*** ausencia de deadlock
+(search initial =>! C:Configuration .)
+
+
+*** buscas para verificar funcionamento
+(search [1] initial =>* send(O, fork@request, IT:Interaction) C:Configuration .)
+
+(search [1] initial =>* ack([O, get-lfork] :: IT1:Interaction) 
+                        ack([O, get-rfork] :: IT2:Interaction) C:Configuration .)

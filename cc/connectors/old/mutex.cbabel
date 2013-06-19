@@ -1,0 +1,13 @@
+(
+connector MUTEX {
+ in port mutex-in1 ;
+ in port mutex-in2 ;
+ out port mutex-out1 ;
+ out port mutex-out2 ;
+
+ exclusive{
+  mutex-in1 > mutex-out1 ;
+  mutex-in2 > mutex-out2 ;
+ }
+}
+)

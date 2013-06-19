@@ -1,0 +1,46 @@
+in vm-3.cbabel
+
+(omod VER-VM is
+ inc VM .
+
+ var C : Configuration .
+ var O : Oid .
+ var IT IT1 IT2 : Interaction .
+ vars N : Int .
+ var P : PortId .
+ var MSG : Msg .
+
+ op initial : -> Configuration .
+ eq initial = topology init(do(ad, add-$, none), 2) init(do(aq, add-q, none), 2)
+                       init(do(bc, buy-c, none), 2) init(do(ba, buy-a, none), 2) .
+
+ op init : Msg Nat -> Configuration .
+ eq init(MSG, N) = MSG init(MSG, N - 1) .
+ eq init(MSG, 0) = none .
+ 
+ rl [slot-put-apple] : 
+    do(O, put-a, IT) < O : SLOT | apples : N > => 
+    done(O, put-a, IT) < O : SLOT | apples : (N + 1) >  .
+
+ rl [slot-put-cake] : 
+    do(O, put-c, IT) < O : SLOT | cakes : N > => 
+    done(O, put-c, IT) < O : SLOT | cakes : (N + 1) >  .
+endom)
+
+
+*** o que eh possivel comprar com a configuracao inicial?
+(search initial =>! X:Configuration < slot : SLOT | cakes : C:Int , apples : A:Int > .)
+
+
+*** existe algum estado onde o numero de dollars seja negativo?
+(search [1] initial =>* C:Configuration < cd : COUNT-DOLLAR | dollars : N:Int , AS1:AttributeSet >
+                        < cq : COUNT-QUARTER | quarters : M:Int , AS2:AttributeSet >
+   such that (N:Int < 0) or (M:Int < 0) .)
+
+*** colocando apenas 3 quarters nao compro um bolo
+(search [1] topology init(do(aq,add-q,none), 3) init(do(bc,buy-c,none),1) =>* C:Configuration 
+            < slot : SLOT | cakes : N:Int , AS:AttributeSet > such that N:Int > 1 .)
+
+*** concorrencia desejada 
+(search [1] initial =>* C:Configuration send(slot, put-a, IT1:Interaction) 
+                        send(slot, put-c, IT2:Interaction) .)

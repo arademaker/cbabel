@@ -1,0 +1,127 @@
+(connector GUARD-WAIT {
+  staterequired int guard-wait@state ;
+  staterequired int guard-wait@ticket ;
+  staterequired int guard-wait@bakery ;
+
+  in port guard-wait@in ;
+
+  interaction {
+    guard-wait@in > 
+    guard(guard-wait@state == int(0)) { --- guard-wait@state == sleep
+     after {
+      guard-wait@state = int(1) ; --- guard-wait@state = wait
+      guard-wait@ticket = guard-wait@bakery + int(1) ;
+     }
+    } > ground ;
+  }
+})
+
+(connector GUARD-MUTEX {
+  staterequired int guard-mutex@state ;
+  in port guard-mutex@in ;
+  in port guard-mutex@out ;
+
+  interaction {
+    guard-mutex@in 
+     > guard(guard-mutex@state == int(1)) > 
+    guard-mutex@out ;
+  }
+})
+
+(connector GUARD-SLEEP {
+  staterequired int guard-sleep@state ;
+  staterequired int guard-sleep@ticket ;
+
+  in port guard-sleep@in ;
+
+  interaction {
+    guard-sleep@in > 
+    guard(guard-sleep@state == int(2)) {
+     after {
+      guard-sleep@state = int(0) ;
+      guard-sleep@ticket = int(0) ;
+     }
+    } > ground ;
+  }
+})
+
+(connector MUTEX {
+ in port mutex@in1 ;
+ in port mutex@in2 ;
+ out port mutex@out1 ;
+ out port mutex@out2 ;
+
+ exclusive{ 
+  mutex@in1 > mutex@out1 ; 
+  mutex@in2 > mutex@out2 ; 
+ }
+})
+
+(connector GUARD-CRIT {
+  staterequired int guard-crit@state ;
+  staterequired int guard-crit@ticket ;
+  staterequired int guard-crit@bakery ;
+
+  in port guard-crit@in ;
+
+  interaction {
+    guard-crit@in > 
+    guard(guard-crit@state == int(1) && 
+          (guard-crit@ticket == int(0) || 
+          (guard-crit@ticket < guard-crit@bakery))) {
+     after {
+      guard-crit@state = int(2) ;
+      guard-crit@bakery = guard-crit@ticket ;
+     }
+    } > ground ;
+  }
+})
+
+(module PROC {
+  var int proc@state = int(0) ;
+  var int proc@ticket = int(0) ;
+  out port proc@req ;
+})
+
+(module BAKERY {
+  var int bakery@ticket = int(0) ;
+})
+
+(application BAKERY-APP {
+  instantiate PROC as proc1 ;
+***  instantiate PROC as proc2 ;
+  instantiate BAKERY as bake ;
+  instantiate MUTEX as mtx ;
+  instantiate GUARD-SLEEP as proc1-gsleep ;
+***  instantiate GUARD-SLEEP as proc2-gsleep ;
+  instantiate GUARD-WAIT as proc1-gwait ;
+***  instantiate GUARD-WAIT as proc2-gwait ;
+  instantiate GUARD-CRIT as proc1-gcrit ;
+***  instantiate GUARD-CRIT as proc2-gcrit ;
+  instantiate GUARD-MUTEX as proc1-gmutex ;
+***  instantiate GUARD-MUTEX as proc2-gmutex ;
+
+  link proc1.proc@req to proc1-gwait.guard-wait@in ;
+  link proc1.proc@req to proc1-gmutex.guard-mutex@in ;
+  link proc1.proc@req to proc1-gsleep.guard-sleep@in ;
+  link proc1-gmutex.guard-mutex@out to mtx.mutex@in1 ;
+  link mtx.mutex@out1 to proc1-gcrit.guard-crit@in ;
+
+  bind int proc1-gwait.guard-wait@state to proc1.proc@state ; 
+  bind int proc1-gwait.guard-wait@ticket to proc1.proc@ticket ;
+  bind int proc1-gwait.guard-wait@bakery to bake.bakery@ticket ;
+
+  bind int proc1-gwait.guard-wait@state to proc1.proc@state ; 
+  bind int proc1-gwait.guard-wait@ticket to proc1.proc@ticket ;
+  bind int proc1-gwait.guard-wait@bakery to bake.bakery@ticket ;
+
+  bind int proc1-gmutex.guard-mutex@state to proc1.proc@state ;
+
+  bind int proc1-gsleep.guard-sleep@state to proc1.proc@state ;
+  bind int proc1-gsleep.guard-sleep@ticket to proc1.proc@ticket ;
+
+  bind int proc1-gcrit.guard-crit@state to proc1.proc@state ;
+  bind int proc1-gcrit.guard-crit@ticket to proc1.proc@ticket ;
+  bind int proc1-gcrit.guard-crit@bakery to bake.bakery@ticket ;
+ 
+})

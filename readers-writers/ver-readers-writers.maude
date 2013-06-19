@@ -1,0 +1,161 @@
+in modules.cbabel
+in connectors.cbabel
+in readers-writers.cbabel
+
+(omod RW-EXEC is
+ inc READERS-WRITERS .
+
+ var O : Oid .
+ var IT : Interaction .
+
+ op initial : -> Configuration .
+ eq initial = topology 
+              do(writer1, w@write, none) do(writer2, w@write, none)
+              do(reader1, r@read, none) do(reader2, r@read, none) .
+
+ var N : Int .
+
+ rl [reading] : 
+    < O : READER | > done(O, r@read, IT)  => 
+    < O : READER | > do(O, r@read, none) .
+
+ rl [writing] : 
+    < O : WRITER | > done(O, w@write, IT) => 
+    < O : WRITER | > do(O, w@write, none) .
+
+ rl [buffer-write] :
+    < O : BUFFER | > do(O, buffer@write, IT) => 
+    < O : BUFFER | > done(O, buffer@write, IT) .
+
+ rl [buffer-read] :
+    < O : BUFFER | > do(O, buffer@read, IT)  => 
+    < O : BUFFER | > done(O, buffer@read, IT) .
+endom)
+
+
+(omod RW-VER is 
+ inc RW-EXEC .
+ inc MODEL-CHECKER .
+
+ subsort Configuration < State .
+
+ var C : Configuration .
+ vars O O' : Oid .
+ vars P P' : PortOutId .
+ var IT : Interaction .
+ vars N M : Int .
+
+ ops writing reading : Oid -> Prop .
+ eq C < buff : BUFFER | > send(buff, buffer@write, IT :: [O, P]) 
+    |= writing(O) = true .
+ eq C < buff : BUFFER | > send(buff, buffer@read, IT :: [O, P]) 
+    |= reading(O) = true .
+
+ ops writing reading : -> Formula .
+ eq writing = (writing(writer1) \/ writing(writer2)) .
+ eq reading = (reading(reader1) \/ reading(reader2)) .
+
+ op raceCond : -> Formula .
+ eq raceCond = ((writing(writer1) /\ writing(writer2)) \/ 
+                (writing /\ reading)) . 
+
+ ops suspendWriters suspendReaders : -> Prop .
+ ceq C < wr : WANT-READ | want-read : N > |= suspendReaders = true   if N > 0 .
+ ceq C < ww : WANT-WRITE | want-write : N > |= suspendWriters = true if N > 0 . 
+
+ op priority-readers : -> Formula .
+ eq priority-readers = 
+    [] ((reading /\ ~ suspendWriters /\ suspendReaders) -> 
+        (suspendReaders U ~ reading)) .
+
+ op there-is : Oid Oid PortId -> Prop .
+ eq C send(O', P, IT :: [O, P']) |= there-is(O, O', P) = true .
+endom)
+
+
+(omod MC-EXP is 
+  pr RW-VER .
+
+  sorts EmptyConfiguration NEConfiguration MsgConfiguration 
+        NEMsgConfiguration ObjectConfiguration NEObjectConfiguration .
+  subsorts EmptyConfiguration < MsgConfiguration ObjectConfiguration < Configuration .
+  subsorts Msg < NEMsgConfiguration < MsgConfiguration NEConfiguration .
+  subsorts Object < NEObjectConfiguration < ObjectConfiguration NEConfiguration .
+  subsort NEConfiguration < Configuration .
+
+  op none : -> EmptyConfiguration .
+  op __ : EmptyConfiguration EmptyConfiguration -> EmptyConfiguration [ditto] .
+  op __ : NEConfiguration NEConfiguration -> NEConfiguration [ditto] .
+  op __ : MsgConfiguration MsgConfiguration -> MsgConfiguration [ditto] .
+  op __ : NEMsgConfiguration NEMsgConfiguration -> NEMsgConfiguration [ditto] .
+  op __ : ObjectConfiguration ObjectConfiguration -> ObjectConfiguration [ditto] .
+  op __ : NEObjectConfiguration NEObjectConfiguration -> NEObjectConfiguration [ditto] .
+
+  sort RuleNameList .
+  subsort RuleName < RuleNameList .
+  op nil : -> RuleNameList .
+  op _->_ : RuleNameList RuleNameList -> RuleNameList [assoc id: nil] .
+
+  sort StateList .
+  subsort State < StateList .
+  op nil : -> StateList .
+  op _->_ : StateList StateList -> StateList [assoc id: nil] .
+
+  ops getPre getPost : ModelCheckResult -> TransitionList .
+  eq getPre(b:Bool) = nil .
+  eq getPost(b:Bool) = nil .
+  eq getPre(counterexample(tl0:TransitionList,tl1:TransitionList))
+        = tl0:TransitionList .
+  eq getPost(counterexample(tl0:TransitionList,tl1:TransitionList))
+        = tl1:TransitionList .
+
+  op getState  : Transition -> State .
+  op getRuleName : Transition -> RuleName .
+  eq getState({s:State,rn:RuleName}) = s:State .
+  eq getRuleName({s:State,rn:RuleName}) = rn:RuleName .
+
+  op getRuleNames : TransitionList -> RuleNameList .
+  eq getRuleNames(nil) = nil .
+  eq getRuleNames({s:State,rn:RuleName} tl:TransitionList) = 
+     rn:RuleName -> getRuleNames(tl:TransitionList) .
+
+  op length : TransitionList -> Nat .
+  eq length(nil) = 0 .
+  eq length(tr:Transition tl:TransitionList) = length(tl:TransitionList) + 1 .
+
+  sort SimplePath .
+  op spath : RuleNameList State -> SimplePath .
+  op noPath : -> SimplePath .
+  op getState : SimplePath -> State .
+  eq getState(spath(rls:RuleNameList,s:State)) = s:State .
+
+  op getPathMsg : TransitionList -> TransitionList .
+  eq getPathMsg(nil) = nil .
+  eq getPathMsg({MC:MsgConfiguration C:Configuration, rn:RuleName} 
+                t1:TransitionList) 
+     = {MC:MsgConfiguration, rn:RuleName} getPathMsg(t1:TransitionList) .
+
+  op getPath : Prop ModelCheckResult -> SimplePath .
+  op getPathx : Prop RuleNameList TransitionList -> SimplePath .
+
+  eq getPath(P:Prop, b:Bool) = noPath .
+  eq getPath(P:Prop, counterexample(tl0:TransitionList,tl1:TransitionList)) 
+      = getPathx(P:Prop, nil, (tl0:TransitionList tl1:TransitionList) ) .
+
+  eq getPathx(P:Prop, rnl:RuleNameList, nil) = noPath .
+  eq getPathx(P:Prop, rnl:RuleNameList, {s:State, rn:RuleName} tl:TransitionList)
+    = if ((s:State |= P:Prop) :: Bool)  
+       then spath(rnl:RuleNameList, s:State)
+       else getPathx(P:Prop, (rnl:RuleNameList -> rn:RuleName), tl:TransitionList)
+      fi .
+
+endom)
+
+(red getRuleNames(getPre(modelCheck(initial, [] ~ reading(reader1)))) .)
+
+eof
+
+
+(red modelCheck(initial, priority-readers) .)
+
+(red getPathMsg(getPre(modelCheck(initial, priority-readers))) .)

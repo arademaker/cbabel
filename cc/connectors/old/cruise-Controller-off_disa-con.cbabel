@@ -1,0 +1,28 @@
+(
+connector Controller-off_disa {
+  staterequired int INACTIVE;
+  staterequired int ACTIVE;
+  staterequired int CRUISING;
+  staterequired int STANDBY;
+  staterequired int controlState;
+
+  // comandos do cruise contro acionados pelo usuario
+   in port oneway  off;
+
+  // efeito produzido no cruise control
+  out port oneway  disableControl;
+
+  interaction {
+
+    off >
+      guard (controlState==CRUISING) {
+         alternative (ground);
+         before {controlState=STANDBY;} }
+    > disableControl;
+  }
+} // end Control
+
+)
+
+
+

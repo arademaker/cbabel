@@ -1,0 +1,41 @@
+(red in VER-RW : modelCheck(initial, [] ~ writers&readers) .)
+
+(red in VER-RW : modelCheck(initial, [] ~ two-writers) .)
+
+
+liveness:
+
+(red modelCheck(initial, []<> reading(reader1)) .)
+
+(red modelCheck(initial, [] ~ reading(reader1)) .)
+
+(red modelCheck(initial, <> reading(reader1)) .)
+
+finalmente: 
+
+(red modelCheck(initial, live-read(reader1)) .)
+
+(red modelCheck(initial, 
+([]<> there-is(reader1, wr, in-want-read) /\ 
+/\ []<> there-is(reader2, wr,in-want-read)
+/\ []<> there-is(writer1, ww, in-want-write)
+/\ []<> there-is(writer2, ww,in-want-write)) -> 
+ ([]<> there-is(reader1, cr,in-count-read)
+  /\ []<> there-is(reader2, cr, in-count-read)
+  /\ []<> there-is(writer1, cw, in-count-write)
+  /\ []<> there-is(writer2, cw,  in-count-write)) -> []<> reading(reader1)) .)
+
+
+deadlock:
+
+(search initial =>! C:Configuration .)
+
+outros:
+
+(search [1] initial =>* C:Configuration 
+                        send(db, db@write, IT:Interaction) .)
+
+(search [1] initial =>* C:Configuration 
+                        send(buff, buffer@read, IT1:Interaction)
+                        send(buff, buffer@read, IT2:Interaction) .)
+

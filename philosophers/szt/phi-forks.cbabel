@@ -1,0 +1,84 @@
+(
+application DINING-PHILOSOPHERS {
+ instantiate PHILOSOPHER as phi1 ;
+ instantiate PHILOSOPHER as phi2 ;
+ instantiate PHILOSOPHER as phi3 ;
+ instantiate PHILOSOPHER as phi4 ;
+ instantiate FORK as fork1 ;
+ instantiate FORK as fork2 ;
+ instantiate FORK as fork3 ;
+ instantiate FORK as fork4 ;
+
+ instantiate REQUEST-FORK as rf1 ;
+ instantiate LEAVE-FORK as lf1 ;
+ instantiate SELF-EXCLUSIVE-REQUEST-FORK as serf1 ; 
+ instantiate SELF-EXCLUSIVE-LEAVE-FORK as self1 ;
+ instantiate EXCLUSIVE-COMM-FORK as emf1 ;
+
+ instantiate REQUEST-FORK as rf2 ;
+ instantiate LEAVE-FORK as lf2 ;
+ instantiate SELF-EXCLUSIVE-REQUEST-FORK as serf2 ; 
+ instantiate SELF-EXCLUSIVE-LEAVE-FORK as self2 ;
+ instantiate EXCLUSIVE-COMM-FORK as emf2 ;
+
+ instantiate REQUEST-FORK as rf3 ;
+ instantiate LEAVE-FORK as lf3 ;
+ instantiate SELF-EXCLUSIVE-REQUEST-FORK as serf3 ; 
+ instantiate SELF-EXCLUSIVE-LEAVE-FORK as self3 ;
+ instantiate EXCLUSIVE-COMM-FORK as emf3 ;
+
+ instantiate REQUEST-FORK as rf4 ;
+ instantiate LEAVE-FORK as lf4 ;
+ instantiate SELF-EXCLUSIVE-REQUEST-FORK as serf4 ; 
+ instantiate SELF-EXCLUSIVE-LEAVE-FORK as self4 ;
+ instantiate EXCLUSIVE-COMM-FORK as emf4 ;
+
+ link serf1.serf@out to rf1.rf@in ;
+ link rf1.rf@out to emf1.emf@in1 ;
+ link self1.self@out to lf1.lf@in ;
+ link lf1.lf@out to emf1.emf@in2 ;
+ link emf1.emf@out1 to fork1.fork@request ;
+ link emf1.emf@out2 to fork1.fork@release ;
+ bind bool lf1.lf@free to rf1.free ;
+
+ link serf2.serf@out to rf2.rf@in ;
+ link rf2.rf@out to emf2.emf@in1 ;
+ link self2.self@out to lf2.lf@in ;
+ link lf2.lf@out to emf2.emf@in2 ;
+ link emf2.emf@out1 to fork2.fork@request ;
+ link emf2.emf@out2 to fork2.fork@release ;
+ bind bool lf2.lf@free to rf2.free ;
+
+ link serf3.serf@out to rf3.rf@in ;
+ link rf3.rf@out to emf3.emf@in1 ;
+ link self3.self@out to lf3.lf@in ;
+ link lf3.lf@out to emf3.emf@in2 ;
+ link emf3.emf@out1 to fork3.fork@request ;
+ link emf3.emf@out2 to fork3.fork@release ;
+ bind bool lf3.lf@free to rf3.free ;
+
+ link serf4.serf@out to rf4.rf@in ;
+ link rf4.rf@out to emf4.emf@in1 ;
+ link self4.self@out to lf4.lf@in ;
+ link lf4.lf@out to emf4.emf@in2 ;
+ link emf4.emf@out1 to fork4.fork@request ;
+ link emf4.emf@out2 to fork4.fork@release ;
+ bind bool lf4.lf@free to rf4.free ;
+
+ link phi1.get-lfork to serf1.serf@in ;
+ link phi1.get-rfork to serf4.serf@in ;
+ link phi1.rel-lfork to self1.self@in ;
+ link phi1.rel-rfork to self4.self@in ;
+
+ link phi2.get-lfork to serf2.serf@in ;
+ link phi2.get-rfork to serf1.serf@in ;
+ link phi2.rel-lfork to self2.self@in ;
+ link phi2.rel-rfork to self1.self@in ;
+
+ link phi3.get-lfork to serf3.serf@in ;
+ link phi3.get-rfork to serf2.serf@in ;
+ link phi3.rel-lfork to self3.self@in ;
+ link phi3.rel-rfork to self2.self@in ;
+}
+)
+

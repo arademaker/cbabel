@@ -1,0 +1,95 @@
+(
+connector GUARD-PUT {
+   var bool gp@vazio = TRUE ;
+   var int gp@maxitems = 2 ;
+   var int gp@nCheio = 0 ; 
+   staterequired int gp@nVazio ;
+   staterequired bool gp@cheio ;
+   in port gp@in ;
+   out port gp@out ;
+
+   interaction {
+     gp@in >
+     guard((gp@nVazio > 0) && (gp@vazio == TRUE)) {
+      before {
+       gp@nVazio = gp@nVazio - 1 ; 
+      }
+      after {
+       gp@nCheio = gp@nCheio + 1 ;
+       if (gp@nCheio == gp@maxitems) { gp@vazio = FALSE ; }
+       gp@cheio = TRUE ;
+      }
+     } > gp@out ;
+   }
+}
+)
+
+(
+connector GUARD-GET {
+   var bool gg@cheio = FALSE ;
+   var int gg@nVazio = 2 ; 
+   staterequired int gg@maxitems ;
+   staterequired int gg@nCheio ;
+   staterequired bool gg@vazio ;
+   in port gg@in ;
+   out port gg@out ;
+
+   interaction {
+     gg@in >
+     guard((gg@nCheio > 0) && (gg@cheio == TRUE)) {
+      before {
+       gg@nCheio = gg@nCheio - 1 ; 
+      }
+      after {
+       gg@nVazio = gg@nVazio + 1 ;
+       if (gg@nVazio == 0) { gg@cheio = FALSE ; }
+       gg@vazio = TRUE ;
+      }
+     } > gg@out ; 
+   }
+}
+)
+
+(
+connector MUTEX {
+ in port mutex@in1 ;
+ in port mutex@in2 ;
+ out port mutex@out1 ;
+ out port mutex@out2 ;
+
+ exclusive{ 
+  mutex@in1 > mutex@out1 ; 
+  mutex@in2 > mutex@out2 ; 
+ }
+}
+)
+
+(
+application PC-GUARDS-MUTEX {
+ instantiate BUFFER as buff ;
+ instantiate PRODUCER as prod1 ;
+ instantiate PRODUCER as prod2 ;
+ instantiate CONSUMER as cons1 ;
+ instantiate CONSUMER as cons2 ;
+ instantiate MUTEX as mutx ;
+ instantiate GUARD-GET as gget ;
+ instantiate GUARD-PUT as gput ;
+
+ link prod1.producer@put to gput.gp@in ;
+ link cons1.consumer@get to gget.gg@in ;
+ link prod2.producer@put to gput.gp@in ;
+ link cons2.consumer@get to gget.gg@in ;
+
+ link gput.gp@out to mutx.mutex@in1 ;
+ link gget.gg@out to mutx.mutex@in2 ;
+ link mutx.mutex@out1 to buff.buffer@put ;
+ link mutx.mutex@out2 to buff.buffer@get ;
+
+ bind int gget.gg@nCheio to gput.gp@nCheio ;
+ bind int gget.gg@maxitems to gput.gp@maxitems ;
+ bind bool gget.gg@vazio to gput.gp@vazio ;
+
+ bind bool gput.gp@cheio to gget.gg@cheio ;
+ bind int gput.gp@nVazio to gget.gg@nVazio ;
+}
+)

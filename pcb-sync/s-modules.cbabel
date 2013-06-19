@@ -1,0 +1,20 @@
+(
+module PRODUCER {
+ out port producer@put ;
+}
+)
+
+(
+module CONSUMER {
+ out port consumer@get ;
+}
+)
+
+(
+module BUFFER {
+ var int items = 0 ;
+ var int maxitems = 2 ;
+ in port buffer@put ;
+ in port buffer@get ;
+}
+)

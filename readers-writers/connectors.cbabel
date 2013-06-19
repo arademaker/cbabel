@@ -1,0 +1,90 @@
+(
+connector WANT-READ {
+ var int want-read = 0 ;
+
+ in port in-want-read ;
+ out port out-want-read ;
+
+ interaction {
+  in-want-read > 
+   guard( TRUE ) { 
+    before { want-read = want-read + 1 ; 
+   } } 
+  > out-want-read ;
+ }
+} 
+)
+
+(
+connector WANT-WRITE {
+ var int want-write = 0 ;
+
+ in port in-want-write ;
+ out port out-want-write ;
+
+ interaction { 
+  in-want-write > 
+   guard( TRUE ) { 
+    before { want-write = want-write + 1 ; 
+   } } 
+  > out-want-write ;
+ }
+}
+)
+
+
+(
+connector COUNT-READ {
+  var int turn = 0 ;
+  var int readers = 0 ;
+
+  staterequired int cr@want-read ;
+  staterequired int cr@want-write ;
+  staterequired bool cr@writing ;
+
+  in port in-count-read ;
+  out port out-count-read ;
+
+  interaction {
+   in-count-read > 
+   guard(cr@writing == FALSE && 
+         (cr@want-write == 0 || turn == 0)) {
+    before {
+     cr@want-read = cr@want-read - 1 ; 
+     readers = readers + 1 ;
+     if (cr@want-read == 0) { turn = 1 ; } 
+    }
+    after { readers = readers - 1 ; }
+   } > out-count-read ;
+ }
+} 
+)
+
+(
+connector COUNT-WRITE {
+ var bool writing = FALSE ;
+
+ staterequired int cw@want-read ;
+ staterequired int cw@want-write ;
+ staterequired int cw@readers ;
+ staterequired int cw@turn ;
+
+ in port in-count-write ;
+ out port out-count-write ;
+
+ interaction {
+  in-count-write > 
+  guard((cw@readers == 0 && writing == FALSE) && 
+        (cw@want-read == 0 || cw@turn == 1)) {
+   before { 
+    cw@want-write = cw@want-write - 1 ; 
+    writing = TRUE ; 
+   } 
+   after {
+    writing = FALSE ; 
+    cw@turn = 0 ;
+   }
+  } > out-count-write ;
+ }
+}
+)

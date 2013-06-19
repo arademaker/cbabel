@@ -1,0 +1,31 @@
+(
+connector MUTEX {
+ in port mutex@in1 ;
+ in port mutex@in2 ;
+ out port mutex@out1 ;
+ out port mutex@out2 ;
+
+ exclusive{ 
+  mutex@in1 > mutex@out1 ; 
+  mutex@in2 > mutex@out2 ; 
+ }
+}
+)
+
+(
+application PC-MUTEX {
+ instantiate BUFFER as buff ;
+ instantiate PRODUCER as prod1 ;
+ instantiate PRODUCER as prod2 ;
+ instantiate CONSUMER as cons1 ;
+ instantiate CONSUMER as cons2 ;
+ instantiate MUTEX as mutx ;
+
+ link prod1.producer@put to mutx.mutex@in1 ;
+ link prod2.producer@put to mutx.mutex@in1 ;
+ link mutx.mutex@out1 to buff.buffer@put ;
+ link cons1.consumer@get to mutx.mutex@in2 ;
+ link cons2.consumer@get to mutx.mutex@in2 ;
+ link mutx.mutex@out2 to buff.buffer@get ;
+}
+)

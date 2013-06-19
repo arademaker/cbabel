@@ -1,0 +1,34 @@
+(
+
+connector SpeedControl-setSp_setThrot {
+  staterequired int DISABLED;      //speed control states
+  staterequired int ENABLED;
+  staterequired int state;         //initial state
+  staterequired int setSpeed;      //target cruise control speed
+
+  staterequired int speed;         // vem do modulo engine
+
+  in port oneway  setSpeed;
+
+  out port oneway setThrottle;     // !!!!! jogada com statereq
+
+  interaction {
+    setSpeed >
+       guard (state==ENABLED) {
+	   before {
+             error = setSpeed - speed / 6.0;
+             steady = setSpeed / 12.0;
+             
+             speed = steady+error; // ja jogo o valor no modulo...
+         }
+	   alternative (ground);
+       }
+    > setThrottle; //simplified feed back control
+  }
+}
+
+)
+
+
+
+

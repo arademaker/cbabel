@@ -1,0 +1,32 @@
+
+Versao 2.1:
+
+1. a descricao do count-quarter para remover 4 quarters antes de
+   enviar a msg de change parece um pouco estranha. mas segue a
+   semantica de que o before e sempre executado quando existe a porta
+   alternative declarada.
+
+2. ainda nao posso usar parentesis para paralelo (|) no contrato. Alem
+   disso o parentesis das expressoes nao devia ser necesario na
+   assinatura.
+
+3. no caso assincrono a busca por deadlock nao pode ser: 
+   (search initial =>! C:Configuration .) 
+
+4. performance: falhas de rescritas no search por estados finais a
+   partir de 1 msg add-$ e uma msg buy-c representam 50% das reescritas!!
+
+
+Versao 2.3:
+
+1. expressoes com () sao suportadas
+
+2. verificacoes com links = equacoes permaneceram com iguais
+   resultados.
+
+3. faz sentido nesta aplicacao procurar por deadlock? Uma busca por
+   configuracoes finais =>! com mensagens a partir do estado inicial
+   retorna os casos onde as vendas nao puderam ser efetivadas por
+   falta de recursos (dinheiro ou itens) na maquina. Ou seja, os
+   deadlock, observados, fazem parte da especificacao.
+

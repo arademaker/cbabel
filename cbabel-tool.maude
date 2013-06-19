@@ -1,0 +1,368 @@
+in my-fm
+in model-checker
+in cbabel-signature
+in cbabel-unit
+
+fmod CBABEL-SIGN is
+ inc FULL-MAUDE-SIGN .
+ inc CBABEL-SIGNATURE .
+
+ subsort eComponentDecl < Input .
+endfm
+
+
+fmod EXT-META-FULL-MAUDE-SIGN is
+ pr META-FULL-MAUDE-SIGN .
+ pr UNIT .
+
+ op CB-GRAMMAR : -> FModule .
+ eq CB-GRAMMAR =
+    addImports((including 'CBABEL-SIGN .), GRAMMAR) .
+endfm
+
+in initial-db.maude
+in cbabel-converter.maude
+
+
+fmod CBABEL-EVALUATION is
+ pr EVALUATION .
+ pr CBABEL-CONVERTER .
+
+ var MN : ModName .
+ vars U U' U'' U''' : Unit .
+ var UL : List<Unit> .
+ var VDS : Set<EOpDecl> .
+ vars DB DB' : Database .
+ var EIL : List<EImport> .
+
+ op evalCbUnit : Unit Database -> Database .
+
+ ceq evalCbUnit(U, DB) = evalUnit(U', none, DB) 
+  if  U : ComponentDecl /\ 
+     MN := getName(U) /\
+     U' := cb2omod(setName(emptyStrOModule, MN), U) .
+
+endfm
+
+
+fmod CBABEL-DECL-PARSING is 
+ pr UNIT-DECL-PARSING .
+ pr EXT-META-FULL-MAUDE-SIGN .
+ pr CBABEL-UNIT .
+
+ sort TupleGuard .
+ op noId : -> Id .
+ op <_;_;_;_> : Exp StmtSeq StmtSeq Id -> TupleGuard .
+ op emptyGuard : -> TupleGuard .
+ eq emptyGuard = < TRUE ; skip ; skip ; noId > .
+
+ sort Tuple<Id|Id> .
+ op <_;_> : Id Id -> Tuple<Id|Id> .
+
+ op parseId : Term -> Id .
+ op parseExp : Term -> Exp .
+ op parseStmt : Term -> StmtSeq .
+ op parseVarType : Term -> VarType .
+ op parseGuard : Term TupleGuard -> TupleGuard .
+ op splitId : Term -> Tuple<Id|Id> .
+
+ vars T1 T2 T3 T4 T T' T'' : Term .
+ vars PU U : Unit .
+ var C : Constant .
+ vars VDS : Set<EOpDecl> .
+ vars SS1 SS2 : StmtSeq .
+ var E : Exp .
+ vars I I1 I2 I3 I4 : Id .
+ vars GT GT' : TupleGuard .
+ var S : String .
+ var N : Nat .
+ vars IS IS' : IdSet .
+ var ITS : InteractionSet .
+ var Q : Qid .
+ var RP : ResultPair? .
+
+--- the function splitIds is used to convert bind's and link's
+--- declarations: bind x.y to z.t
+--- 
+--- neste versao, nenhum tratamento de erro e feito, ou seja,
+--- assume-se que as descricoes cbabel dadas como entrada estao
+--- corretas e bem formatadas.
+
+ ceq splitId(T) = < ID(qid(substr(S, 0, N))) ; 
+                    ID(qid(substr(S, s(N), length(S)))) >
+  if ID(Q) := parseId(T) /\ S := string(Q) /\ N := find(S, ".", 0) .
+
+ ceq parseId('cbtoken[C]) = 
+    if RP :: ResultPair then 
+      VL(downTerm(getTerm(RP), error)) 
+    else 
+      ID(downQid(C))
+    fi
+  if Q := downQid(C) /\ 
+     RP := metaParse(CB-GRAMMAR, Q, anyType) .
+
+ eq parseVarType('int.eVarType) = Integer .
+ eq parseVarType('bool.eVarType) = Boolean .
+
+ eq parseExp('TRUE.eBoolean) = (TRUE).Exp .
+ eq parseExp('FALSE.eBoolean) = (FALSE).Exp .
+ eq parseExp('cbtoken[C]) = parseId('cbtoken[C]) .
+ op error : -> [Int] .
+
+ eq parseExp('_<_[T1, T2])  = less-than(parseExp(T1), parseExp(T2)) .
+ eq parseExp('_>_[T1, T2])  = greater-than(parseExp(T1), parseExp(T2)) .
+ eq parseExp('_-_[T1, T2])  = minus(parseExp(T1), parseExp(T2)) .
+ eq parseExp('_+_[T1, T2])  = plus(parseExp(T1), parseExp(T2)) .
+ eq parseExp('_==_[T1, T2]) = equal(parseExp(T1), parseExp(T2)) .
+ eq parseExp('_!=_[T1, T2]) = not-equal(parseExp(T1), parseExp(T2)) .
+ eq parseExp('_&&_[T1, T2]) = land(parseExp(T1), parseExp(T2)) .
+ eq parseExp('_||_[T1, T2]) = lor(parseExp(T1), parseExp(T2)) .
+ eq parseExp('`(_`)[T]) = (parseExp(T)).Exp .
+
+ eq parseStmt('skip.eStmtSeq) = skip .
+ eq parseStmt('_=_;[T1, T2]) = assign(parseId(T1), parseExp(T2)) .
+
+ eq parseStmt('if`(_`)`{_`}[T1, T2]) 
+    = if-then-else(parseExp(T1), parseStmt(T2), skip) .
+ eq parseStmt('if`(_`)`{_`}else`{_`}[T1, T2, T3]) 
+    = if-then-else(parseExp(T1), parseStmt(T2), parseStmt(T3)) .
+ eq parseStmt('__[T1, T2]) = stmt-seq(parseStmt(T1), parseStmt(T2)) .
+
+
+ ceq parseGuard('__[T1, T2], GT) = parseGuard(T2, GT')
+  if GT' := parseGuard(T1, GT) .
+ eq parseGuard('before`{_`}[T], < E ; SS1 ; SS2 ; I >) 
+    = < E ; parseStmt(T) ; SS2 ; I > .
+ eq parseGuard('after`{_`}[T], < E ; SS1 ; SS2 ; I >)   
+    = < E ; SS1 ; parseStmt(T) ; I > .
+ eq parseGuard('alternative`(_`);[T], < E ; SS1 ; SS2 ; I >) 
+    = < E ; SS1 ; SS2 ; parseId(T) > .
+ eq parseGuard('guard`(_`)[T], < E ; SS1 ; SS2 ; I >) 
+    = < parseExp(T) ; SS1 ; SS2 ; I > .
+ eq parseGuard('guard`(_`)`{_`}[T, T1], < E ; SS1 ; SS2 ; I >) 
+    = parseGuard(T1, < parseExp(T) ; SS1 ; SS2 ; I >) .
+
+
+ eq parseDecl('in`port_;[T], PU, U, VDS)
+    = < addPort(in(parseId(T), sinc), PU) ; U ; VDS > .
+ eq parseDecl('out`port_;[T], PU, U, VDS)
+    = < addPort(out(parseId(T), sinc), PU) ; U ; VDS > .
+ eq parseDecl('in`port`oneway_;[T], PU, U, VDS)
+    = < addPort(in(parseId(T), assinc), PU) ; U ; VDS > .
+ eq parseDecl('out`port`oneway_;[T], PU, U, VDS)
+    = < addPort(out(parseId(T), assinc), PU) ; U ; VDS > .
+
+ eq parseDecl('var__;[T1, T2], PU, U, VDS) 
+    = < addVar(local(parseId(T2), parseVarType(T1)), PU) ; U ; VDS > .
+ eq parseDecl('staterequired__;[T1, T2], PU, U, VDS) 
+    = < addVar(required(parseId(T2), parseVarType(T1)), PU) ; U ; VDS > .
+ eq parseDecl('var__=_;[T1, T2, T3], PU, U, VDS)
+    = < addVar(local(parseId(T2), parseVarType(T1), parseExp(T3)), PU) ; 
+        U ; VDS > .
+
+---------------------------------------------------------------------
+--- the following equations define de parsing of contracts that could
+--- be defined in connector modules.
+---------------------------------------------------------------------
+ op parseIdSet : Term -> IdSet .
+ op parseInterSet : Term InteractionSet -> InteractionSet .
+ op parseInter : Term -> Interaction .
+
+ eq parseIdSet('_|_[T, T']) = parseId(T) ; parseIdSet(T') .
+ eq parseIdSet(T) = parseId(T) [owise] .
+
+ ceq parseInterSet('__[T, T'], ITS) 
+     = parseInterSet(T', seq(parseIdSet(T1), parseIdSet(T2)) ITS) 
+  if '_>_;[T1, T2] := T .
+
+ eq parseInterSet('_>_;[T, T'], ITS) 
+    = seq(parseIdSet(T), parseIdSet(T')) ITS [owise] .
+
+ eq parseDecl('interaction`{_`}[T], PU, U, VDS) 
+    = < addContract(interaction(parseInter(T)), PU) ; U ; VDS > .
+
+ eq parseInter('_>_;[T, T']) = seq(parseIdSet(T), parseIdSet(T')) .
+
+ ceq parseInter('_>_>_;[T1, T2, T3]) 
+     = if I == noId then 
+        guard(parseId(T1), parseId(T3), E, SS1, SS2)
+       else 
+        guard(parseId(T1), parseId(T3), I, E, SS1, SS2)
+       fi 
+  if < E ; SS1 ; SS2 ; I > := parseGuard(T2, emptyGuard) .
+
+ ceq parseDecl('exclusive`{_`}[T], PU, U, VDS)
+     = < addContract(exclusive(ITS), PU) ; U ; VDS > 
+  if ITS := parseInterSet(T, mt-interaction) .
+
+
+---------------------------------------------------------------------
+--- the following equations define de parsing of instances, links and
+--- binds of application modules.
+---------------------------------------------------------------------
+
+ eq parseDecl('instantiate_as_;[T1, T2], PU, U, VDS) 
+    = < addInstance(instantiate(parseId(T2), parseId(T1)), PU) ; U ; VDS > .
+
+ ceq parseDecl('link_to_;[T1, T2], PU, U, VDS)
+     = < addLink(link(I1, I2, I3, I4), PU) ; U ; VDS > 
+  if < I1 ; I2 > := splitId(T1) /\ 
+     < I3 ; I4 > := splitId(T2) .
+
+ ceq parseDecl('bind__to_;[T3, T1, T2], PU, U, VDS) 
+     = < addBind(bind(I1, I2, I3, I4, parseVarType(T3)), PU) ; U ; VDS >  
+  if < I1 ; I2 > := splitId(T1) /\ 
+     < I3 ; I4 > := splitId(T2) .
+endfm
+
+
+fmod CBABEL-PROCESSING is
+ pr UNIT-PROCESSING .
+ pr CBABEL-DECL-PARSING .
+ pr CBABEL-EVALUATION .
+
+ var PDR : ParseDeclResult .
+ var VDS : Set<EOpDecl> .
+ vars PU PU' U U' : Unit .
+ vars T T' T'' T''' : Term .
+ vars QI F : Qid .
+ var  QIL : QidList .
+ var  TL : TermList .
+ var  DB : Database .
+
+--- procUnit3 do FM chama procUnit4 com duas copias do modulo, uma
+--- para conter declaracoes com bubbles e outra sem, e um conjunto de
+--- variaveis. Embora a procCbUnit4 seja declarada apenas com uma unit
+--- como parametro pode ser conveniente no futuro usar o parametro de
+--- conj de variaveis da procUnit4 original para renomear as variaveis
+--- dos modulos. No entanto, em cbabel nao ha necessidade de lidar com
+--- bubbles 
+
+*** op procCbUnit3 : Term Term Term Unit Database -> Database .
+ op procCbUnit4 : Term Term Unit Database -> Database .
+ 
+ eq procUnit2(T, 'module_`{_`}[T', T''], DB) 
+   = procUnit3(T, T', T'', emptyModule, DB) .
+ eq procUnit2(T, 'connector_`{_`}[T', T''], DB) 
+   = procUnit3(T, T', T'', emptyConnector, DB) .
+ eq procUnit2(T, 'application_`{_`}[T', T''], DB) 
+   = procUnit3(T, T', T'', emptyApplication, DB) .
+
+***  ceq procCbUnit3(T, 'cbtoken[T'], T'', U, DB)
+***     = procCbUnit4(T, T'', setName(U, QI), DB) 
+***   if QI := downQid(T') .
+
+ ceq procUnit3(T, 'cbtoken[T'], T'', U, DB)
+     = procCbUnit4(T, T'', setName(U, QI), DB) 
+  if QI := downQid(T') .
+
+ ceq procCbUnit4(T, '__[T', T''], PU, DB)
+    = procCbUnit4(T, T'', preUnit(PDR), DB) 
+  if PDR := parseDecl(T', PU, PU, none) .
+
+ ceq procCbUnit4(T, F[TL], PU, DB)
+    = evalCbUnit(preUnit(PDR), insertTermUnit(getName(PU), T, DB))
+  if F =/= '__  /\ 
+     PDR := parseDecl(F[TL], PU, PU, none) .
+endfm
+
+
+
+
+
+mod EXT-DATABASE-HANDLING is
+ inc DATABASE-HANDLING .
+ inc INITIAL-DB .
+ pr CBABEL-PROCESSING .
+
+ var  F : Qid .
+ vars QIL QIL' QIL'' : QidList .
+ vars T T' T'' T''' : Term .
+ var TL : TermList .
+ vars DB DB' : Database .
+ var MN : ModName .
+ var Atts : AttributeSet .
+ var X@Database : DatabaseClass .
+ var O : Oid .
+
+ eq parseModName('cbtoken[T]) = downQid(T) .
+
+ crl [module] :
+   < O : X@Database | db : DB,  input : (F[T, T']), 
+         output : nil, default : MN, Atts >
+   => 
+   < O : X@Database | db : procUnit(F[T, T'], DB), input : nilTermList, 
+         output : 
+          ('Introduced 'CBabel 'Component modNameToQid(parseModName(T)) '\n),
+         default : parseModName(T), Atts > 
+   if (F == 'module_`{_`}) or-else 
+      (F == 'connector_`{_`}) or-else 
+      (F == 'application_`{_`}) . 
+endm
+
+
+mod CBABEL-TOOL is
+  pr EXT-DATABASE-HANDLING .
+  pr EXT-META-FULL-MAUDE-SIGN .
+  pr PREDEF-UNITS .
+  inc LOOP-MODE .
+
+  subsort Object < State .
+
+  op o : -> Oid .
+  op init : -> System .
+
+  var  Atts : AttributeSet .
+  var  X@Database : DatabaseClass .
+  var  O : Oid .
+  var  DB : Database .
+  var  MN : ModName .
+  vars QIL QIL' QIL'' : QidList .
+  var  TL : TermList .
+  var  N : Nat .
+  vars RP RP' : ResultPair .
+
+
+  rl [init] : init => 
+    [nil,
+     < o : Database | db : initial-db, input : nilTermList, output : nil, 
+                      default : 'CONVERSION >,
+     ('\n '\t '\s '\s '\s '\s '\s '\s '\s 
+      'Cbabel 'Tool '2.4 '\s '`( 'February '14th '`, '\s '2005 '`) '\n)] .
+
+  crl [in] :
+    [QIL, < O : X@Database | input : nilTermList, Atts >, QIL'] => 
+    [nil, < O : X@Database | 
+                input : getTerm(metaParse(CB-GRAMMAR, QIL, 'Input)), Atts >, 
+     QIL'] 
+   if QIL =/= nil 
+      /\ metaParse(CB-GRAMMAR, QIL, 'Input) : ResultPair .
+
+
+  crl [in] :
+    [QIL, < O : X@Database | Atts, output : nil >, QIL'] => 
+    [nil, 
+          < O : X@Database | Atts, 
+           output : ('\r 'Warning: 
+                     printSyntaxError(metaParse(CB-GRAMMAR, QIL, 'Input), QIL) 
+                     '\n
+                     '\r 'Error: '\o 'No 'parse 'for 'input. '\n) >, 
+     QIL'] 
+    if QIL =/= nil 
+       /\ not metaParse(CB-GRAMMAR, QIL, 'Input) :: ResultPair .
+
+
+  crl [out] :
+    [QIL, < O : X@Database | output : QIL', Atts >, QIL'']
+    => 
+    [QIL, < O : X@Database | output : nil, Atts >, (QIL' QIL'')] 
+   if QIL' =/= nil .
+endm
+
+loop init .
+
+in cbabel-configuration.maude 
+
+trace exclude CBABEL-TOOL .
+set show loop stats on .
+set show loop timing on .

@@ -1,0 +1,42 @@
+*** round tripe dos links pelo postman?! substitui equacoes dos links!
+
+ sorts Link LinkList .
+ subsort Link < LinkList .
+
+ op <_,_,_,_> : Oid PortOut Oid PortIn -> Link [ctor] . 
+
+ ops src-o dest-o : Link -> Oid .
+ ops src-p dest-p : Link -> PortId .
+
+ eq  src-o(< O1 , P1 , O2 , P2 >) = O1 .
+ eq dest-o(< O1 , P1 , O2 , P2 >) = O2 .
+ eq  src-p(< O1 , P1 , O2 , P2 >) = P1 .
+ eq dest-p(< O1 , P1 , O2 , P2 >) = P2 .
+
+ op nil : -> LinkList [ctor] .
+ op _;_ : LinkList LinkList -> ListList [assoc id: nil] .
+
+ op pm : -> Oid .
+ op Postman : -> Cid .
+ op msgs : _ : Configuration -> Attribute .
+ op state : _ : Int -> Attribute .
+ op links : _ : LinkList -> Attribute .
+
+ rl < pm : Postman | msgs : C , state : 0 > send(O, PO, IT) => 
+    < pm : Postman | msgs : C send(O, PO, IT) , state : 1 > .
+
+ crl < pm : Postman | msgs : C send(O,P,IT) , links : L ; LS , state : 1 > => 
+     < pm : Postman | msgs : C , links : LS ; L , state : 0 > 
+     send(dest-o(L),dest-p(L),IT) 
+  if O == src-o(L) /\ src-p(L) .
+
+ rl < pm : Postman | msgs : C , links : L ; LS , state : 1 > => 
+    < pm : Postman | links : LS ; L > .
+
+eq route = < cons1 , consumer@get , mutx , mutex@in1 > ;
+           < prod1 , producer@put , mutx , mutex@in2 > ;
+ 	   < mutx , mutex@out1 , buff , buffer@get > ;
+	   < mutx , mutex@out2 , buff , buffer@put > .
+
+eq initial = 
+   topology < pm : Postman | msg : none , state : 0 , links : route > .

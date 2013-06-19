@@ -1,0 +1,150 @@
+(
+module BUY-APPLE {
+ out port oneway buy-apple ;
+}
+)
+
+(
+module BUY-CAKE {
+ out port oneway buy-cake ;
+}
+)
+
+(
+module ADD-DOLLAR {
+ out port oneway add-$ ;
+}
+)
+
+(
+module ADD-QUARTER {
+ out port oneway add-q ;
+}
+)
+
+(
+module SLOT {
+ var int slot@apples ;
+ var int slot@cakes ;
+ in port oneway put-apple ;
+ in port oneway put-cake ;
+}
+)
+
+(
+connector COUNT-DOLLAR {
+ var int dollars = 0 ;
+ in port oneway inc-$ ;
+
+ interaction {
+  inc-$ > guard(TRUE) {
+           before { 
+            dollars = dollars + 1 ;
+           }
+          } 
+  > ground ;
+ }
+}
+)
+
+(
+connector COUNT-QUARTER {
+ var int quarters = 0 ;
+ in port oneway inc-q ;
+ out port oneway change ;
+
+ interaction {
+  inc-q > guard(quarters == 3) {
+           alternative ( ground ) ; 
+           before { 
+            quarters = quarters + 1 ;
+            if (quarters == 4) { quarters = quarters - 4 ; } 
+           }
+          } 
+  > change ;
+ }
+}
+)
+
+
+(
+connector SOLD-APPLE {
+ var int apples = 5 ;
+ staterequired int sa@dollars ;
+ in port oneway ack-apple ;
+ out port oneway give-apple ;
+
+ interaction {
+  ack-apple > guard((apples > 0) && (sa@dollars > 0)) {
+               before { 
+                sa@dollars = sa@dollars - 1 ;
+                apples = apples - 1 ;
+               }
+              } 
+  > give-apple ;
+ }
+}
+)
+
+(
+connector SOLD-CAKE {
+ var int cakes  = 5 ;
+ staterequired int sc@dollars ;
+ in port oneway ack-cake ;
+ out port oneway give-cake ;
+
+ interaction {
+  ack-cake > guard((cakes > 0) && (sc@dollars > 0)) {
+              before { 
+               sc@dollars = sc@dollars - 1 ;
+               cakes = cakes - 1 ;
+              }
+             } 
+  > give-cake ;
+ }
+}
+)
+
+
+(
+connector SPLIT { 
+  in port oneway give-apple-in ;
+  out port oneway give-apple-out ;
+  out port oneway return-q ;
+
+  interaction {
+   give-apple-in > give-apple-out | return-q ;
+  }
+}
+)
+
+
+(
+application VENDING-MACHINE {
+ instantiate BUY-APPLE as ba ;
+ instantiate BUY-CAKE as bc ;
+ instantiate ADD-DOLLAR as ad ;
+ instantiate ADD-QUARTER as aq ;
+ instantiate SOLD-CAKE as sc ;
+ instantiate SOLD-APPLE as sa ;
+ instantiate COUNT-DOLLAR as cd ;
+ instantiate COUNT-QUARTER as cq ;
+ instantiate SLOT as slot ;
+ instantiate SPLIT as split ;
+
+ link ba.buy-apple to sa.ack-apple ;
+ link bc.buy-cake to sc.ack-cake ;
+
+ link aq.add-q to cq.inc-q ;
+ link ad.add-$ to cd.inc-$ ;
+ link cq.change to cd.inc-$ ;
+
+ link sa.give-apple to split.give-apple-in ;
+ link split.give-apple-out to slot.put-apple ;
+ link split.return-q to cq.inc-q ;
+ link sc.give-cake to slot.put-cake ;
+
+ bind int sa.sa@dollars to cd.dollars ;
+ bind int sc.sc@dollars to cd.dollars ;
+}
+)

@@ -1,0 +1,23 @@
+(
+/*
+    Sends the signal to the car engine and
+    to the cruise control
+*/
+
+connector splitter-accelerator {
+
+  // controles normais de um carro padrao
+
+  in port oneway  accelerator-in;
+
+  out port oneway  accelerator-out1;
+
+  out port oneway  accelerator-out2;
+
+  interaction {
+
+     accelerator-in > (accelerator-out1 || accelerator-out2);
+  }
+} // splitter
+
+)

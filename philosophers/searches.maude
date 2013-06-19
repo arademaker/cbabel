@@ -1,0 +1,17 @@
+*** exclusao mutua
+
+(red modelCheck(initial, [] ~ (eating(phi1) /\ eating(phi2)) ) .)
+
+*** deadlock?
+(search initial =>! C:Configuration .)
+
+*** phi1 come?
+
+(red modelCheck(initial, [] ~ eating(phi1)) .)
+
+--- contra-exemplo
+
+(search [1] initial =>* 
+            send(food, food@eat, IT:Interaction :: [phi1, phi@eat]) 
+            C:Configuration .)
+

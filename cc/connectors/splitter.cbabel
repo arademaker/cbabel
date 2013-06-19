@@ -1,0 +1,63 @@
+(
+connector splitter {
+  in port oneway spt@in ; 
+  out port oneway spt@out1 ;
+  out port oneway spt@out2 ;
+
+  interaction {
+     spt@in > spt@out1 | spt@out2 ;
+  }
+} 
+)
+
+eof
+
+
+(
+connector splitter-accelerator {
+  in port oneway  accelerator-in ; 
+  out port oneway  accelerator-out1 ;
+  out port oneway  accelerator-out2 ;
+
+  interaction {
+     accelerator-in > accelerator-out1 | accelerator-out2 ;
+  }
+} 
+)
+
+(
+connector splitter-engineOn {
+  in port oneway  engineOn-in ;
+  out port oneway  engineOn-out1 ;
+  out port oneway  engineOn-out2 ;
+
+  interaction {
+      engineOn-in > engineOn-out1 | engineOn-out2 ;
+  }
+}
+)
+
+(
+connector splitter-engineOff {
+  in port oneway engineOff-in ;
+  out port oneway engineOff-out1 ;
+  out port oneway engineOff-out2 ;
+
+  interaction {
+     engineOff-in > engineOff-out1 | engineOff-out2 ;
+  }
+}
+)
+
+(
+connector splitter-brake {
+  in port oneway  brake-in ;
+  out port oneway  brake-out1 ;
+  out port oneway  brake-out2 ;
+
+  interaction {
+     brake-in > brake-out1 | brake-out2 ;
+  }
+}
+)
+

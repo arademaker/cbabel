@@ -1,0 +1,588 @@
+fmod CBABEL-CONVERTER-AUX is
+ pr CBABEL-UNIT .
+ pr CONVERSION .
+
+ vars I I' : Id .
+ var Q : Qid .
+ var S : String .
+ var TL : TermList .
+ var N : Nat .
+ var MN : ModName .
+
+ op makeVar : Qid Nat -> Variable .
+ eq makeVar(Q, N) = qid("V#" + string(N, 10) + ":" + string(Q)) .
+
+ op strId : Id -> String .  
+ eq strId(ID(Q)) = string(Q) .
+
+ op qidId : Id -> Qid .
+ eq qidId(ID(Q)) = Q .
+
+ ops itv ov : -> Variable .
+ eq itv = 'IT:Interaction .
+ eq ov  = 'O:Oid .
+
+ op consId : Id String -> Constant .
+ eq consId(I, S) = qid(strId(I) + "." + S) .
+
+ op  varId : Id String -> Variable .
+ eq  varId(I, S) = qid(strId(I) + ":" + S) .
+
+ ops portInC portOutC classC varNameC : Id -> Constant .
+ eq  portInC(I) = consId(I, "PortInId") .
+ eq portOutC(I) = consId(I, "PortOutId") .
+ eq   classC(I) = consId(I, strId(I)) .
+
+ op classC : ModName -> Constant .
+ eq classC(MN) = qid(string(MN) + "." + string(MN)) .
+
+ op objt : ModName -> Term .
+ eq objt(MN) = '<_:_|`>[ov, classC(MN)] .
+
+ op objt : ModName TermList -> Term .
+ eq objt(MN, TL) =  '<_:_|_>[ov, classC(MN), TL] .
+
+ op objt : Id Id TermList -> Term .
+ eq objt(I, I', TL) = '<_:_|_>[consId(I, "Oid"), classC(I'), TL] .
+
+ op labelRule : ModName String Id -> Attr .
+ eq labelRule(MN, S, I) = label(qid(string(MN) + "-" + S + "-" + strId(I))) .
+
+ op labelRule : Id String Id -> Attr .
+ eq labelRule(I, S, I') = label(qid(strId(I) + "-" + S + "-" + strId(I'))) .
+
+ op labelRule : ModName String -> Attr .
+ eq labelRule(MN, S) = label(qid(string(MN) + "-" + S)) .
+
+
+ op value? : Value -> Constant .
+ eq value?( TRUE  ) = 'true.Bool .
+ eq value?( FALSE ) = 'false.Bool .
+ eq value?( VL(I:Int) ) = upTerm(I:Int) .
+
+ op defaultValue : VarType -> Constant .
+ eq defaultValue(Integer) = value?(VL(0)) .
+ eq defaultValue(Boolean) = value?(TRUE) .
+
+ op type? : VarType -> Qid .
+ eq type?( Boolean ) = 'Bool .
+ eq type?( Integer ) = 'Int .
+endfm
+
+
+fmod CBABEL-STMT-CONVERTER is 
+ pr CBABEL-CONVERTER-AUX .
+
+ op st2t : StmtSeq -> Term .
+ op st2t : Term StmtSeq -> Term .
+ op  e2t : Exp -> Term .
+ op  e2t : Term Exp -> Term .
+
+ var T : Term . 
+ var I : Id . 
+ var VL : Value .
+ vars SS1 SS2 SS : StmtSeq .
+ vars E E1 E2 : Exp .
+
+ eq st2t(SS) = st2t('OBJ:Object, SS) . 
+
+ eq st2t(T, skip) = T .
+
+ eq st2t(T, stmt-seq(SS1, SS2)) = 
+    st2t(st2t(T, SS1), SS2) .
+
+ eq st2t(T, assign(I, E)) =
+    qid("set-" + strId(I))[T, e2t(T, E)] .
+
+ eq st2t(T, if-then-else(E, SS1, SS2)) =
+    'if_then_else_fi[e2t(T, E), st2t(T, SS1), st2t(T, SS2)] .
+
+ eq e2t(E) = e2t('OBJ:Object, E) .
+
+ eq e2t(T, equal(E, E))   = 'true.Bool .
+ eq e2t(T, equal(E1, E2)) =  '_==_[e2t(T, E1), e2t(T, E2)] .
+ eq e2t(T, not-equal(E1, E2)) =  '_=/=_[e2t(T, E1), e2t(T, E2)] .
+ eq e2t(T, less-than(E1, E2))    = '_<_[e2t(T, E1), e2t(T, E2)] .
+ eq e2t(T, greater-than(E1, E2)) = '_>_[e2t(T, E1), e2t(T, E2)] .
+ eq e2t(T, plus(E1, E2))    = '_+_[e2t(T, E1), e2t(T, E2)] .
+ eq e2t(T, minus(E1, E2))    = '_-_[e2t(T, E1), e2t(T, E2)] .
+ eq e2t(T, land(E1, E2)) = '_and_[e2t(T, E1), e2t(T, E2)] .
+ eq e2t(T, lor(E1, E2))  =  '_or_[e2t(T, E1), e2t(T, E2)] .
+
+ eq e2t(T, VL) = value?(VL) .
+ eq e2t(T, I) = qid("get-" + strId(I))[T] .
+endfm
+
+
+fmod CBABEL-CONVERTER is
+ pr CBABEL-STMT-CONVERTER .
+
+ vars I I' I'' I1 I2 I3 : Id .
+ vars IDS IDS' : IdSet .
+ vars OId1 PId1 OId2 PId2 : Id .
+ var S : String .
+ vars Q Q' QA : Qid .
+ var TL : TermList .
+ vars T T' T1 T2 T3 T4 : Term .
+ var VT : VarType .
+ var VL : Value .
+ vars U U' U'' : Unit .
+ var VDS : VariableDeclSet .
+ var VD : VariableDecl .
+ var PT : PortType .
+ var PDS : PortDeclSet .
+ var PD : PortDecl .
+ var RLS : Set<ERule> .
+ var EQS : Set<EEquation> .
+ var CTD : Contract .
+ *** vars M M' : IMap .
+ var E : Exp .
+ vars SS1 SS2 : StmtSeq .
+ var CLD : ClassDecl .
+ var AD : AttrDecl .
+ var ADS : AttrDeclSet .
+ vars CDS CDS' CDS'' CDS1 CDS2 CDS3 : ConfigDeclSet .
+ var MN : ModName .
+
+
+------------------------------------------------------------------------------
+--- Variable's Semantics
+------------------------------------------------------------------------------
+ op getName : VariableDecl -> Id .
+ eq getName(local(I, VT)) = I .
+ eq getName(local(I, VT, E)) = I .
+ eq getName(required(I, VT)) = I .
+
+ op getType : VariableDecl -> VarType .
+ eq getType(local(I, VT)) = VT .
+ eq getType(local(I, VT, E)) = VT .
+ eq getType(required(I, VT)) = VT .
+
+ op varOpGetName : VariableDecl -> Qid .
+ eq varOpGetName(VD) = qid("get-" + strId(getName(VD))) .
+
+ op varOpSetName : VariableDecl -> Qid .
+ eq varOpSetName(VD) = qid("set-" + strId(getName(VD))) .
+
+ op varOpType : VariableDecl -> Qid .
+ eq varOpType(VD) = type?(getType(VD)) .
+
+ op  vars2omod : Unit VariableDeclSet -> Unit .
+
+ eq vars2omod(U, VD VDS) =
+    vars2omod(
+     prepGetSetEq(
+      addOps(
+       (op varOpGetName(VD) : 'Object -> varOpType(VD) [none] .)
+       (op varOpSetName(VD) : 'Object varOpType(VD) -> 'Object [none] .)
+       , U)
+      , VD)
+     , VDS) .
+
+ eq vars2omod(U, mt-var) = U .
+
+ op  prepGetSetEq : Unit VariableDecl -> Unit . 
+
+ ceq prepGetSetEq(U, required(I, VT)) = 
+     addEqs(
+      (eq varOpGetName(VD)[objt(MN, QA['st[Q, 'S:Status]])] = Q [none] .)
+      (eq varOpSetName(VD)[objt(MN, QA['st[Q, 'S:Status]]), Q'] 
+          = objt(MN, QA['st[Q', 'changed.Status]]) [none] .)
+      , U) 
+  if VD := required(I, VT) /\ 
+     MN := getName(U) /\ 
+     Q  := qid("V:" + string(type?(VT))) /\
+     Q' := qid("V':" + string(type?(VT))) /\
+     QA := qid(strId(I) + " :_") .
+
+ ceq prepGetSetEq(U, VD) = 
+     addEqs(
+      (eq varOpGetName(VD)[objt(MN, QA[Q])] = Q [none] .)
+      (eq varOpSetName(VD)[objt(MN, QA[Q]), Q'] = objt(MN, QA[Q']) [none] .)
+      , U)
+  if MN := getName(U) /\
+     Q  := qid("V:" + string(type?(getType(VD))))  /\ 
+     Q' := qid("V':" + string(type?(getType(VD)))) /\
+     QA := qid(strId(getName(VD)) + " :_") [owise] .
+
+
+------------------------------------------------------------------------------
+--- Port's Semantics
+
+--- we declare two functions to convert port declarations. The
+--- ports2omod1 convert ports declarations in module and ports2omod2
+--- convert ports declarations in connectors. The difference is that
+--- in modules each port declaration generate a set of rules, but in
+--- connectors the port declaration do not generate rules. 
+------------------------------------------------------------------------------
+ op ports2omod1 : Unit PortDeclSet -> Unit . 
+ op ports2omod2 : Unit PortDeclSet -> Unit . 
+
+ ceq ports2omod1(U, in(I, PT) PDS) 
+     = ports2omod1(addRls(RLS, U'), PDS) 
+  if U'  := addOps((op qidId(I) : nil -> 'PortInId [ctor] .), U) /\ 
+     RLS := prepPortRls(getName(U), in(I, PT)) .
+
+ ceq ports2omod1(U, out(I, PT) PDS) 
+     = ports2omod1(addRls(RLS, U'), PDS) 
+  if U'  := addOps((op qidId(I) : nil -> 'PortOutId [ctor] .), U) /\ 
+     RLS := prepPortRls(getName(U), out(I, PT)) .
+
+ ceq ports2omod2(U, in(I, PT) PDS) = ports2omod2(U', PDS) 
+  if U' := addOps((op qidId(I) : nil -> 'PortInId [ctor] .), U) .
+
+ ceq ports2omod2(U, out(I, PT) PDS) = ports2omod2(U', PDS)
+  if U' := addOps((op qidId(I) : nil -> 'PortOutId [ctor] .), U) .
+
+ eq ports2omod1(U, mt-port) = U .
+ eq ports2omod2(U, mt-port) = U .
+
+ op prepPortRls : ModName PortDecl -> Set<ERule> .
+
+ ceq prepPortRls(MN, in(I', sinc)) = 
+    (rl 
+      '__[T, 'send[ov, portInC(I'), itv]] => '__[T, 'do[ov, portInC(I'), itv]]  
+     [labelRule(MN, "recevingAndDo", I')] .)
+    (rl 
+      '__[T, 'done[ov, portInC(I'), itv]] => '__[T, 'ack[itv]] 
+     [labelRule(MN, "doneAndAcking", I')] .) 
+  if T := objt(MN) .
+
+ ceq prepPortRls(MN, in(I', assinc)) =
+    (rl 
+      '__[T, 'send[ov, portInC(I'), itv]] => '__[T, 'do[ov, portInC(I'), itv]] 
+     [labelRule(MN, "receivingAndDo", I')] .)
+    (rl 
+      '__[T, 'done[ov, portInC(I'), itv]] => T  [labelRule(MN,  "done", I')] .)
+  if T := objt(MN) .
+
+ ceq prepPortRls(MN, out(I', sinc)) =
+    (rl 
+      '__['do[ov, portOutC(I'), 'none.Interaction],
+          objt(MN, Q['unlocked.PortStatus])] =>
+      '__['send[ov, portOutC(I'), '`[_`,_`][ov, portOutC(I')]], 
+          objt(MN, Q['locked.PortStatus])] 
+     [labelRule(MN, "sending", I')] .)
+    (rl 
+      '__['ack['`[_`,_`][ov, portOutC(I')]], 
+          objt(MN, Q['locked.PortStatus])] =>
+      '__['done[ov, portOutC(I'), 'none.Interaction],
+          objt(MN, Q['unlocked.PortStatus])]  
+     [labelRule(MN,  "receivingAck", I')] .) 
+   if Q := qid(strId(I') + "-status :_") .
+
+ ceq prepPortRls(MN, out(I', assinc)) =
+    (rl '__[T, 'do[ov, portOutC(I'), 'none.Interaction]] =>
+        '__[T, 'send[ov, portOutC(I'), '`[_`,_`][ov, portOutC(I')]]]   
+     [labelRule(MN, "sending", I')] .)
+    (rl 
+      '__[T, 'ack['`[_`,_`][ov, portOutC(I')]]] => T 
+     [labelRule(MN,  "receivingAck", I')] .) 
+  if T := objt(MN) .
+
+
+------------------------------------------------------------------------------
+--- The functions below convert Contract declaration
+------------------------------------------------------------------------------
+ sort Tuple<Term|Term> .
+ op <_;_> : Term Term -> Tuple<Term|Term> .
+
+ op contract2omod : Unit Contract -> Unit .
+
+ op prepMsgsLHS : Tuple<Term|Term> Nat IdSet -> Tuple<Term|Term> .
+ op prepMsgsRHS : Term IdSet -> Term .
+ op prepAcksLHS : Term IdSet -> Term .
+ op prepAcksRHS : Term -> Term .
+
+ vars C C' : Constant .
+ var V : Variable .
+ var N : Nat .
+ var IT : Interaction .
+ var ITS : InteractionSet .
+
+ ceq prepMsgsLHS(< noTerm ; noTerm >, N, I ; IDS) = 
+     prepMsgsLHS(< 'send[ov, portInC(I), V] ; V >, s(N), IDS) 
+  if V := makeVar('Interaction, N) .
+
+ ceq prepMsgsLHS(< T ; T' >, N, I ; IDS) = 
+     prepMsgsLHS(< '__[T, 'send[ov, portInC(I), V]] ; 'iset[V, T'] >, s(N), IDS) 
+  if V := makeVar('Interaction, N) .
+
+ eq  prepMsgsLHS(< T ; T' >, N, mt-id) = < T ; T' > .
+
+ 
+ ceq prepMsgsRHS(T, I ; IDS) =
+     '__['send[ov, C, '_::_['`[_`,_`][ov, C], T]], prepMsgsRHS(T, IDS)]
+  if C := portOutC(I) .
+
+ eq prepMsgsRHS(T, mt-id) = 'none.Configuration . 
+
+
+ eq prepAcksLHS(T, I ; IDS) =
+    '__['ack['_::_['`[_`,_`][ov, portOutC(I)], T]], prepAcksLHS(T, IDS)] .
+
+ eq prepAcksLHS(T', mt-id) = 'none.Configuration .
+
+
+ eq prepAcksRHS('iset[V, T]) = '__['ack[V], prepAcksRHS(T)] .
+ eq prepAcksRHS(C) = 'ack[C] .
+ eq prepAcksRHS(V) = 'ack[V] .
+
+ ceq contract2omod(U, interaction(seq(IDS, IDS'))) = 
+     addRls(
+      (rl '__[T1, T] => '__[T, T2] [labelRule(MN, "sending")] .)
+      (rl '__[T3, T] => '__[T, T4] [labelRule(MN, "acking")] .)
+      , U)
+  if
+    MN := getName(U) /\ 
+     T := objt(MN) /\ 
+    < T1 ; T' > := prepMsgsLHS(< noTerm ; noTerm >, 0, IDS) /\
+    T2 := prepMsgsRHS(T', IDS') /\ 
+    T3 := prepAcksLHS(T', IDS') /\
+    T4 := prepAcksRHS(T') .
+
+
+ op prepExclusiveRls : Set<ERule> ModName InteractionSet -> Set<ERule> .
+
+ ceq prepExclusiveRls(RLS, MN, seq(I1, I2) ITS) =
+     prepExclusiveRls(RLS 
+      (rl '__[T , T1] => '__[T', T2]  [labelRule(MN, "sending", I1)] .)
+      (rl '__[T', T3] => '__[T , T4]  [labelRule(MN, "acking", I2)] .)
+      , MN, ITS) 
+  if T  := objt(MN, 'status`:_['unlocked.PortStatus]) /\ 
+     T' := objt(MN, 'status`:_['locked.PortStatus]) /\
+     T1 := 'send[ov, portInC(I1), itv] /\
+     T2 := 'send[ov, portOutC(I2), '_::_['`[_`,_`][ov, portOutC(I2)], itv]] /\
+     T3 := 'ack['_::_['`[_`,_`][ov, portOutC(I2)], itv]] /\
+     T4 := 'ack[itv] .
+
+ eq prepExclusiveRls(RLS, MN, mt-interaction) = RLS .
+
+ eq contract2omod(U, exclusive(ITS))
+    = addRls(prepExclusiveRls(none, getName(U), ITS), U) .
+
+
+ op prepGuardEqs : ModName Exp StmtSeq StmtSeq -> Set<EEquation> .
+
+ eq prepGuardEqs(MN, E, SS1, SS2) =
+    (ceq 'before['OBJ:Object] = st2t(SS1) 
+      if  'class['OBJ:Object] = classC(MN) [none] .)
+    (ceq  'after['OBJ:Object] = st2t(SS2) 
+      if  'class['OBJ:Object] = classC(MN) [none] .)
+    (ceq  'open?['OBJ:Object] = e2t(E) 
+      if  'class['OBJ:Object] = classC(MN) [none] .) .
+
+ *** retirei o lock do status apos aplicacao da regra mantendo sempre o
+ *** obj unlocked
+
+ ceq contract2omod(U, interaction(guard(I1, I2, E, SS1, SS2)))
+     = addRls(RLS, addEqs(EQS, U)) 
+  if MN := getName(U) /\
+     T  := objt(MN) /\ 
+   EQS := prepGuardEqs(MN, E, SS1, SS2) /\
+   RLS := 
+     (crl 
+       '__[T, 'send[ov, portInC(I1), itv]] => 
+       '__['before[T], 
+           'send[ov, portOutC(I2), '_::_['`[_`,_`][ov, portOutC(I2)], itv]]] 
+       if 'open?[T] = 'true.Bool [labelRule(MN, "sending", I1)] .)
+     (rl 
+       '__[T, 'ack['_::_['`[_`,_`][ov, portOutC(I2)], itv]]] => 
+       '__['after[T], 'ack[itv]] [labelRule(MN, "acking", I2)] .) .
+
+
+ ceq contract2omod(U, interaction(guard(I1, I2, I3, E, SS1, SS2)))
+     = addRls(RLS, addEqs(EQS, U)) 
+  if MN := getName(U) /\
+     T  := objt(MN) /\ 
+   EQS := prepGuardEqs(MN, E, SS1, SS2) /\
+   RLS := 
+     (crl 
+       '__[T, 'send[ov, portInC(I1), itv]] => 
+       '__['before[T],
+           'send[ov, portOutC(I2), '_::_['`[_`,_`][ov, portOutC(I2)], itv]]] 
+       if 'open?[T] = 'true.Bool [labelRule(MN, "sending", I1)] .)
+     (crl 
+       '__[T, 'send[ov, portInC(I1), itv]] => 
+       '__['before[T],
+           'send[ov, portOutC(I3), '_::_['`[_`,_`][ov, portOutC(I3)], itv]]] 
+       if 'open?[T] = 'false.Bool [labelRule(MN, "sending", I3)] .)
+     (rl 
+       '__[T, 'ack['_::_['`[_`,_`][ov, portOutC(I2)], itv]]] =>
+       '__['after[T], 'ack[itv]] [labelRule(MN, "acking", I2)] .) .
+
+
+------------------------------------------------------------------------------
+--- Class Declaration 
+------------------------------------------------------------------------------
+ op  makeClass : ClassDecl VariableDeclSet Contract -> ClassDecl .
+ op  makeClass : ClassDecl VariableDeclSet PortDeclSet -> ClassDecl .
+ op makeClass1 : ClassDecl VariableDeclSet -> ClassDecl .
+ op makeClass2 : ClassDecl PortDeclSet -> ClassDecl .
+ op makeClass3 : ClassDecl Contract -> ClassDecl .
+
+ eq makeClass(CLD, VDS, CTD) 
+    = makeClass3(makeClass1(CLD, VDS), CTD) .
+ eq makeClass(CLD, VDS, PDS) 
+    = makeClass2(makeClass1(CLD, VDS), PDS) .
+
+ eq makeClass1(class MN | ADS ., required(I, VT) VDS) 
+    = makeClass1((class MN | (attr qidId(I) : 'StateRequired) , ADS .), VDS) .
+ eq makeClass1(class MN | ADS ., local(I, VT) VDS) 
+    = makeClass1((class MN | (attr qidId(I) : type?(VT)) , ADS .), VDS) .
+ eq makeClass1(class MN | ADS ., local(I, VT, E) VDS) 
+    = makeClass1((class MN | (attr qidId(I) : type?(VT)) , ADS .), VDS) .
+ eq makeClass1(CLD, mt-var) = CLD .
+
+ ceq makeClass2(class MN | ADS ., out(I, sinc) PDS) 
+     = makeClass2(class MN | AD , ADS ., PDS)
+  if AD := (attr qid(strId(I) + "-status") : 'PortStatus) .
+ eq makeClass2(CLD, mt-port) = CLD .
+ eq makeClass2(CLD, PD PDS) = makeClass2(CLD, PDS) [owise] . 
+
+ eq makeClass3(class MN | ADS ., exclusive(ITS)) 
+    = (class MN | (attr 'status : 'PortStatus) , ADS .) .
+ eq makeClass3(class MN | ADS ., CTD) = (class MN | ADS .) [owise] .
+
+
+------------------------------------------------------------------------------
+--- Make instance of Classes
+------------------------------------------------------------------------------
+ op prepAttrTerm : Term PortDeclSet -> Term .
+ op prepAttrTerm : Term VariableDeclSet -> Term .
+ op prepAttrTerm : Term Contract -> Term .
+
+ ceq prepAttrTerm(T, out(I,sinc) PDS) 
+     = prepAttrTerm('_`,_[T, T'], PDS) 
+  if T' := qid(strId(I) + "-status :_")['unlocked.PortStatus] .
+ eq prepAttrTerm(T, mt-port) = T .
+ eq prepAttrTerm(T, PD PDS) = prepAttrTerm(T, PDS) [owise] .
+
+ ceq prepAttrTerm(T, local(I, VT) VDS) 
+     = prepAttrTerm('_`,_[T, T'], VDS) 
+  if T' := qid(strId(I) + " :_")[defaultValue(VT)] .
+
+ ceq prepAttrTerm(T, local(I, VT, E) VDS) 
+     = prepAttrTerm('_`,_[T, T'], VDS)
+  if T' := qid(strId(I) + " :_")[e2t(E)] .
+
+ ceq prepAttrTerm(T, required(I, VT) VDS)
+     = prepAttrTerm('_`,_[T, T'], VDS) 
+  if T' := qid(strId(I) + " :_")['st[defaultValue(VT), 'unchanged.Status]] .
+ eq prepAttrTerm(T, mt-var) = T .
+
+ eq prepAttrTerm(T, exclusive(ITS)) = 
+    '_`,_[T, 'status`:_['unlocked.PortStatus]] .
+ eq prepAttrTerm(T, CTD) = T [owise] .
+
+ op makeEqInstance : ModName VariableDeclSet PortDeclSet -> EEquation .
+ op makeEqInstance : ModName VariableDeclSet Contract -> EEquation .
+
+ ceq makeEqInstance(MN, VDS, PDS) =
+     (eq 'instantiate[ov, classC(MN)] = '<_:_|_>[ov, classC(MN), T] [none] .)
+  if T := prepAttrTerm(prepAttrTerm('none.AttributeSet, PDS), VDS) .
+
+ ceq makeEqInstance(MN, VDS, CTD) = 
+     (eq 'instantiate[ov, classC(MN)] = '<_:_|_>[ov, classC(MN), T'] [none] .)
+  if T  := prepAttrTerm('none.AttributeSet, CTD) /\ 
+     T' := prepAttrTerm(T, VDS) .
+
+------------------------------------------------------------------------------
+--- Binds, Links and Instances
+------------------------------------------------------------------------------
+
+--- the functions below generate the equation for the application
+--- topology, it receives the instances declarations 
+
+ op prepEqTopology : ConfigDeclSet -> EEquation .
+ op prepEqTopoRHS : ConfigDeclSet -> Term . 
+
+ eq prepEqTopology(CDS) 
+   = (eq 'topology.Configuration = prepEqTopoRHS(CDS) [none] .) .
+
+ eq prepEqTopoRHS(instantiate(I1, I2) CDS)
+   = '__['instantiate[consId(I1,"Oid"), classC(I2)], prepEqTopoRHS(CDS)] .
+ eq prepEqTopoRHS(mt-config) = 'none.Configuration .
+
+
+--- abaixo as funcoes que transformam uma unidade recebida de acordo com
+--- as declaracoes de binds, instancias e links
+
+ op instances2omod : Unit ConfigDeclSet -> Unit .
+ op links2omod : Unit ConfigDeclSet -> Unit .
+ op binds2omod : Unit ConfigDeclSet ConfigDeclSet -> Unit .
+
+ vars Q1 Q1' Q2 Q2' : Qid .
+ vars CI1 CI2 V1 V2 OI1 OI2 PI1 PI2 : Id .
+
+ eq instances2omod(U, instantiate(I1, I2) CDS) = 
+    instances2omod(
+     addOps((op qidId(I1) : nil -> 'Oid [none] .), 
+      addImports((including qidId(I2) .), U)), CDS) .
+
+ eq instances2omod(U, mt-config) = U .
+
+
+ eq links2omod(U, link(OI1,PI1,OI2,PI2) CDS) =
+    links2omod(
+      addEqs( 
+       (eq 'send[consId(OI1,"Oid"), portOutC(PI1), itv] =
+           'send[consId(OI2,"Oid"),  portInC(PI2), itv] 
+        [labelRule(PI1,"linking",PI2)] .)
+       , U), CDS) .
+
+ eq links2omod(U, mt-config) = U .
+
+
+ ceq binds2omod(U, CDS', bind(I1,V1,I2,V2,VT) CDS) =
+     binds2omod(
+      addEqs(
+        (eq '__[objt(I1, CI1, Q1'['st[Q1, 'changed.Status]]),
+                objt(I2, CI2, Q2'[Q2])] =
+            '__[objt(I1, CI1, Q1'['st[Q1, 'unchanged.Status]]),
+                objt(I2, CI2, Q2'[Q1])] [none] .)
+        (ceq '__[objt(I1, CI1, Q1'['st[Q1, 'unchanged.Status]]),
+                 objt(I2, CI2, Q2'[Q2])] =
+             '__[objt(I1, CI1, Q1'['st[Q2, 'unchanged.Status]]),
+                 objt(I2, CI2, Q2'[Q2])]
+          if '_=/=_[Q1, Q2] = 'true.Bool [none] .)
+        , U)
+      , CDS', CDS) 
+  if instantiate(I1, CI1) instantiate(I2, CI2) CDS'' := CDS' /\ 
+     Q1  := qid("V1:" + string(type?(VT))) /\
+     Q1' := qid(strId(V1) + " :_")         /\
+     Q2  := qid("V2:" + string(type?(VT))) /\ 
+     Q2' := qid(strId(V2) + " :_") .
+
+ eq binds2omod(U, CDS, mt-config) = U .
+
+------------------------------------------------------------------------------
+--- Top level function to convert, modules, connector and applications
+--- to their representation in RWL 
+------------------------------------------------------------------------------
+ op cb2omod : StrOModule ComponentDecl -> StrOModule .
+
+ ceq cb2omod(U, module(I, VDS, PDS))  
+    = vars2omod(ports2omod1(addEqs(EQS, addClasses(CLD, U')), PDS), VDS) 
+  if  MN := getName(U) /\
+     CLD := makeClass(class MN | none ., VDS, PDS) /\
+     EQS := makeEqInstance(MN, VDS, PDS) /\ 
+     U'  := addImports((including 'CBABEL-CONFIGURATION .), U) .
+
+ ceq cb2omod(U, connector(I, VDS, PDS, CTD)) 
+    = contract2omod(
+       vars2omod(ports2omod2(addEqs(EQS, addClasses(CLD, U')), PDS), VDS)
+       , CTD) 
+  if  MN := getName(U) /\
+     CLD := makeClass(class MN | none ., VDS, CTD) /\
+     EQS := makeEqInstance(MN, VDS, CTD) /\
+     U'  := addImports((including 'CBABEL-CONFIGURATION .), U) .
+
+ ceq cb2omod(U, application(I, CDS1, CDS2, CDS3))
+    = links2omod(binds2omod(instances2omod(addEqs(EQS, U'), CDS1)
+                            , CDS1, CDS3), CDS2)
+  if EQS := prepEqTopology(CDS1) /\
+      U' := addOps((op 'topology : nil -> 'Configuration [none] .), 
+             addImports((including 'CBABEL-CONFIGURATION .), U)) .
+
+endfm

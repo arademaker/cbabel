@@ -1,0 +1,44 @@
+in model-checker.maude
+
+mod TESTE is 
+ inc SAT-SOLVER .
+
+ ops a b c d e f g h i j k l m : -> Prop .
+endm
+
+mod TESTE1 is
+ inc TESTE .
+ inc LTL-SIMPLIFIER .
+endm
+
+mod TESTE2 is
+ inc MODEL-CHECKER .
+
+ sorts Obj Conf .
+ subsort Obj < Conf .
+ subsort Conf < State .
+
+ op none : -> Conf .
+ op __ : Conf Conf -> Conf [comm assoc id: none] .
+ ops init a b c d e f : -> Obj .
+
+ rl init => c .
+ rl init => a .
+ rl a => b .
+ rl b => d .
+ rl d => e .
+ rl e => c .
+ rl c => e .
+
+ op is : Conf -> Prop .
+ eq C:Conf O:Obj |= is(O:Obj) = true .
+endm
+
+red modelCheck(init, (~ is(c)) U is(e)) .
+red modelCheck(init, (<> is(a)) -> ((~ is(c)) U is(e))) .
+
+red modelCheck(init, (<> is(a)) -> ((<> is(d)) U is(e))) .
+red modelCheck(init, (<> is(a)) -> ~ ((<> is(d)) U is(e))) .
+
+
+

@@ -1,0 +1,37 @@
+
+version 2.1 
+===========
+
+CBABEL-UNIT
+-----------
+
+- removi sorts de contratos (guard, exclusive) mantendo apenas
+  operadores para o sort contract e o sort Interaction
+
+- renomeei contractdecl para contract
+
+- removi sorts PortId e VarId mantendo apenas Id.
+
+- Id nao eh mais subsort de Qid, foi criado operador ID e renomeado
+  operador VL
+
+
+CBABEL-SIGNATURE
+----------------
+
+- removi sort de beforeDecl, afterdecl, alternativedecl mantendo
+  apenas o sort guardbody e operacoes para este sort .
+
+- sort PortExp e operador | incluidos 
+
+- renomeei sort eSequential para InteractionDecl e InteractionDeclSet
+  para usar no exclude
+
+
+TODO
+----
+
+- quanto a assinatura deve garantir a correcao das construcoes e
+  quanto pode ser deixado para a analise semantica?
+
+

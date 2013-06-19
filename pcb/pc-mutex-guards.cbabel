@@ -1,0 +1,81 @@
+(
+connector MUTEX {
+ in port mutex@in1 ;
+ in port mutex@in2 ;
+ out port mutex@out1 ;
+ out port mutex@out2 ;
+
+ exclusive{ 
+  mutex@in1 > mutex@out1 ; 
+  mutex@in2 > mutex@out2 ; 
+ }
+}
+)
+
+(
+connector GUARD-PUT {
+   var int full = 0 ; 
+   staterequired int gp@empty ;
+   in port gp@in ;
+   out port gp@out ;
+
+   interaction {
+     gp@in >
+     guard(gp@empty > 0) {
+      before {
+       gp@empty = gp@empty - 1 ; 
+      }
+      after {
+       full = full + 1 ;
+      }
+     } > gp@out ;
+   }
+}
+)
+
+(
+connector GUARD-GET {
+   var int empty = 2 ; 
+   staterequired int gg@full ;
+   in port gg@in ;
+   out port gg@out ;
+
+   interaction {
+     gg@in >
+     guard(gg@full > 0) {
+      before {
+       gg@full = gg@full - 1 ; 
+      }
+      after {
+       empty = empty + 1 ;
+      }
+     } > gg@out ; 
+   }
+}
+)
+
+(
+application PC-MUTEX-GUARDS {
+ instantiate BUFFER as buff ;
+ instantiate PRODUCER as prod1 ;
+ instantiate PRODUCER as prod2 ;
+ instantiate CONSUMER as cons1 ;
+ instantiate CONSUMER as cons2 ;
+ instantiate MUTEX as mutx ;
+ instantiate GUARD-GET as gget ;
+ instantiate GUARD-PUT as gput ;
+
+ link prod1.producer@put to mutx.mutex@in1 ;
+ link cons1.consumer@get to mutx.mutex@in2 ;
+ link prod2.producer@put to mutx.mutex@in1 ;
+ link cons2.consumer@get to mutx.mutex@in2 ;
+
+ link mutx.mutex@out1 to gput.gp@in ;
+ link mutx.mutex@out2 to gget.gg@in ;
+ link gput.gp@out to buff.buffer@put ;
+ link gget.gg@out to buff.buffer@get ;
+
+ bind int gget.gg@full to gput.full ;
+ bind int gput.gp@empty to gget.empty ;
+}
+)

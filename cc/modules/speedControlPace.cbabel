@@ -1,0 +1,12 @@
+*** out port oneway (void) setSpeed { 
+***   while (true) {
+***    sleep(500);
+***   }
+*** }
+
+(
+module speedControlPace {
+  out port oneway speedControlPace@setSpeed ;
+}
+)
+

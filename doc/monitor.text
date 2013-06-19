@@ -1,0 +1,10 @@
+- nenhum outro programa pode ser executado entre o signal e a
+  condinuacao de um wating program. Por isso a solucao com guardas e
+  depois o muted no pcb nao funciona como monitor.
+
+- uma fila deve ser implementada para a condicao. isto permite que
+  todo processo tenha sua chance.
+
+- as condicoes de monitor para um resouce simples funciona como um
+  semaphoro. ou seja, semaphoros podem ser implementados por
+  monitores.

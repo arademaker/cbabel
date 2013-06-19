@@ -1,0 +1,313 @@
+in cbabel-configuration.maude
+
+mod PC-GUARDS-MUTEX is
+  inc CBABEL-CONFIGURATION .
+
+  sorts BUFFER CONSUMER GUARD-GET GUARD-PUT MUTEX PRODUCER .
+
+  subsort BUFFER < Cid .
+  subsort CONSUMER < Cid .
+  subsort GUARD-GET < Cid .
+  subsort GUARD-PUT < Cid .
+  subsort MUTEX < Cid .
+  subsort PRODUCER < Cid .
+
+  op class : Object -> Cid .
+  op BUFFER : -> BUFFER .
+  op CONSUMER : -> CONSUMER .
+  op GUARD-GET : -> GUARD-GET .
+  op GUARD-PUT : -> GUARD-PUT .
+  op MUTEX : -> MUTEX .
+  op PRODUCER : -> PRODUCER .
+  op buff : -> Oid .
+  op cons1 : -> Oid .
+  op cons2 : -> Oid .
+  op get-buffer@items : Object -> Int .
+  op get-gg@nCheio : Object -> Int .
+  op get-gg@nVazio : Object -> Int .
+  op get-gp@maxitems : Object -> Int .
+  op get-gp@nCheio : Object -> Int .
+  op get-gp@nVazio : Object -> Int .
+  op gget : -> Oid .
+  op gput : -> Oid .
+  op instantiate : Oid Cid -> Object .
+  op mutx : -> Oid .
+  op prod1 : -> Oid .
+  op prod2 : -> Oid .
+  op set-buffer@items : Object Int -> Object .
+  op set-gg@nCheio : Object Int -> Object .
+  op set-gg@nVazio : Object Int -> Object .
+  op set-gp@maxitems : Object Int -> Object .
+  op set-gp@nCheio : Object Int -> Object .
+  op set-gp@nVazio : Object Int -> Object .
+  op topology : -> Configuration .
+  op buffer@get : -> PortInId
+    [ctor] .
+  op buffer@items`:_ : Int -> Attribute
+    [gather(&)] .
+  op buffer@put : -> PortInId
+    [ctor] .
+  op consumer@get : -> PortOutId
+    [ctor] .
+  op consumer@get-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op gg@in : -> PortInId
+    [ctor] .
+  op gg@nCheio`:_ : StateRequired -> Attribute
+    [gather(&)] .
+  op gg@nVazio`:_ : Int -> Attribute
+    [gather(&)] .
+  op gg@out : -> PortOutId
+    [ctor] .
+  op gp@in : -> PortInId
+    [ctor] .
+  op gp@maxitems`:_ : Int -> Attribute
+    [gather(&)] .
+  op gp@nCheio`:_ : Int -> Attribute
+    [gather(&)] .
+  op gp@nVazio`:_ : StateRequired -> Attribute
+    [gather(&)] .
+  op gp@out : -> PortOutId
+    [ctor] .
+  op mutex@in1 : -> PortInId
+    [ctor] .
+  op mutex@in2 : -> PortInId
+    [ctor] .
+  op mutex@out1 : -> PortOutId
+    [ctor] .
+  op mutex@out2 : -> PortOutId
+    [ctor] .
+  op producer@put : -> PortOutId
+    [ctor] .
+  op producer@put-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+
+  eq class(< O:Oid : C:Cid | A:AttributeSet >)
+    = C:Cid .
+  eq topology
+    = instantiate(buff,BUFFER)instantiate(cons1,CONSUMER)instantiate(cons2,
+    CONSUMER)instantiate(gget,GUARD-GET)instantiate(gput,GUARD-PUT)instantiate(
+    mutx,MUTEX)instantiate(prod1,PRODUCER)instantiate(prod2,PRODUCER)none .
+  eq < gget : V#0:GUARD-GET | status : V#2:PortStatus,gg@nVazio : V#1:Int,
+    gg@nCheio : st(V1:Int,changed),none,V#3:AttributeSet > < gput :
+    V#4:GUARD-PUT | status : V#7:PortStatus,gp@nVazio : V#6:StateRequired,
+    gp@maxitems : V#5:Int,gp@nCheio : V2:Int,none,V#8:AttributeSet >
+    = < gget : V#0:GUARD-GET | gg@nCheio : st(V1:Int,unchanged),gg@nVazio :
+    V#1:Int,status : V#2:PortStatus,V#3:AttributeSet > < gput : V#4:GUARD-PUT |
+    gp@nCheio : V1:Int,gp@maxitems : V#5:Int,gp@nVazio : V#6:StateRequired,
+    status : V#7:PortStatus,V#8:AttributeSet > .
+  eq < gput : V#9:GUARD-PUT | status : V#12:PortStatus,gp@nCheio : V#11:Int,
+    gp@maxitems : V#10:Int,gp@nVazio : st(V1:Int,changed),none,
+    V#13:AttributeSet > < gget : V#14:GUARD-GET | status : V#16:PortStatus,
+    gg@nCheio : V#15:StateRequired,gg@nVazio : V2:Int,none,V#17:AttributeSet >
+    = < gput : V#9:GUARD-PUT | gp@nVazio : st(V1:Int,unchanged),gp@maxitems :
+    V#10:Int,gp@nCheio : V#11:Int,status : V#12:PortStatus,V#13:AttributeSet >
+    < gget : V#14:GUARD-GET | gg@nVazio : V1:Int,gg@nCheio :
+    V#15:StateRequired,status : V#16:PortStatus,V#17:AttributeSet > .
+  eq get-buffer@items(< O:Oid : V#0:BUFFER | buffer@items : V:Int,none,
+    V#1:AttributeSet >)
+    = V:Int .
+  eq get-gg@nCheio(< O:Oid : V#0:GUARD-GET | status : V#2:PortStatus,gg@nVazio
+    : V#1:Int,gg@nCheio : st(V:Int,S:Status),none,V#3:AttributeSet >)
+    = V:Int .
+  eq get-gg@nVazio(< O:Oid : V#4:GUARD-GET | status : V#6:PortStatus,gg@nCheio
+    : V#5:StateRequired,gg@nVazio : V:Int,none,V#7:AttributeSet >)
+    = V:Int .
+  eq get-gp@maxitems(< O:Oid : V#0:GUARD-PUT | status : V#3:PortStatus,
+    gp@nVazio : V#2:StateRequired,gp@nCheio : V#1:Int,gp@maxitems : V:Int,none,
+    V#4:AttributeSet >)
+    = V:Int .
+  eq get-gp@nCheio(< O:Oid : V#5:GUARD-PUT | status : V#8:PortStatus,gp@nVazio
+    : V#7:StateRequired,gp@maxitems : V#6:Int,gp@nCheio : V:Int,none,
+    V#9:AttributeSet >)
+    = V:Int .
+  eq get-gp@nVazio(< O:Oid : V#10:GUARD-PUT | status : V#13:PortStatus,
+    gp@nCheio : V#12:Int,gp@maxitems : V#11:Int,gp@nVazio : st(V:Int,S:Status),
+    none,V#14:AttributeSet >)
+    = V:Int .
+  eq instantiate(O:Oid,BUFFER)
+    = < O:Oid : BUFFER | none,buffer@items : 0 > .
+  eq instantiate(O:Oid,CONSUMER)
+    = < O:Oid : CONSUMER | none,consumer@get-status : unlocked > .
+  eq instantiate(O:Oid,GUARD-GET)
+    = < O:Oid : GUARD-GET |(status : unlocked,gg@nVazio : 2),gg@nCheio : st(0,
+    unchanged)> .
+  eq instantiate(O:Oid,GUARD-PUT)
+    = < O:Oid : GUARD-PUT |((status : unlocked,gp@maxitems : 2),gp@nCheio : 0),
+    gp@nVazio : st(0,unchanged)> .
+  eq instantiate(O:Oid,MUTEX)
+    = < O:Oid : MUTEX | status : unlocked > .
+  eq instantiate(O:Oid,PRODUCER)
+    = < O:Oid : PRODUCER | none,producer@put-status : unlocked > .
+  eq set-buffer@items(< O:Oid : V#2:BUFFER | buffer@items : V:Int,none,
+    V#3:AttributeSet >,V':Int)
+    = < O:Oid : V#2:BUFFER | buffer@items : V':Int,V#3:AttributeSet > .
+  eq set-gg@nCheio(< O:Oid : V#8:GUARD-GET | status : V#10:PortStatus,gg@nVazio
+    : V#9:Int,gg@nCheio : st(V:Int,S:Status),none,V#11:AttributeSet >,V':Int)
+    = < O:Oid : V#8:GUARD-GET | gg@nCheio : st(V':Int,changed),gg@nVazio :
+    V#9:Int,status : V#10:PortStatus,V#11:AttributeSet > .
+  eq set-gg@nVazio(< O:Oid : V#12:GUARD-GET | status : V#14:PortStatus,
+    gg@nCheio : V#13:StateRequired,gg@nVazio : V:Int,none,V#15:AttributeSet >,
+    V':Int)
+    = < O:Oid : V#12:GUARD-GET | gg@nVazio : V':Int,gg@nCheio :
+    V#13:StateRequired,status : V#14:PortStatus,V#15:AttributeSet > .
+  eq set-gp@maxitems(< O:Oid : V#15:GUARD-PUT | status : V#18:PortStatus,
+    gp@nVazio : V#17:StateRequired,gp@nCheio : V#16:Int,gp@maxitems : V:Int,
+    none,V#19:AttributeSet >,V':Int)
+    = < O:Oid : V#15:GUARD-PUT | gp@maxitems : V':Int,gp@nCheio : V#16:Int,
+    gp@nVazio : V#17:StateRequired,status : V#18:PortStatus,V#19:AttributeSet >
+    .
+  eq set-gp@nCheio(< O:Oid : V#20:GUARD-PUT | status : V#23:PortStatus,
+    gp@nVazio : V#22:StateRequired,gp@maxitems : V#21:Int,gp@nCheio : V:Int,
+    none,V#24:AttributeSet >,V':Int)
+    = < O:Oid : V#20:GUARD-PUT | gp@nCheio : V':Int,gp@maxitems : V#21:Int,
+    gp@nVazio : V#22:StateRequired,status : V#23:PortStatus,V#24:AttributeSet >
+    .
+  eq set-gp@nVazio(< O:Oid : V#25:GUARD-PUT | status : V#28:PortStatus,
+    gp@nCheio : V#27:Int,gp@maxitems : V#26:Int,gp@nVazio : st(V:Int,S:Status),
+    none,V#29:AttributeSet >,V':Int)
+    = < O:Oid : V#25:GUARD-PUT | gp@nVazio : st(V':Int,changed),gp@maxitems :
+    V#26:Int,gp@nCheio : V#27:Int,status : V#28:PortStatus,V#29:AttributeSet >
+    .
+  ceq < gget : V#18:GUARD-GET | status : V#20:PortStatus,gg@nVazio : V#19:Int,
+    gg@nCheio : st(V1:Int,unchanged),none,V#21:AttributeSet > < gput :
+    V#22:GUARD-PUT | status : V#25:PortStatus,gp@nVazio : V#24:StateRequired,
+    gp@maxitems : V#23:Int,gp@nCheio : V2:Int,none,V#26:AttributeSet >
+    = < gget : V#18:GUARD-GET | gg@nCheio : st(V2:Int,unchanged),gg@nVazio :
+    V#19:Int,status : V#20:PortStatus,V#21:AttributeSet > < gput :
+    V#22:GUARD-PUT | gp@nCheio : V2:Int,gp@maxitems : V#23:Int,gp@nVazio :
+    V#24:StateRequired,status : V#25:PortStatus,V#26:AttributeSet >
+    if V1:Int =/= V2:Int = true .
+  ceq < gput : V#27:GUARD-PUT | status : V#30:PortStatus,gp@nCheio : V#29:Int,
+    gp@maxitems : V#28:Int,gp@nVazio : st(V1:Int,unchanged),none,
+    V#31:AttributeSet > < gget : V#32:GUARD-GET | status : V#34:PortStatus,
+    gg@nCheio : V#33:StateRequired,gg@nVazio : V2:Int,none,V#35:AttributeSet >
+    = < gput : V#27:GUARD-PUT | gp@nVazio : st(V2:Int,unchanged),gp@maxitems :
+    V#28:Int,gp@nCheio : V#29:Int,status : V#30:PortStatus,V#31:AttributeSet >
+    < gget : V#32:GUARD-GET | gg@nVazio : V2:Int,gg@nCheio :
+    V#33:StateRequired,status : V#34:PortStatus,V#35:AttributeSet >
+    if V1:Int =/= V2:Int = true .
+  ceq after(OBJ:Object)
+    = set-gg@nVazio(OBJ:Object,get-gg@nVazio(OBJ:Object)+ 1)
+    if class(OBJ:Object)= GUARD-GET .
+  ceq after(OBJ:Object)
+    = set-gp@nCheio(OBJ:Object,get-gp@nCheio(OBJ:Object)+ 1)
+    if class(OBJ:Object)= GUARD-PUT .
+  ceq before(OBJ:Object)
+    = set-gg@nCheio(OBJ:Object,get-gg@nCheio(OBJ:Object)- 1)
+    if class(OBJ:Object)= GUARD-GET .
+  ceq before(OBJ:Object)
+    = set-gp@nVazio(OBJ:Object,get-gp@nVazio(OBJ:Object)- 1)
+    if class(OBJ:Object)= GUARD-PUT .
+  ceq open?(OBJ:Object)
+    = get-gg@nCheio(OBJ:Object)> 0
+    if class(OBJ:Object)= GUARD-GET .
+  ceq open?(OBJ:Object)
+    = get-gp@nVazio(OBJ:Object)> 0
+    if class(OBJ:Object)= GUARD-PUT .
+  eq send(cons1,consumer@get,IT:Interaction)
+    = send(gget,gg@in,IT:Interaction) [label consumer@get-linking-gg@in] .
+  eq send(cons2,consumer@get,IT:Interaction)
+    = send(gget,gg@in,IT:Interaction) [label consumer@get-linking-gg@in] .
+  eq send(gget,gg@out,IT:Interaction)
+    = send(mutx,mutex@in2,IT:Interaction) [label gg@out-linking-mutex@in2] .
+  eq send(gput,gp@out,IT:Interaction)
+    = send(mutx,mutex@in1,IT:Interaction) [label gp@out-linking-mutex@in1] .
+  eq send(mutx,mutex@out1,IT:Interaction)
+    = send(buff,buffer@put,IT:Interaction) [label
+    mutex@out1-linking-buffer@put] .
+  eq send(mutx,mutex@out2,IT:Interaction)
+    = send(buff,buffer@get,IT:Interaction) [label
+    mutex@out2-linking-buffer@get] .
+  eq send(prod1,producer@put,IT:Interaction)
+    = send(gput,gp@in,IT:Interaction) [label producer@put-linking-gp@in] .
+  eq send(prod2,producer@put,IT:Interaction)
+    = send(gput,gp@in,IT:Interaction) [label producer@put-linking-gp@in] .
+  rl < O:Oid : V#0:MUTEX | status : locked,none,V#1:AttributeSet > ack([O:Oid,
+    mutex@out1]:: IT:Interaction)
+    => < O:Oid : V#0:MUTEX | status : unlocked,V#1:AttributeSet > ack(
+    IT:Interaction) [label MUTEX-acking-mutex@out1] .
+  rl < O:Oid : V#10:BUFFER | buffer@items : V#11:Int,none,V#12:AttributeSet >
+    send(O:Oid,buffer@get,IT:Interaction)
+    => < O:Oid : V#10:BUFFER | buffer@items : V#11:Int,V#12:AttributeSet > do(
+    O:Oid,buffer@get,IT:Interaction) [label BUFFER-recevingAndDo-buffer@get] .
+  rl < O:Oid : V#13:BUFFER | buffer@items : V#14:Int,none,V#15:AttributeSet >
+    send(O:Oid,buffer@put,IT:Interaction)
+    => < O:Oid : V#13:BUFFER | buffer@items : V#14:Int,V#15:AttributeSet > do(
+    O:Oid,buffer@put,IT:Interaction) [label BUFFER-recevingAndDo-buffer@put] .
+  rl < O:Oid : V#16:GUARD-GET | gg@nVazio : V#18:Int,gg@nCheio :
+    V#17:StateRequired,status : unlocked,none,V#19:AttributeSet > ack([O:Oid,
+    gg@out]:: IT:Interaction)
+    => after(< O:Oid : V#16:GUARD-GET | status : unlocked,gg@nCheio :
+    V#17:StateRequired,gg@nVazio : V#18:Int,V#19:AttributeSet >)ack(
+    IT:Interaction) [label GUARD-GET-acking-gg@out] .
+  rl < O:Oid : V#2:MUTEX | status : locked,none,V#3:AttributeSet > ack([O:Oid,
+    mutex@out2]:: IT:Interaction)
+    => < O:Oid : V#2:MUTEX | status : unlocked,V#3:AttributeSet > ack(
+    IT:Interaction) [label MUTEX-acking-mutex@out2] .
+  rl < O:Oid : V#30:GUARD-PUT | gp@nVazio : V#33:StateRequired,gp@nCheio :
+    V#32:Int,gp@maxitems : V#31:Int,status : unlocked,none,V#34:AttributeSet >
+    ack([O:Oid,gp@out]:: IT:Interaction)
+    => after(< O:Oid : V#30:GUARD-PUT | status : unlocked,gp@maxitems :
+    V#31:Int,gp@nCheio : V#32:Int,gp@nVazio : V#33:StateRequired,
+    V#34:AttributeSet >)ack(IT:Interaction) [label GUARD-PUT-acking-gp@out] .
+  rl < O:Oid : V#4:BUFFER | buffer@items : V#5:Int,none,V#6:AttributeSet >
+    done(O:Oid,buffer@get,IT:Interaction)
+    => < O:Oid : V#4:BUFFER | buffer@items : V#5:Int,V#6:AttributeSet > ack(
+    IT:Interaction) [label BUFFER-doneAndAcking-buffer@get] .
+  rl < O:Oid : V#4:MUTEX | status : unlocked,none,V#5:AttributeSet > send(
+    O:Oid,mutex@in1,IT:Interaction)
+    => < O:Oid : V#4:MUTEX | status : locked,V#5:AttributeSet > send(O:Oid,
+    mutex@out1,[O:Oid,mutex@out1]:: IT:Interaction) [label
+    MUTEX-sending-mutex@in1] .
+  rl < O:Oid : V#6:MUTEX | status : unlocked,none,V#7:AttributeSet > send(
+    O:Oid,mutex@in2,IT:Interaction)
+    => < O:Oid : V#6:MUTEX | status : locked,V#7:AttributeSet > send(O:Oid,
+    mutex@out2,[O:Oid,mutex@out2]:: IT:Interaction) [label
+    MUTEX-sending-mutex@in2] .
+  rl < O:Oid : V#7:BUFFER | buffer@items : V#8:Int,none,V#9:AttributeSet >
+    done(O:Oid,buffer@put,IT:Interaction)
+    => < O:Oid : V#7:BUFFER | buffer@items : V#8:Int,V#9:AttributeSet > ack(
+    IT:Interaction) [label BUFFER-doneAndAcking-buffer@put] .
+  rl ack([O:Oid,consumer@get])< O:Oid : V#0:CONSUMER | consumer@get-status :
+    locked,none,V#1:AttributeSet >
+    => done(O:Oid,consumer@get,none)< O:Oid : V#0:CONSUMER |
+    consumer@get-status : unlocked,V#1:AttributeSet > [label
+    CONSUMER-receivingAck-consumer@get] .
+  rl ack([O:Oid,producer@put])< O:Oid : V#0:PRODUCER | producer@put-status :
+    locked,none,V#1:AttributeSet >
+    => done(O:Oid,producer@put,none)< O:Oid : V#0:PRODUCER |
+    producer@put-status : unlocked,V#1:AttributeSet > [label
+    PRODUCER-receivingAck-producer@put] .
+  rl do(O:Oid,consumer@get,none)< O:Oid : V#2:CONSUMER | consumer@get-status :
+    unlocked,none,V#3:AttributeSet >
+    => send(O:Oid,consumer@get,[O:Oid,consumer@get])< O:Oid : V#2:CONSUMER |
+    consumer@get-status : locked,V#3:AttributeSet > [label
+    CONSUMER-sending-consumer@get] .
+  rl do(O:Oid,producer@put,none)< O:Oid : V#2:PRODUCER | producer@put-status :
+    unlocked,none,V#3:AttributeSet >
+    => send(O:Oid,producer@put,[O:Oid,producer@put])< O:Oid : V#2:PRODUCER |
+    producer@put-status : locked,V#3:AttributeSet > [label
+    PRODUCER-sending-producer@put] .
+  crl < O:Oid : V#20:GUARD-GET | gg@nVazio : V#22:Int,gg@nCheio :
+    V#21:StateRequired,status : unlocked,none,V#23:AttributeSet > send(O:Oid,
+    gg@in,IT:Interaction)
+    => before(< O:Oid : V#20:GUARD-GET | status : unlocked,gg@nCheio :
+    V#21:StateRequired,gg@nVazio : V#22:Int,V#23:AttributeSet >)send(O:Oid,
+    gg@out,[O:Oid,gg@out]:: IT:Interaction)
+    if open?(< O:Oid : V#20:GUARD-GET | status : unlocked,gg@nCheio :
+    V#21:StateRequired,gg@nVazio : V#22:Int,V#23:AttributeSet >)= true [label
+    GUARD-GET-sending-gg@in] .
+  crl < O:Oid : V#35:GUARD-PUT | gp@nVazio : V#38:StateRequired,gp@nCheio :
+    V#37:Int,gp@maxitems : V#36:Int,status : unlocked,none,V#39:AttributeSet >
+    send(O:Oid,gp@in,IT:Interaction)
+    => before(< O:Oid : V#35:GUARD-PUT | status : unlocked,gp@maxitems :
+    V#36:Int,gp@nCheio : V#37:Int,gp@nVazio : V#38:StateRequired,
+    V#39:AttributeSet >)send(O:Oid,gp@out,[O:Oid,gp@out]:: IT:Interaction)
+    if open?(< O:Oid : V#35:GUARD-PUT | status : unlocked,gp@maxitems :
+    V#36:Int,gp@nCheio : V#37:Int,gp@nVazio : V#38:StateRequired,
+    V#39:AttributeSet >)= true [label GUARD-PUT-sending-gp@in] .
+endm
+

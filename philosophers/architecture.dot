@@ -1,0 +1,18 @@
+digraph philosophers {
+  edge [style="solid", color="black"];
+  phi1 -> lfork1 -> rfork1 -> food ;
+  phi2 -> lfork2 -> rfork2 -> food ;
+  phi3 -> lfork3 -> rfork3 -> food ;
+  phi4 -> lfork4 -> rfork4 -> food ;
+
+  fork1 ;
+  fork2 ;
+  fork3 ;
+  fork4 ;
+
+  edge [style="dotted", dit="both", color="red"];
+  {rfork1 ; lfork2 } -> fork1 ;
+  {rfork2 ; lfork3 } -> fork2 ;
+  {rfork3 ; lfork4 } -> fork3 ;
+  {rfork4 ; lfork1 } -> fork4 ;
+}

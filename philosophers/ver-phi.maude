@@ -1,0 +1,40 @@
+load phi-forks-table.cbabel
+
+(omod PHI-EXEC is
+ inc DP . 
+
+ var C : Configuration .
+ var O : Oid .
+ var IT : Interaction .
+
+ op initial : -> Configuration .
+ op init : Oid -> Configuration .
+
+ eq initial = topology init(phi1) init(phi2) init(phi3) init(phi4) . 
+
+ eq init(O) = do(O, phi@eat, none) .
+
+ rl [eat] :
+   < O : PHILOSOPHER | > done(O, phi@eat, IT) => 
+   < O : PHILOSOPHER | > init(O) .
+
+ rl [eating] : 
+   < food : FOOD | > do(food, food@eat, IT) => 
+   < food : FOOD | > done(food, food@eat, IT) .
+endom)
+
+(omod PHI-VER is 
+ inc PHI-EXEC .
+ inc MODEL-CHECKER .
+
+ subsort Configuration < State .
+
+ var C : Configuration .
+ var O : Oid .
+ var P : PortId .
+ var IT : Interaction .
+
+ op eating : Oid -> Prop .
+ eq C < food : FOOD | > send(food, food@eat, IT :: [O, P]) |= eating(O) = true .
+
+endom)

@@ -1,0 +1,26 @@
+(
+
+/*
+    Sends the signal to the car engine and
+    to the cruise control
+*/
+
+connector splitter-engineOff {
+
+  // controles normais de um carro padrao
+
+  in port oneway engineOff-in;
+
+  out port oneway engineOff-out1;
+
+  out port oneway engineOff-out2;
+
+
+  interaction {
+
+     engineOff-in > (engineOff-out1 || engineOff-out2);
+
+  }
+} // splitter
+
+)

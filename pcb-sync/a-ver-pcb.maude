@@ -1,0 +1,54 @@
+
+(omod A-VER-PCB is
+ inc APP .
+ inc MODEL-CHECKER .
+
+ var C : Configuration .
+ var O : Oid .
+ var P : PortId .
+ var IT IT1 IT2 : Interaction .
+
+ op initial : -> Configuration .
+ eq initial = topology .
+
+ rl [producerRunning] : 
+  < O : PRODUCER | > => < O : PRODUCER | > do(O, producer-put, none) .
+
+ rl [consumerRunning] :
+  < O : CONSUMER | > => < O : CONSUMER | > do(O, consumer-get, none) .
+
+ vars M N : Int .
+
+ rl [buffer-do-put] : 
+    do(O, buffer-put, IT) < O : BUFFER | items : N, MAXITEMS : M > 
+    => 
+    done(O, buffer-put, IT) 
+    < O : BUFFER | items : (if (N + 1) > (M + 1) then (M + 1) else (N - 1) fi),
+                   MAXITEMS : M >  .
+
+ rl [buffer-do-get] : 
+    do(O, buffer-get, IT) < O : BUFFER | items : N, MAXITEMS : M > 
+    => 
+    done(O, buffer-get, IT)
+    < O : BUFFER | items : (if (N - 1) < -1 then -1 else (N - 1) fi),
+                   MAXITEMS : M > .
+
+ subsort Configuration < State .
+
+ op raceCond : -> Prop .
+ eq send(buff, buffer-put, IT1) send(buff, buffer-get, IT2) 
+    C |= raceCond = true .
+
+ eq send(O, P, IT) send(O, P, IT) send(O, P, IT) =
+    send(O, P, IT) send(O, P, IT) [label msgs-abstraction] .
+
+ eq do(O, P, IT) do(O, P, IT) do(O, P, IT) =
+    do(O, P, IT) do(O, P, IT) [label msgs-abstraction] .
+
+ eq done(O, P, IT) done(O, P, IT) done(O, P, IT) =
+    done(O, P, IT) done(O, P, IT) [label msgs-abstraction] .
+
+ eq ack(IT)  ack(IT)  ack(IT) =
+    ack(IT)  ack(IT) [label msgs-abstraction] .
+endom)
+

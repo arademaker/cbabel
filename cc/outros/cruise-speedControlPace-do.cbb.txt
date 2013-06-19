@@ -1,0 +1,23 @@
+(
+
+module speedControlPace {
+  
+  out port oneway (void) setSpeed;
+
+  // the speed controller thread
+
+     {
+  //OK. Nem CBabel tem previsao para a declaracao do
+  //    comportamento dos modulos, nem Maude tem
+  //    como modelar o tempo de forma direta
+  //   
+  // O objetivo e' ativar a porta de saida setSpeed
+  // de tempos em tempos durante a atuacao do speedControl
+
+     while (true) {
+        sleep(500);
+      }
+  }
+}
+
+)

@@ -1,0 +1,15 @@
+load a-producer.cbabel
+load a-consumer.cbabel
+load s-buffer.cbabel
+load mutex.cbabel
+load guard-get.cbabel
+load guard-put.cbabel
+load pc-mutex-guards.cbabel
+
+(omod APP is
+ inc PC-MUTEX-GUARDS .
+endom)
+
+load a-ver-pcb.maude
+
+in searches.maude

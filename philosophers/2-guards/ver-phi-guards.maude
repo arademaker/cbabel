@@ -1,0 +1,41 @@
+load phi-guards.cbabel
+
+(omod VER-DP is
+ inc DP . 
+
+ var C : Configuration .
+ var O : Oid .
+ var IT IT1 IT2 : Interaction .
+ vars N : Int .
+
+ op initial : -> Configuration .
+ op init : Oid -> Configuration .
+
+ eq initial = topology init(phi1) init(phi2) init(phi3) init(phi4) . 
+
+ eq init(O) = do(O, get-fork, none) .
+
+ rl [eat] :
+   < O : PHILOSOPHER | > done(O, get-fork, IT) => 
+   < O : PHILOSOPHER | > init(O) .
+
+ rl [eating] : 
+   < food : FOOD | > do(food, eat, IT) => 
+   < food : FOOD | > done(food, eat, IT) .
+endom)
+
+(search [1] initial =>* C:Configuration 
+                        send(food, eat, IT1:Interaction) 
+                        send(food, eat, IT2:Interaction) .)
+
+(search initial =>! C:Configuration .)
+
+(search [1] initial =>* 
+            send(food, eat, IT:Interaction :: [phi1, get-fork]) 
+            C:Configuration .)
+
+(search [1] initial =>* 
+            send(food, eat, IT:Interaction :: [phi1, get-fork]) 
+            send(food, eat, IT:Interaction :: [phi2, get-fork]) 
+            C:Configuration .)
+

@@ -1,0 +1,28 @@
+omod CBABEL-CONFIGURATION is
+  protecting CONFIGURATION .
+  protecting INT .
+  sorts Interaction PortId PortInId PortOutId PortStatus StateRequired Status .
+  subsort PortInId < PortId .
+  subsort PortOutId < PortId .
+  op [_,_] : Oid PortOutId -> Interaction .
+  op after : Object -> Object .
+  op before : Object -> Object .
+  op instantiate : Oid Cid -> Object .
+  op none : -> Interaction .
+  op open? : Object -> Bool .
+  op _::_ : Interaction Interaction -> Interaction [assoc id:(none).Interaction prec 13 gather(e E)] .
+  op changed : -> Status    [ctor] .
+  op ground : -> PortOutId    [ctor] .
+  op iset : Interaction Interaction -> Interaction    [assoc id:(none).Interaction] .
+  op locked : -> PortStatus    [ctor] .
+  op st : Bool Status -> StateRequired    [ctor] .
+  op st : Int Status -> StateRequired    [ctor] .
+  op unchanged : -> Status    [ctor] .
+  op unlocked : -> PortStatus    [ctor] .
+  msg ack : Interaction -> Msg .
+  msg do : Oid PortId Interaction -> Msg .
+  msg done : Oid PortId Interaction -> Msg .
+  msg send : Oid PortId Interaction -> Msg .
+  eq ack(none)    = (none).Configuration .
+  eq send(O:Oid,ground,IT:Interaction) = (none).Configuration .
+endom

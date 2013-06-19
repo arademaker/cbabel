@@ -1,0 +1,33 @@
+
+(
+application READERS-WRITERS {
+ instantiate WRITER as writer1 ;
+ instantiate WRITER as writer2 ;
+ instantiate READER as reader1 ;
+ instantiate READER as reader2 ;
+ instantiate BUFFER as buff ;
+ instantiate WANT-READ as wr ;
+ instantiate COUNT-READ as cr ;
+ instantiate WANT-WRITE as ww ;
+ instantiate COUNT-WRITE as cw ;
+
+ link reader1.r@read to wr.in-want-read ;
+ link reader2.r@read to wr.in-want-read ;
+ link wr.out-want-read to cr.in-count-read ;
+ link cr.out-count-read to buff.buffer@read ;
+
+ link writer1.w@write to ww.in-want-write ;
+ link writer2.w@write to ww.in-want-write ;
+ link ww.out-want-write to cw.in-count-write ;
+ link cw.out-count-write to buff.buffer@write ;
+
+ bind int cr.cr@want-read to wr.want-read ;
+ bind int cr.cr@want-write to ww.want-write ;
+ bind bool cr.cr@writing to cw.writing ;
+
+ bind int cw.cw@want-read to wr.want-read ;
+ bind int cw.cw@want-write to ww.want-write ;
+ bind int cw.cw@readers to cr.readers ;
+ bind int cw.cw@turn to cr.turn ;
+}
+)

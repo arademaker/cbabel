@@ -1,0 +1,78 @@
+(
+connector MUTEX {
+ in port mutex@in1 ;
+ in port mutex@in2 ;
+ out port mutex@out1 ;
+ out port mutex@out2 ;
+
+ exclusive{ 
+  mutex@in1 > mutex@out1 ; 
+  mutex@in2 > mutex@out2 ; 
+ }
+}
+)
+
+(
+connector GUARD-PUT {
+   var int gp@nCheio = int(0) ; 
+   staterequired int gp@maxitems ;
+   staterequired int gp@nVazio ;
+   in port gp@in ;
+   out port gp@out ;
+
+   interaction {
+     gp@in >
+     guard(gp@nVazio > int(0)) {
+      before {
+       gp@nVazio = gp@nVazio - int(1) ; 
+      }
+      after {
+       gp@nCheio = gp@nCheio + int(1) ;
+      }
+     } > gp@out ;
+   }
+}
+)
+
+(
+connector GUARD-GET {
+   var int gg@nVazio = int(2) ; 
+   staterequired int gg@nCheio ;
+   in port gg@in ;
+   out port gg@out ;
+
+   interaction {
+     gg@in >
+     guard(gg@nCheio > int(0)) {
+      before {
+       gg@nCheio = gg@nCheio - int(1) ; 
+      }
+      after {
+       gg@nVazio = gg@nVazio + int(1) ;
+      }
+     } > gg@out ; 
+   }
+}
+)
+
+(
+application PC-GUARDS-MUTEX {
+ instantiate BUFFER as buff ;
+ instantiate PRODUCER as prod ;
+ instantiate CONSUMER as cons ;
+ instantiate MUTEX as mutx ;
+ instantiate GUARD-GET as gget ;
+ instantiate GUARD-PUT as gput ;
+
+ link prod.producer@put to gput.gp@in ;
+ link cons.consumer@get to gget.gg@in ;
+ link gput.gp@out to mutx.mutex@in1 ;
+ link gget.gg@out to mutx.mutex@in2 ;
+ link mutx.mutex@out1 to buff.buffer@put ;
+ link mutx.mutex@out2 to buff.buffer@get ;
+
+ bind int gget.gg@nCheio to gput.gp@nCheio ;
+ bind int gput.gp@nVazio to gget.gg@nVazio ;
+ bind int gput.gp@maxitems to buff.buffer@maxitems ;
+}
+)

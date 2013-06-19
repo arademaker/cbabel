@@ -1,0 +1,53 @@
+load ver-readers-writers.maude
+
+*** Se existem leitores em atividade e escritores e leitores
+*** suspensos. Então os leitores somente terão oportunidade de ler
+*** depois que um escritor suspenso conseguir escrever.
+
+(omod TESTE is 
+  inc RW-VER .
+
+  ops a0 a1 b0 b1 b1a b1b b2 b3 b3b : -> Formula .
+  eq a0 = reading /\ suspendReaders /\ suspendWriters .
+  eq a1 = turnW /\ suspendReaders /\ suspendWriters /\ ~ reading /\ ~ writing .
+  eq b0 = suspendReaders U writing .
+  eq b1 = (~ reading) U writing .
+  eq b1a = O ((writing \/ ~ writing) /\ ~ reading) . 
+  eq b2  = (<> reading) U writing  .
+  eq b3  = O ((reading \/ ~ reading) /\ ~ writing) .
+endom)
+
+eof
+
+*** O comando abaixo encontra um trace onde a partir de um estado onde
+*** leitores e escritores desejam acessar o recurso, os leitores
+*** entram na frente. Mas os leitores devem ficar suspensos caso o
+*** turn seja dos escritores.
+
+(red modelCheck(initial, a0 => b0) .)
+
+*** Reformulando a busca
+
+(red modelCheck(initial, a1 => b1) .) 
+
+*** True. No entanto o lado esquerdo da implicacao pode nunca ocorrer
+*** em um traço de execução. Como tambem pode ocorrer.
+
+(red modelCheck(initial, []<> a1) .)
+
+(red modelCheck(initial, [] ~ a1) .)
+
+*** Os contra-exemplo mostram isso. Logo a implicacao pode ter sido
+*** valida porque o lado esquerdo nao valeu nunca. Precisamos entao
+*** nos certificar que estamos de fato garantindo que se ocorrer a
+*** situacao a entao b ocorrera
+
+(red modelCheck(initial, ([]<> a1) -> (a1 => b1)) .)
+(red modelCheck(initial, ([]<> a1) -> (a1 => b1a)) .)
+
+*** Para comprovar, vamos tentar garantir que deve poder ocorrer uma
+*** leitura antes de uma escrita
+
+(red modelCheck(initial, ([]<> a1) -> (a1 => b2)) .) *** nao mostra contra-exemplo?
+(red modelCheck(initial, ([]<> a1) -> (a1 => b3)) .)
+

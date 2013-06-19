@@ -1,0 +1,28 @@
+*** Escritores acessam o recurso compartilhado em exclusão mútua com
+*** Leitores e outros Escritores. Se existe um Escritor escrevendo, então
+*** não existem Leitores lendo e apenas um Escritor escrevendo.
+
+(select EXEC-RW .)
+
+(search [1] initial =>* C:Configuration 
+   < cw : COUNT-WRITE | writing : true , AS:AttributeSet > 
+   < cr : COUNT-READ | readers : N:Int , AS':AttributeSet > 
+  such that N:Int > 0  .)
+
+*** No solution
+
+
+*************************************
+*** Usando o modelCheck
+*************************************
+
+(select VER-RW .)
+
+(red modelCheck(initial, test1) .)
+
+*** True 
+
+(red modelCheck(initial, [] ~ raceCond) .)
+
+*** True
+

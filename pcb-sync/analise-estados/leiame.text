@@ -1,0 +1,29 @@
+
+1. a opcao usada em core-rules.maude de controlar nas regras sua
+   aplicacao apenas quando o objeto em questao nao foi o ultimo a
+   executar AUMENTA o numero de estados da aplicacao. Alem disso,
+   deve-se ter cuidado de em qual regra colocar a condicao para que um
+   possivel deadlock nao seja gerado. Ex: regras do/done ou done/do
+   nao podem ser condicionadas pois um objeto pode precisar executar
+   todo seu comportamento interno para responder a alguma mensagem que
+   esteja bloqueando o restante do sistema.
+
+2. posso provar propriedades por parte. Estilo Peter:
+
+search [1] topology  
+       send(mutx, mutex@in2, I1:Interaction) 
+       send(mutx, mutex@in1, I2:Interaction) =>* 
+       C:Configuration 
+       send(buff, buffer@get, I4:Interaction) .
+
+search [1] topology  
+       send(mutx, mutex@in2, I1:Interaction) 
+       send(mutx, mutex@in1, I2:Interaction) =>* 
+       C:Configuration 
+       send(buff, buffer@get, I4:Interaction) 
+       send(buff, buffer@put, I3:Interaction) .
+
+E ainda posso usar o 
+
+cont 1 . 
+

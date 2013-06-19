@@ -1,0 +1,37 @@
+
+1. A construcao abaixo usada no exemplo da tese do alexandre, nao
+   existe pela BNF:
+
+   exclusive, selfexclusive { .. } 
+
+2. sempre que sequencias guardadas estao dentro de um mutex, temos um
+   monitor que tambem eh selfexclusive. Seria conveniente nao ser
+   selfexclusive em algum momento?
+
+3. em concorrencia real (e nao interleaving como o maude trabalha na
+   aplicacao das rl), o mapeamento para staterequired estaria correto?
+   o que propomos eh um estado distribuido.
+
+   obj1 obj2 .... =>  before(obj1) before(obj2) ....
+   = obj1' obj2' ... = sinc via equacoes staterequired.
+
+4. na solucao da tese do Szt o deadlock eh evitado com a table que
+   permite que apenas n-1 filosofos concorram a garfos... sera?
+
+5. mutex nao eh um semaphoro 
+
+6. performace!! as equacoes do staterequired sao aplicadas uma ordem
+   de grandeza acima das regras analisando o profile.
+
+   Curiosidade sobre # rew/sec, o numero de rew/sec para inclusao dos
+   modulos e transformacoes eh da ordem de 500mil e para buscas uma
+   ordem abaixo. Vide arquivo output-1.text
+
+   embora de fato a performace seja ruim no mapeamento do bind, tambem
+   temos problemas sem binds. os arquivos
+   ver-phi-fork-simple-core-2.text e ver-phi-fork-simple-core-1.text
+   apresentam comparacoes de desempenho dos filosofos apenas com mutex
+   rodando no core maude onde no 1 as classes nos obj eram variaveis e
+   no 2 eram constantes. Como houve melhoria na performace do 1 para o
+   2 provavelmente o tempo de reescrita esta lendo pela dificuldade de
+   executar math no termo da configuracao

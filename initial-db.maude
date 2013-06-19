@@ -1,0 +1,42 @@
+mod INITIAL-DB is
+  pr META-FULL-MAUDE-SIGN .
+  pr DATABASE-HANDLING .
+  pr PREDEF-UNITS .
+  inc LOOP-MODE .
+
+ op importFromMetaModules : List<Unit> Database -> Database .
+ op importFromCoreMaude : QidList Database -> Database .
+
+ var  Q : Qid .
+ var  QL : QidList .
+ var  U : Unit .
+ var  UL : List<Unit> .
+ var DB : Database .
+
+ ceq importFromCoreMaude (Q QL, DB) 
+ = importFromCoreMaude (QL, 
+    importFromCoreMaude (Q, DB)) 
+ if QL =/= nil .
+
+ eq importFromCoreMaude (Q, DB) 
+ = importFromMetaModules (upModule (Q, false), DB) .
+
+ ceq importFromMetaModules (U UL, DB)
+ = importFromMetaModules (UL,
+    importFromMetaModules (U, DB))
+ if UL =/= nil .
+
+ eq importFromMetaModules (U, DB)
+ = evalUnit (U, none, DB) .
+
+ op initial-db : -> Database .
+ eq initial-db = 
+    importFromMetaModules (TRIV UP CONFIGURATION+,
+     importFromCoreMaude 
+       ('TRUTH-VALUE 'TRUTH 'BOOL 'EXT-BOOL
+        'IDENTICAL 
+        'NAT 'INT 'RAT 'FLOAT 'STRING 'CONVERSION
+        'QID 'QID-LIST 'META-TERM 'META-MODULE 'META-LEVEL 
+        'LTL 'LTL-SIMPLIFIER 'SATISFACTION 'MODEL-CHECKER 
+        'CONFIGURATION, emptyDatabase)) .
+endm

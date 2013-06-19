@@ -1,0 +1,102 @@
+*** comentarios no before
+***   instantiate carSimulator
+***   link carSimulator
+
+***    var bool ignition = FALSE ;       *** engine off
+***    var float @throttle = 0.1 ;       *** throttle setting 0.10
+***    var int @brakepedal = 0 ;         *** brake setting 0..10
+***    var float maxThrottle = 10.0 ;
+***    var int maxBrake = 10 ;
+
+***    staterequired float throttle ;    *** vem do modulo engine
+***    staterequired int brakepedal ;    *** vem do modulo engine
+
+*** Retirei dos conectores abaixo as variaveis _throttle e _breakepedal
+*** Com o uso de variavel compartilhada perderam o sentido. Acessamos
+*** diretamente as mesmas do modulo "carro"
+
+(
+connector CarControllerEngineOn {
+  var bool cceon@ignition = FALSE ;
+  in port oneway cceon@engineOn ;
+
+  interaction {
+    cceon@engineOn > guard (cceon@ignition == FALSE) {
+                before { cceon@ignition = TRUE ; }
+                alternative ( ground ) ;
+               }
+    > ground ;
+  }
+}
+)
+
+(
+connector CarControllerEngineOff {
+  staterequired bool cceoff@ignition ;
+  in port oneway cceoff@engineOff ;
+
+  interaction {
+    cceoff@engineOff > guard (cceoff@ignition == TRUE) {
+                 before { cceoff@ignition = FALSE ; }
+                 alternative (ground) ; 
+                }
+    > ground ;
+  }
+}
+)
+
+(
+connector CarControllerAccelerate {
+  staterequired bool cca@ignition ;
+  staterequired int  cca@throttle ;
+  staterequired int  cca@brakepedal ;
+  in port oneway cca@accelerate ;
+  out port oneway cca@setThrottle ;
+
+  interaction {
+   cca@accelerate > 
+          guard (TRUE) {
+             before {
+               if (cca@brakepedal > 0) {
+                 cca@brakepedal = 0 ; 
+               } else {
+                 if (cca@throttle < (10 - 1)) {
+                    cca@throttle = cca@throttle + 1 ;
+                 }
+                 else {
+                    cca@throttle = 10 ; 
+                 }
+               }
+             }
+          }
+   > cca@setThrottle ;   
+  }
+}
+)
+
+(
+connector CarControllerBrake {
+  staterequired bool ccb@ignition ;
+  staterequired int  ccb@throttle ;
+  staterequired int  ccb@brakepedal ;
+  in port oneway ccb@brake ;
+  out port oneway ccb@setThrottle ;
+
+  interaction {
+    ccb@brake > guard (TRUE) { 
+              before {
+                if (ccb@throttle > 0) { 
+                  ccb@throttle = 0 ; 
+                }
+                else {
+                 if (ccb@brakepedal < 10) {
+                  ccb@brakepedal = ccb@brakepedal + 1 ;
+                 }
+                }
+              }
+            }
+    > ccb@setThrottle ;   
+  }
+}
+)
+

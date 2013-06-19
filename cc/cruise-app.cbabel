@@ -1,0 +1,146 @@
+
+load modules/carInput.cbabel 
+load modules/speedControlPace.cbabel
+load modules/carSimulator.cbabel
+load modules/controlInput.cbabel
+
+load connectors/carController.cbabel  
+load connectors/speedControl.cbabel  
+load connectors/tranco.cbabel
+load connectors/controller.cbabel     
+load connectors/splitter.cbabel
+
+(
+application cruise {
+  *** modules
+  instantiate carInput as carIn ;
+  instantiate carSimulator as carSim ;
+  instantiate controlInput as ctrlIn ;
+  instantiate speedControlPace as spCtrl ;
+
+  *** connectors
+  instantiate CarControllerEngineOn   as carCtlEngOn ;
+  instantiate CarControllerEngineOff  as carCtlEngOff ;
+  instantiate CarControllerAccelerate as carCtlAcc ;
+  instantiate CarControllerBrake      as carCtlBrake ;
+
+  instantiate splitter as splitEngineOn ;
+  instantiate splitter as splitEngineOff ;
+  instantiate splitter as splitAccelerate ;
+  instantiate splitter as splitBrake ;
+
+  instantiate ControllerBrake            as ctrlBrake ;
+  instantiate ControllerAccelerator      as ctrlAcc ;
+  instantiate ControllerEngineOffCorreta as ctrlEngOffC ;
+  instantiate ControllerEngineOffGround  as ctrlEngOffG ;
+  instantiate ControllerEngineOn         as ctrlEngOn ;
+  instantiate ControllerOff              as ctrlOff ;
+  instantiate ControllerOn               as ctrlOn ;
+  instantiate ControllerResume           as ctrlRes ;
+
+  instantiate SpeedControlRecordSpeed    as SCtrlRec ;
+  instantiate SpeedControlClearSpeed     as SCtrlClear ;
+  instantiate SpeedControlDisableControl as SCtrlDisable ;
+  instantiate SpeedControlEnableControl  as SCtrlEnable ;
+  instantiate SpeedControlSetSpeed       as SCtrlSetS ;
+
+  instantiate tranco as zoom ;
+
+  instantiate splitter as stRec-ena ;
+
+
+  *** links 
+  link carIn.carInput@engineOn   to splitEngineOn.spt@in ;
+  link carIn.carInput@engineOff  to splitEngineOff.spt@in ;
+  link carIn.carInput@accelerate to splitAccelerate.spt@in ;
+  link carIn.carInput@brake      to splitBrake.spt@in ;
+
+  *** links
+  link splitBrake.spt@out1         to carCtlBrake.ccb@brake ;
+  link splitAccelerate.spt@out1    to carCtlAcc.cca@accelerate ;
+  link splitEngineOff.spt@out1     to carCtlEngOff.cceoff@engineOff ;
+  link splitEngineOn.spt@out1      to carCtlEngOn.cceon@engineOn ;
+
+  link carCtlBrake.ccb@setThrottle to carSim.carSimulator@setThrottle ;
+  link carCtlAcc.cca@setThrottle   to carSim.carSimulator@setThrottle ;
+
+  link splitBrake.spt@out2         to ctrlBrake.cb@brake ;           
+  link splitAccelerate.spt@out2    to ctrlAcc.ca@accelerate ;    
+  link splitEngineOn.spt@out2      to ctrlEngOn.ceon@engineOn ;
+  link splitEngineOff.spt@out2     to ctrlEngOffG.ceoffg@engineOff ;       
+   
+  *** o link abaixo e´para a versao que nao dar o zoom 
+  *** link splitEngineOff.spt@out2    to ctrlEngOffC.ceoffc@engineOff ;
+
+  link ctrlIn.controlInput@on     to ctrlOn.con@on ;                            
+  link ctrlIn.controlInput@off    to ctrlOff.coff@off ;                             
+  link ctrlIn.controlInput@resume to ctrlRes.cr@resume ;                           
+
+  link ctrlBrake.cb@disableControl  to SCtrlDisable.scdc@disableControl ;
+  link ctrlAcc.ca@disableControl    to SCtrlDisable.scdc@disableControl ;
+  link ctrlOff.coff@disableControl  to SCtrlDisable.scdc@disableControl ;
+  link ctrlEngOn.ceon@clearSpeed    to SCtrlClear.sccs@clearSpeed ;
+  link ctrlRes.cr@enableControl     to SCtrlEnable.scec@enableControl ;
+  link ctrlOn.con@rec-ena           to stRec-ena.spt@in ;
+  link stRec-ena.spt@out1           to SCtrlRec.scrs@recordSpeed ;
+  link stRec-ena.spt@out2           to SCtrlEnable.scec@enableControl ;
+
+  *** o link abaixo e´para a versao que nao dar o zoom 
+  link ctrlEngOffC.ceoffc@correta   to zoom.tr@correta ;
+  link zoom.tr@disableControl       to SCtrlDisable.scdc@disableControl ;
+
+  link spCtrl.speedControlPace@setSpeed     to SCtrlSetS.scss@setSpeed ; 
+  link SCtrlSetS.scss@setThrottle           to carSim.carSimulator@setThrottle ;
+
+  *** binds
+  bind bool carCtlEngOff.cceoff@ignition    to carCtlEngOn.cceon@ignition ;
+
+  bind bool carCtlAcc.cca@ignition          to carCtlEngOn.cceon@ignition ;         
+***   bind float carCtlAcc@cca@throttle     to carSim.carSimulator@throttle ;   
+  bind int carCtlAcc.cca@throttle           to carSim.carSimulator@throttle ;   
+  bind int carCtlAcc.cca@brakepedal         to carSim.carSimulator@brakepedal ;   
+
+  bind bool carCtlBrake.ccb@ignition        to carCtlEngOn.cceon@ignition ;         
+***   bind float carCtlBrake.ccb@throttle   to carSim.carSimulator@throttle ;   
+  bind int carCtlBrake.ccb@throttle         to carSim.carSimulator@throttle ;   
+  bind int carCtlBrake.ccb@brakepedal       to carSim.carSimulator@brakepedal ;   
+
+  bind int ctrlAcc.ca@controlState          to ctrlBrake.cb@controlState ;
+
+  *** /* so para a versao correta */
+  bind int ctrlEngOffC.ceoffc@controlState  to ctrlBrake.cb@controlState ;
+
+  bind int ctrlEngOffG.ceoffg@controlState  to ctrlBrake.cb@controlState ;
+  bind int ctrlEngOn.ceon@controlState      to ctrlBrake.cb@controlState ;
+  bind int ctrlOff.coff@controlState        to ctrlBrake.cb@controlState ;
+  bind int ctrlOn.con@controlState          to ctrlBrake.cb@controlState ;
+  bind int ctrlRes.cr@controlState          to ctrlBrake.cb@controlState ;
+
+  bind int zoom.tr@controlState             to ctrlBrake.cb@controlState ;
+
+  bind int SCtrlRec.scrs@speed              to carSim.carSimulator@speed ;      
+
+  bind int SCtrlClear.sccs@state            to SCtrlRec.scrs@state ;       
+  bind int SCtrlClear.sccs@setSpeed         to SCtrlRec.scrs@setSpeed ;     
+***   bind int SCtrlClear.sccs@speed        to carSim.carSimulator@speed ;        
+
+  bind int SCtrlDisable.scdc@state          to SCtrlRec.scrs@state ;       
+***   bind int SCtrlDisable.scdc@setSpeed   to SCtrlRec.scrs@setSpeed ;     
+***   bind int SCtrlDisable.scdc@speed      to carSim.carSimulator@speed ;  
+
+  bind int SCtrlEnable.scec@state           to SCtrlRec.scrs@state ;       
+***   bind int SCtrlEnable.scec@setSpeed    to SCtrlRec.scrs@setSpeed ;     
+***   bind int SCtrlEnable.scec@speed       to carSim.carSimulator@speed ;  
+
+  bind int SCtrlSetS.scss@state             to SCtrlRec.scrs@state ;       
+  bind int SCtrlSetS.scss@setSpeed          to SCtrlRec.scrs@setSpeed ;     
+  bind int SCtrlSetS.scss@speed             to carSim.carSimulator@speed ;  
+
+}
+)
+
+(show module cruise .)
+(red topology .)
+
+eof
+

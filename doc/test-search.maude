@@ -1,0 +1,331 @@
+***(
+testes com search no FULL-MAUDE os modulos abaixo foram gerados pelo
+cbabel-fm mas foram posteriormente carregados no fm original para
+testes com o comando search.
+)
+
+in cbabel-configuration.maude
+
+(
+omod PRODUCER is
+  including CBABEL-CONFIGURATION .
+  class PRODUCER | producer-put-status : PortStatus .
+  op producer-put : -> PortOutId
+    [ctor] .
+  eq instantiate(O:Oid,PRODUCER)
+    = < O:Oid : PRODUCER | none,producer-put-status : unlocked,none > .
+  rl ack([O:Oid,producer-put])< O:Oid : PRODUCER | producer-put-status : locked
+    >
+    => done(O:Oid,producer-put,none)< O:Oid : PRODUCER | producer-put-status :
+    unlocked > [label PRODUCER-receivingAck-producer-put] .
+  rl do(O:Oid,producer-put,none)< O:Oid : PRODUCER | producer-put-status :
+    unlocked >
+    => send(O:Oid,producer-put,[O:Oid,producer-put])< O:Oid : PRODUCER |
+    producer-put-status : locked > [label PRODUCER-sending-producer-put] .
+endom
+)
+
+(
+omod CONSUMER is
+  including CBABEL-CONFIGURATION .
+  class CONSUMER | consumer-get-status : PortStatus .
+  op consumer-get : -> PortOutId
+    [ctor] .
+  eq instantiate(O:Oid,CONSUMER)
+    = < O:Oid : CONSUMER | none,consumer-get-status : unlocked,none > .
+  rl ack([O:Oid,consumer-get])< O:Oid : CONSUMER | consumer-get-status : locked
+    >
+    => done(O:Oid,consumer-get,none)< O:Oid : CONSUMER | consumer-get-status :
+    unlocked > [label CONSUMER-receivingAck-consumer-get] .
+  rl do(O:Oid,consumer-get,none)< O:Oid : CONSUMER | consumer-get-status :
+    unlocked >
+    => send(O:Oid,consumer-get,[O:Oid,consumer-get])< O:Oid : CONSUMER |
+    consumer-get-status : locked > [label CONSUMER-sending-consumer-get] .
+endom
+)
+
+(
+omod BUFFER is
+  including CBABEL-CONFIGURATION .
+  class BUFFER | MAXITEMS : Int, items : Int .
+  op get-MAXITEMS : Object -> Int .
+  op get-items : Object -> Int .
+  op set-MAXITEMS : Object Int -> Object .
+  op set-items : Object Int -> Object .
+  op buffer-get : -> PortInId
+    [ctor] .
+  op buffer-put : -> PortInId
+    [ctor] .
+  eq get-MAXITEMS(< O:Oid : BUFFER | MAXITEMS : V:Int >)
+    = V:Int .
+  eq get-items(< O:Oid : BUFFER | items : V:Int >)
+    = V:Int .
+  eq instantiate(O:Oid,BUFFER)
+    = < O:Oid : BUFFER |(MAXITEMS : 2,items : 0,none),none > .
+  eq set-MAXITEMS(< O:Oid : BUFFER | MAXITEMS : V:Int >,V':Int)
+    = < O:Oid : BUFFER | MAXITEMS : V':Int > .
+  eq set-items(< O:Oid : BUFFER | items : V:Int >,V':Int)
+    = < O:Oid : BUFFER | items : V':Int > .
+  rl < O:Oid : BUFFER | > done(O:Oid,buffer-get,IT:Interaction)
+    => < O:Oid : BUFFER | > ack(IT:Interaction) [label
+    BUFFER-doneAndAcking-buffer-get] .
+  rl < O:Oid : BUFFER | > done(O:Oid,buffer-put,IT:Interaction)
+    => < O:Oid : BUFFER | > ack(IT:Interaction) [label
+    BUFFER-doneAndAcking-buffer-put] .
+  rl < O:Oid : BUFFER | > send(O:Oid,buffer-get,IT:Interaction)
+    => < O:Oid : BUFFER | > do(O:Oid,buffer-get,IT:Interaction) [label
+    BUFFER-recevingAndDo-buffer-get] .
+  rl < O:Oid : BUFFER | > send(O:Oid,buffer-put,IT:Interaction)
+    => < O:Oid : BUFFER | > do(O:Oid,buffer-put,IT:Interaction) [label
+    BUFFER-recevingAndDo-buffer-put] .
+endom
+)
+
+(
+omod MUTEX is
+  including CBABEL-CONFIGURATION .
+  class MUTEX | status : PortStatus .
+  op mutex-in1 : -> PortInId
+    [ctor] .
+  op mutex-in2 : -> PortInId
+    [ctor] .
+  op mutex-out1 : -> PortOutId
+    [ctor] .
+  op mutex-out2 : -> PortOutId
+    [ctor] .
+  eq instantiate(O:Oid,MUTEX)
+    = < O:Oid : MUTEX | none,status : unlocked > .
+  rl < O:Oid : MUTEX | status : locked > ack([O:Oid,mutex-out1]::
+    IT:Interaction)
+    => < O:Oid : MUTEX | status : unlocked > ack(IT:Interaction) [label
+    MUTEX-acking-mutex-out1] .
+  rl < O:Oid : MUTEX | status : locked > ack([O:Oid,mutex-out2]::
+    IT:Interaction)
+    => < O:Oid : MUTEX | status : unlocked > ack(IT:Interaction) [label
+    MUTEX-acking-mutex-out2] .
+  rl < O:Oid : MUTEX | status : unlocked > send(O:Oid,mutex-in1,IT:Interaction)
+    => < O:Oid : MUTEX | status : locked > send(O:Oid,mutex-out1,[O:Oid,
+    mutex-out1]:: IT:Interaction) [label MUTEX-sending-mutex-in1] .
+  rl < O:Oid : MUTEX | status : unlocked > send(O:Oid,mutex-in2,IT:Interaction)
+    => < O:Oid : MUTEX | status : locked > send(O:Oid,mutex-out2,[O:Oid,
+    mutex-out2]:: IT:Interaction) [label MUTEX-sending-mutex-in2] .
+endom
+)
+
+(
+omod GUARD-GET is
+  including CBABEL-CONFIGURATION .
+  class GUARD-GET | cheio : Bool, items : StateRequired, status : PortStatus,
+    vazio : StateRequired .
+  op get-cheio : Object -> Bool .
+  op get-items : Object -> Int .
+  op get-vazio : Object -> Bool .
+  op set-cheio : Object Bool -> Object .
+  op set-items : Object Int -> Object .
+  op set-vazio : Object Bool -> Object .
+  op get-in : -> PortInId
+    [ctor] .
+  op get-out : -> PortOutId
+    [ctor] .
+  eq get-cheio(< O:Oid : GUARD-GET | cheio : V:Bool >)
+    = V:Bool .
+  eq get-items(< O:Oid : GUARD-GET | items : st(V:Int,S:Status)>)
+    = V:Int .
+  eq get-vazio(< O:Oid : GUARD-GET | vazio : st(V:Bool,S:Status)>)
+    = V:Bool .
+  eq instantiate(O:Oid,GUARD-GET)
+    = < O:Oid : GUARD-GET |(cheio : false,items : st(0,unchanged),vazio : st(
+    true,unchanged),none),status : unlocked > .
+  eq set-cheio(< O:Oid : GUARD-GET | cheio : V:Bool >,V':Bool)
+    = < O:Oid : GUARD-GET | cheio : V':Bool > .
+  eq set-items(< O:Oid : GUARD-GET | items : st(V:Int,S:Status)>,V':Int)
+    = < O:Oid : GUARD-GET | items : st(V':Int,changed)> .
+  eq set-vazio(< O:Oid : GUARD-GET | vazio : st(V:Bool,S:Status)>,V':Bool)
+    = < O:Oid : GUARD-GET | vazio : st(V':Bool,changed)> .
+  ceq after(OBJ:Object)
+    = if get-items(set-vazio(OBJ:Object,true))== 0 then set-cheio(set-vazio(
+    OBJ:Object,true),false)else set-vazio(OBJ:Object,true)fi
+    if class(OBJ:Object)= GUARD-GET .
+  ceq before(OBJ:Object)
+    = OBJ:Object
+    if class(OBJ:Object)= GUARD-GET .
+  ceq open?(OBJ:Object)
+    = get-cheio(OBJ:Object)== true
+    if class(OBJ:Object)= GUARD-GET .
+  rl < O:Oid : GUARD-GET | status : locked > ack([O:Oid,get-out]::
+    IT:Interaction)
+    => after(< O:Oid : GUARD-GET | status : unlocked >)ack(IT:Interaction) [
+    label GUARD-GET-acking-get-out] .
+  crl < O:Oid : GUARD-GET | status : unlocked > send(O:Oid,get-in,
+    IT:Interaction)
+    => before(< O:Oid : GUARD-GET | status : locked >)send(O:Oid,get-out,[
+    O:Oid,get-out]:: IT:Interaction)
+    if open?(< O:Oid : GUARD-GET | status : unlocked >)= true [label
+    GUARD-GET-sending-get-in] .
+endom
+)
+
+
+(
+omod GUARD-PUT is
+  including CBABEL-CONFIGURATION .
+  class GUARD-PUT | cheio : StateRequired, items : StateRequired, maxitems :
+    StateRequired, status : PortStatus, vazio : Bool .
+  op get-cheio : Object -> Bool .
+  op get-items : Object -> Int .
+  op get-maxitems : Object -> Int .
+  op get-vazio : Object -> Bool .
+  op set-cheio : Object Bool -> Object .
+  op set-items : Object Int -> Object .
+  op set-maxitems : Object Int -> Object .
+  op set-vazio : Object Bool -> Object .
+  op put-in : -> PortInId
+    [ctor] .
+  op put-out : -> PortOutId
+    [ctor] .
+  eq get-cheio(< O:Oid : GUARD-PUT | cheio : st(V:Bool,S:Status)>)
+    = V:Bool .
+  eq get-items(< O:Oid : GUARD-PUT | items : st(V:Int,S:Status)>)
+    = V:Int .
+  eq get-maxitems(< O:Oid : GUARD-PUT | maxitems : st(V:Int,S:Status)>)
+    = V:Int .
+  eq get-vazio(< O:Oid : GUARD-PUT | vazio : V:Bool >)
+    = V:Bool .
+  eq instantiate(O:Oid,GUARD-PUT)
+    = < O:Oid : GUARD-PUT |(vazio : true,maxitems : st(0,unchanged),items : st(
+    0,unchanged),cheio : st(true,unchanged),none),status : unlocked > .
+  eq set-cheio(< O:Oid : GUARD-PUT | cheio : st(V:Bool,S:Status)>,V':Bool)
+    = < O:Oid : GUARD-PUT | cheio : st(V':Bool,changed)> .
+  eq set-items(< O:Oid : GUARD-PUT | items : st(V:Int,S:Status)>,V':Int)
+    = < O:Oid : GUARD-PUT | items : st(V':Int,changed)> .
+  eq set-maxitems(< O:Oid : GUARD-PUT | maxitems : st(V:Int,S:Status)>,V':Int)
+    = < O:Oid : GUARD-PUT | maxitems : st(V':Int,changed)> .
+  eq set-vazio(< O:Oid : GUARD-PUT | vazio : V:Bool >,V':Bool)
+    = < O:Oid : GUARD-PUT | vazio : V':Bool > .
+  ceq after(OBJ:Object)
+    = if get-items(set-cheio(OBJ:Object,true))== get-maxitems(set-cheio(
+    OBJ:Object,true))then set-vazio(set-cheio(OBJ:Object,true),false)else
+    set-cheio(OBJ:Object,true)fi
+    if class(OBJ:Object)= GUARD-PUT .
+  ceq before(OBJ:Object)
+    = OBJ:Object
+    if class(OBJ:Object)= GUARD-PUT .
+  ceq open?(OBJ:Object)
+    = get-vazio(OBJ:Object)== true
+    if class(OBJ:Object)= GUARD-PUT .
+  rl < O:Oid : GUARD-PUT | status : locked > ack([O:Oid,put-out]::
+    IT:Interaction)
+    => after(< O:Oid : GUARD-PUT | status : unlocked >)ack(IT:Interaction) [
+    label GUARD-PUT-acking-put-out] .
+  crl < O:Oid : GUARD-PUT | status : unlocked > send(O:Oid,put-in,
+    IT:Interaction)
+    => before(< O:Oid : GUARD-PUT | status : locked >)send(O:Oid,put-out,[
+    O:Oid,put-out]:: IT:Interaction)
+    if open?(< O:Oid : GUARD-PUT | status : unlocked >)= true [label
+    GUARD-PUT-sending-put-in] .
+endom
+)
+
+(
+omod PC-MUTEX-GUARDS is
+  including CBABEL-CONFIGURATION .
+  including GUARD-PUT .
+  including GUARD-GET .
+  including MUTEX .
+  including CONSUMER .
+  including PRODUCER .
+  including BUFFER .
+  op buff : -> Oid .
+  op cons : -> Oid .
+  op gget : -> Oid .
+  op gput : -> Oid .
+  op mutx : -> Oid .
+  op prod : -> Oid .
+  op topology : -> Configuration .
+  eq topology
+    = instantiate(gput,GUARD-PUT)instantiate(gget,GUARD-GET)instantiate(mutx,
+    MUTEX)instantiate(cons,CONSUMER)instantiate(prod,PRODUCER)instantiate(buff,
+    BUFFER)none .
+  eq < gget : GUARD-GET | items : st(V1:Int,changed)> < buff : BUFFER | items :
+    V2:Int >
+    = < gget : GUARD-GET | items : st(V1:Int,unchanged)> < buff : BUFFER |
+    items : V1:Int > .
+  eq < gget : GUARD-GET | vazio : st(V1:Bool,changed)> < gput : GUARD-PUT |
+    vazio : V2:Bool >
+    = < gget : GUARD-GET | vazio : st(V1:Bool,unchanged)> < gput : GUARD-PUT |
+    vazio : V1:Bool > .
+  eq < gput : GUARD-PUT | cheio : st(V1:Bool,changed)> < gget : GUARD-GET |
+    cheio : V2:Bool >
+    = < gput : GUARD-PUT | cheio : st(V1:Bool,unchanged)> < gget : GUARD-GET |
+    cheio : V1:Bool > .
+  eq < gput : GUARD-PUT | items : st(V1:Int,changed)> < buff : BUFFER | items :
+    V2:Int >
+    = < gput : GUARD-PUT | items : st(V1:Int,unchanged)> < buff : BUFFER |
+    items : V1:Int > .
+  eq < gput : GUARD-PUT | maxitems : st(V1:Int,changed)> < buff : BUFFER |
+    MAXITEMS : V2:Int >
+    = < gput : GUARD-PUT | maxitems : st(V1:Int,unchanged)> < buff : BUFFER |
+    MAXITEMS : V1:Int > .
+  ceq < gget : GUARD-GET | items : st(V1:Int,unchanged)> < buff : BUFFER |
+    items : V2:Int >
+    = < gget : GUARD-GET | items : st(V2:Int,unchanged)> < buff : BUFFER |
+    items : V2:Int >
+    if V1:Int =/= V2:Int = true .
+  ceq < gget : GUARD-GET | vazio : st(V1:Bool,unchanged)> < gput : GUARD-PUT |
+    vazio : V2:Bool >
+    = < gget : GUARD-GET | vazio : st(V2:Bool,unchanged)> < gput : GUARD-PUT |
+    vazio : V2:Bool >
+    if V1:Bool =/= V2:Bool = true .
+  ceq < gput : GUARD-PUT | cheio : st(V1:Bool,unchanged)> < gget : GUARD-GET |
+    cheio : V2:Bool >
+    = < gput : GUARD-PUT | cheio : st(V2:Bool,unchanged)> < gget : GUARD-GET |
+    cheio : V2:Bool >
+    if V1:Bool =/= V2:Bool = true .
+  ceq < gput : GUARD-PUT | items : st(V1:Int,unchanged)> < buff : BUFFER |
+    items : V2:Int >
+    = < gput : GUARD-PUT | items : st(V2:Int,unchanged)> < buff : BUFFER |
+    items : V2:Int >
+    if V1:Int =/= V2:Int = true .
+  ceq < gput : GUARD-PUT | maxitems : st(V1:Int,unchanged)> < buff : BUFFER |
+    MAXITEMS : V2:Int >
+    = < gput : GUARD-PUT | maxitems : st(V2:Int,unchanged)> < buff : BUFFER |
+    MAXITEMS : V2:Int >
+    if V1:Int =/= V2:Int = true .
+  rl send(cons,consumer-get,IT:Interaction)
+    => send(mutx,mutex-in2,IT:Interaction) [label
+    consumer-get-linking-mutex-in2] .
+  rl send(gget,get-out,IT:Interaction)
+    => send(buff,buffer-get,IT:Interaction) [label get-out-linking-buffer-get]
+    .
+  rl send(gput,put-out,IT:Interaction)
+    => send(buff,buffer-put,IT:Interaction) [label put-out-linking-buffer-put]
+    .
+  rl send(mutx,mutex-out1,IT:Interaction)
+    => send(gput,put-in,IT:Interaction) [label mutex-out1-linking-put-in] .
+  rl send(mutx,mutex-out2,IT:Interaction)
+    => send(gget,get-in,IT:Interaction) [label mutex-out2-linking-get-in] .
+  rl send(prod,producer-put,IT:Interaction)
+    => send(mutx,mutex-in1,IT:Interaction) [label
+    producer-put-linking-mutex-in1] .
+endom
+)
+
+(omod APP is 
+  inc PC-MUTEX-GUARDS .
+endom)
+
+load pcb/s-ver-pcb.maude
+
+eof
+
+--- esta busca funciona
+(search [1] initial =>* C:Configuration send(buff, buffer-put, IT1:Interaction) .)
+
+--- esta busca gera erro!
+(search [1] initial =>* C:Configuration .)
+
+--- esta busca funciona
+(search initial =>! C:Configuration .)
+
+--- esta busca gera erro!
+(search [1] initial =>! C:Configuration .)

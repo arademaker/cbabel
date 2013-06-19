@@ -1,0 +1,30 @@
+(
+connector DEFAULT {
+ in port default@in ;
+ out port default@out ;
+
+ interaction{
+   default@in > default@out ;
+ }
+}
+)
+
+(
+application PC-DEFAULT {
+ instantiate BUFFER as buff ;
+ instantiate PRODUCER as prod1 ;
+ instantiate CONSUMER as cons1 ;
+ instantiate PRODUCER as prod2 ;
+ instantiate CONSUMER as cons2 ;
+ instantiate DEFAULT as default1 ;
+ instantiate DEFAULT as default2 ;
+
+ link prod1.producer@put to default1.default@in ;
+ link prod2.producer@put to default1.default@in ;
+ link default1.default@out to buff.buffer@put ;
+
+ link cons1.consumer@get to default2.default@in ;
+ link cons2.consumer@get to default2.default@in ;
+ link default2.default@out to buff.buffer@get ;
+}
+)

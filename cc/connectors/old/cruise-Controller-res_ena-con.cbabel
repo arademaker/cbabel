@@ -1,0 +1,28 @@
+(
+connector Controller-res_ena {
+  staterequired int INACTIVE;
+  staterequired int ACTIVE;
+  staterequired int CRUISING;
+  staterequired int STANDBY;
+  staterequired int controlState;
+
+  // comandos do cruise contro acionados pelo usuario
+  in port oneway resume;
+
+  // efeito produzido no cruise control
+  out port oneway enableControl;
+
+  interaction {
+
+    resume >
+       guard (controlState==STANDBY) {
+         alternative (ground);
+         before {controlState=CRUISING;}}
+    > enableControl;
+  }
+} // end Control
+
+)
+
+
+

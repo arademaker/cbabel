@@ -1,0 +1,13 @@
+load a-producer.cbabel
+load a-consumer.cbabel
+load s-buffer.cbabel
+load mutex.cbabel
+load pc-mutex.cbabel
+
+(omod APP is
+ inc PC-MUTEX .
+endom)
+
+load a-ver-pcb.maude
+
+in searches.maude

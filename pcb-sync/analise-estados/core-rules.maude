@@ -1,0 +1,374 @@
+
+mod PCB-EXEC is
+  pr CONFIGURATION .
+  pr INT .
+
+  sorts BUFFER CONSUMER Interaction MUTEX OidSet PRODUCER PortId
+    PortInId PortOutId PortStatus StateRequired Status .
+
+  subsort BUFFER < Cid .
+  subsort CONSUMER < Cid .
+  subsort MUTEX < Cid .
+  subsort Oid < OidSet .
+  subsort PRODUCER < Cid .
+  subsort PortInId < PortId .
+  subsort PortOutId < PortId .
+  subsort Zero < Nat .
+  op <_:_|`> : Oid Cid -> Object .
+  op BUFFER : -> BUFFER .
+  op CONSUMER : -> CONSUMER .
+  op MUTEX : -> MUTEX .
+  op PRODUCER : -> PRODUCER .
+  op `[_`,_`] : Oid PortOutId -> Interaction .
+  op ack : Interaction -> Msg .
+  op after : Object -> Object .
+  op before : Object -> Object .
+  op buff : -> Oid .
+  op class : Object -> Cid .
+  op cons1 : -> Oid .
+  op cons10 : -> Oid .
+  op cons2 : -> Oid .
+  op cons3 : -> Oid .
+  op cons4 : -> Oid .
+  op cons5 : -> Oid .
+  op cons6 : -> Oid .
+  op cons7 : -> Oid .
+  op cons8 : -> Oid .
+  op cons9 : -> Oid .
+  op do : Oid PortId Interaction -> Msg .
+  op done : Oid PortId Interaction -> Msg .
+  op get-items : Object -> Int .
+  op get-maxitems : Object -> Int .
+  op instantiate : Oid Cid -> Object .
+  op mutx : -> Oid .
+  op none : -> AttributeSet .
+  op none : -> Configuration .
+  op none : -> Interaction .
+  op none : -> OidSet .
+  op open? : Object -> Bool .
+  op prod1 : -> Oid .
+  op prod10 : -> Oid .
+  op prod2 : -> Oid .
+  op prod3 : -> Oid .
+  op prod4 : -> Oid .
+  op prod5 : -> Oid .
+  op prod6 : -> Oid .
+  op prod7 : -> Oid .
+  op prod8 : -> Oid .
+  op prod9 : -> Oid .
+  op send : Oid PortId Interaction -> Msg .
+  op set-items : Object Int -> Object .
+  op set-maxitems : Object Int -> Object .
+  op start : OidSet PortId -> Configuration .
+  op topology : -> Configuration .
+
+  op _::_ : Interaction Interaction -> Interaction
+    [assoc id:(none).Interaction prec 13 gather(e E)] .
+  op __ : OidSet OidSet -> OidSet
+    [assoc comm id:(none).OidSet] .
+  op buffer@get : -> PortInId
+    [ctor] .
+  op buffer@put : -> PortInId
+    [ctor] .
+  op changed : -> Status
+    [ctor] .
+  op consumer@get : -> PortOutId
+    [ctor] .
+  op consumer@get-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+
+  op ground : -> PortOutId
+    [ctor] .
+  op iset : Interaction Interaction -> Interaction
+    [assoc id:(none).Interaction] .
+  op items`:_ : Int -> Attribute
+    [gather(&)] .
+  op locked : -> PortStatus
+    [ctor] .
+  op maxitems`:_ : Int -> Attribute
+    [gather(&)] .
+  op mutex@in1 : -> PortInId
+    [ctor] .
+  op mutex@in2 : -> PortInId
+    [ctor] .
+  op mutex@out1 : -> PortOutId
+    [ctor] .
+  op mutex@out2 : -> PortOutId
+    [ctor] .
+  op producer@put : -> PortOutId
+    [ctor] .
+  op producer@put-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op st : Bool Status -> StateRequired
+    [ctor] .
+  op st : Int Status -> StateRequired
+    [ctor] .
+  op status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op unchanged : -> Status
+    [ctor] .
+  op unlocked : -> PortStatus
+    [ctor] .
+
+
+  eq topology
+    = instantiate(buff,BUFFER)
+instantiate(cons1,CONSUMER)
+instantiate(cons10,CONSUMER)
+instantiate(cons2,CONSUMER)
+instantiate(cons3,CONSUMER)
+instantiate(cons4,CONSUMER)
+instantiate(cons5,CONSUMER)
+instantiate(cons6,CONSUMER)
+instantiate(cons7,CONSUMER)
+instantiate(cons8,CONSUMER)
+instantiate(cons9,CONSUMER)
+instantiate(mutx,MUTEX)
+instantiate(prod1,PRODUCER)
+instantiate(prod10,PRODUCER)
+instantiate(prod2,PRODUCER)
+instantiate(prod3,PRODUCER)
+instantiate(prod4,PRODUCER)
+instantiate(prod5,PRODUCER)
+instantiate(prod6,PRODUCER)
+instantiate(prod7,PRODUCER)
+instantiate(prod8,PRODUCER)
+instantiate(prod9,PRODUCER)
+(none).Configuration .
+
+  eq < O:Oid : C:Cid | >
+    = < O:Oid : C:Cid | none > .
+
+  eq ack(none)
+    = (none).Configuration .
+  eq class(< O:Oid : C:Cid | A:AttributeSet >)
+    = C:Cid .
+  eq get-items(< O:Oid : V#0:BUFFER | maxitems : V#1:Int,items : V:Int,none,
+    V#2:AttributeSet >)
+    = V:Int .
+  eq get-maxitems(< O:Oid : V#3:BUFFER | items : V#4:Int,maxitems : V:Int,none,
+    V#5:AttributeSet >)
+    = V:Int .
+  eq instantiate(O:Oid,BUFFER)
+    = < O:Oid : BUFFER |(none,items : 0),maxitems : 2 > .
+  eq instantiate(O:Oid,CONSUMER)
+    = < O:Oid : CONSUMER | none,consumer@get-status : unlocked > .
+  eq instantiate(O:Oid,MUTEX)
+    = < O:Oid : MUTEX | none,status : unlocked > .
+  eq instantiate(O:Oid,PRODUCER)
+    = < O:Oid : PRODUCER | none,producer@put-status : unlocked > .
+  eq send(O:Oid,ground,IT:Interaction)
+    = (none).Configuration .
+  eq set-items(< O:Oid : V#6:BUFFER | maxitems : V#7:Int,items : V:Int,none,
+    V#8:AttributeSet >,V':Int)
+    = < O:Oid : V#6:BUFFER | items : V':Int,maxitems : V#7:Int,V#8:AttributeSet
+    > .
+  eq set-maxitems(< O:Oid : V#9:BUFFER | items : V#10:Int,maxitems : V:Int,
+    none,V#11:AttributeSet >,V':Int)
+    = < O:Oid : V#9:BUFFER | maxitems : V':Int,items : V#10:Int,
+    V#11:AttributeSet > .
+  eq start(none,P:PortId)
+    = (none).Configuration .
+  eq start(O:Oid OS:OidSet,P:PortId)
+    = do(O:Oid,P:PortId,none)
+start(OS:OidSet,P:PortId) .
+  eq send(cons1,consumer@get,IT:Interaction)
+    = send(mutx,mutex@in2,IT:Interaction) [label
+    consumer@get-linking-mutex@in2] .
+  eq send(cons10,consumer@get,IT:Interaction)
+    = send(mutx,mutex@in2,IT:Interaction) [label
+    consumer@get-linking-mutex@in2] .
+  eq send(cons2,consumer@get,IT:Interaction)
+    = send(mutx,mutex@in2,IT:Interaction) [label
+    consumer@get-linking-mutex@in2] .
+  eq send(cons3,consumer@get,IT:Interaction)
+    = send(mutx,mutex@in2,IT:Interaction) [label
+    consumer@get-linking-mutex@in2] .
+  eq send(cons4,consumer@get,IT:Interaction)
+    = send(mutx,mutex@in2,IT:Interaction) [label
+    consumer@get-linking-mutex@in2] .
+  eq send(cons5,consumer@get,IT:Interaction)
+    = send(mutx,mutex@in2,IT:Interaction) [label
+    consumer@get-linking-mutex@in2] .
+  eq send(cons6,consumer@get,IT:Interaction)
+    = send(mutx,mutex@in2,IT:Interaction) [label
+    consumer@get-linking-mutex@in2] .
+  eq send(cons7,consumer@get,IT:Interaction)
+    = send(mutx,mutex@in2,IT:Interaction) [label
+    consumer@get-linking-mutex@in2] .
+  eq send(cons8,consumer@get,IT:Interaction)
+    = send(mutx,mutex@in2,IT:Interaction) [label
+    consumer@get-linking-mutex@in2] .
+  eq send(cons9,consumer@get,IT:Interaction)
+    = send(mutx,mutex@in2,IT:Interaction) [label
+    consumer@get-linking-mutex@in2] .
+  eq send(mutx,mutex@out1,IT:Interaction)
+    = send(buff,buffer@put,IT:Interaction) [label
+    mutex@out1-linking-buffer@put] .
+  eq send(mutx,mutex@out2,IT:Interaction)
+    = send(buff,buffer@get,IT:Interaction) [label
+    mutex@out2-linking-buffer@get] .
+  eq send(prod1,producer@put,IT:Interaction)
+    = send(mutx,mutex@in1,IT:Interaction) [label
+    producer@put-linking-mutex@in1] .
+  eq send(prod10,producer@put,IT:Interaction)
+    = send(mutx,mutex@in1,IT:Interaction) [label
+    producer@put-linking-mutex@in1] .
+  eq send(prod2,producer@put,IT:Interaction)
+    = send(mutx,mutex@in1,IT:Interaction) [label
+    producer@put-linking-mutex@in1] .
+  eq send(prod3,producer@put,IT:Interaction)
+    = send(mutx,mutex@in1,IT:Interaction) [label
+    producer@put-linking-mutex@in1] .
+  eq send(prod4,producer@put,IT:Interaction)
+    = send(mutx,mutex@in1,IT:Interaction) [label
+    producer@put-linking-mutex@in1] .
+  eq send(prod5,producer@put,IT:Interaction)
+    = send(mutx,mutex@in1,IT:Interaction) [label
+    producer@put-linking-mutex@in1] .
+  eq send(prod6,producer@put,IT:Interaction)
+    = send(mutx,mutex@in1,IT:Interaction) [label
+    producer@put-linking-mutex@in1] .
+  eq send(prod7,producer@put,IT:Interaction)
+    = send(mutx,mutex@in1,IT:Interaction) [label
+    producer@put-linking-mutex@in1] .
+  eq send(prod8,producer@put,IT:Interaction)
+    = send(mutx,mutex@in1,IT:Interaction) [label
+    producer@put-linking-mutex@in1] .
+  eq send(prod9,producer@put,IT:Interaction)
+    = send(mutx,mutex@in1,IT:Interaction) [label
+    producer@put-linking-mutex@in1] .
+
+  sort SystemState .
+  op {_,_} : Configuration Oid -> SystemState [ctor] .
+  
+  vars O' O : Oid .
+  var C : Configuration .
+
+  crl {C < O : V#0:MUTEX | status : locked,none,V#1:AttributeSet >
+       ack([O,mutex@out1]:: IT:Interaction) , O'}
+   => {C < O : V#0:MUTEX | status : unlocked,V#1:AttributeSet >
+       ack(IT:Interaction) , O}
+    if O =/= O' [label MUTEX-acking-mutex@out1] .
+
+  rl < O : V#12:BUFFER | maxitems : V#14:Int,items : V#13:Int,none,
+    V#15:AttributeSet > done(O,buffer@get,IT:Interaction)
+    => < O : V#12:BUFFER | items : V#13:Int,maxitems : V#14:Int,
+    V#15:AttributeSet > ack(IT:Interaction)
+    [label BUFFER-doneAndAcking-buffer@get] .
+
+  rl < O : V#16:BUFFER | maxitems : V#18:Int,items : V#17:Int,none,
+    V#19:AttributeSet > done(O,buffer@put,IT:Interaction)
+    => < O : V#16:BUFFER | items : V#17:Int,maxitems : V#18:Int,
+    V#19:AttributeSet > ack(IT:Interaction)
+   [label BUFFER-doneAndAcking-buffer@put] .
+
+  crl {C < O : V#20:BUFFER | maxitems : V#22:Int,items : V#21:Int,none,
+    V#23:AttributeSet > send(O,buffer@get,IT:Interaction), O'}
+    => {C < O : V#20:BUFFER | items : V#21:Int,maxitems : V#22:Int,
+    V#23:AttributeSet > do(O,buffer@get,IT:Interaction), O}
+   if O =/= O' [label BUFFER-recevingAndDo-buffer@get] .
+
+  crl {C < O : V#24:BUFFER | maxitems : V#26:Int,items : V#25:Int,none,
+    V#27:AttributeSet > send(O,buffer@put,IT:Interaction), O'}
+    => {C < O : V#24:BUFFER | items : V#25:Int,maxitems : V#26:Int,
+    V#27:AttributeSet > do(O,buffer@put,IT:Interaction), O} 
+   if O =/= O' [label BUFFER-recevingAndDo-buffer@put] .
+
+  crl {C < O : V#2:MUTEX | status : locked,none,V#3:AttributeSet >
+       ack([O,mutex@out2]:: IT:Interaction), O'}
+    => {C < O : V#2:MUTEX | status : unlocked,V#3:AttributeSet >
+        ack(IT:Interaction), O} 
+   if O =/= O' [label MUTEX-acking-mutex@out2] .
+
+  crl {C < O : V#4:MUTEX | status : unlocked,none,V#5:AttributeSet >
+send(O,mutex@in1,IT:Interaction), O'}
+    => {C < O : V#4:MUTEX | status : locked,V#5:AttributeSet >
+send(O,mutex@out1,[O,mutex@out1]:: IT:Interaction), O} 
+   if O =/= O' [label MUTEX-sending-mutex@in1] .
+
+  crl {C < O : V#6:MUTEX | status : unlocked,none,V#7:AttributeSet >
+send(O,mutex@in2,IT:Interaction), O'}
+    => {C < O : V#6:MUTEX | status : locked,V#7:AttributeSet >
+        send(O,mutex@out2,[O,mutex@out2]:: IT:Interaction), O}
+   if O =/= O' [label MUTEX-sending-mutex@in2] .
+
+  crl {C ack([O,consumer@get])
+< O : V#0:CONSUMER | consumer@get-status : locked,none,V#1:AttributeSet >, O'}
+    => {C done(O,consumer@get,none) 
+< O : V#0:CONSUMER | consumer@get-status : unlocked,V#1:AttributeSet >, O}
+   if O =/= O' [label CONSUMER-receivingAck-consumer@get] .
+
+  crl {C ack([O,producer@put])
+< O : V#0:PRODUCER | producer@put-status : locked,none,V#1:AttributeSet >, O'}
+    => {C  done(O,producer@put,none)
+< O : V#0:PRODUCER | producer@put-status : unlocked,V#1:AttributeSet >, O} 
+   if O =/= O' [label PRODUCER-receivingAck-producer@put] .
+
+  rl do(O,buffer@get,IT:Interaction)
+< O : V#0:BUFFER | maxitems : V#1:Int,items : N:Int,none,V#2:AttributeSet >
+    => < O : V#0:BUFFER | items : if N:Int - 1 < -1 then -1 else N:Int - 1
+    fi,maxitems : V#1:Int,V#2:AttributeSet > 
+done(O,buffer@get,IT:Interaction) [label buffer-do-get] .
+
+  rl do(O,buffer@put,IT:Interaction)
+< O : V#3:BUFFER | maxitems : M:Int,items : N:Int,none,V#4:AttributeSet >
+    => < O : V#3:BUFFER | maxitems : M:Int,items : if N:Int + 1 > M:Int + 1
+    then M:Int + 1 else N:Int + 1 fi,V#4:AttributeSet >
+done(O,buffer@put,IT:Interaction) [label buffer-do-put] .
+
+  crl {C do(O,consumer@get,none)
+< O : V#2:CONSUMER | consumer@get-status : unlocked,none,V#3:AttributeSet >, O'}
+    => {C send(O,consumer@get,[O,consumer@get])
+< O : V#2:CONSUMER | consumer@get-status : locked,V#3:AttributeSet >, O} 
+   if O =/= O' [label CONSUMER-sending-consumer@get] .
+
+  crl {C do(O,producer@put,none)
+< O : V#2:PRODUCER | producer@put-status : unlocked,none,V#3:AttributeSet >, O'}
+    => {C send(O,producer@put,[O,producer@put])
+< O : V#2:PRODUCER | producer@put-status : locked,V#3:AttributeSet >, O} 
+   if O =/= O' [label PRODUCER-sending-producer@put] .
+
+  rl done(O,consumer@get,IT:Interaction)
+    => do(O,consumer@get,none) [label consumer-do] .
+
+  rl done(O,producer@put,IT:Interaction)
+    => do(O,producer@put,none) [label producer-do] .
+
+  op initial : -> SystemState .
+  eq initial = { topology
+                 start(cons1,consumer@get) 
+                 start(prod1,producer@put), prod1} .
+endm
+
+search initial =>* {C M:Msg, O'} . 
+q
+
+eof
+search initial =>* {C < cons1 : CONSUMER | A:AttributeSet >, O'} . 
+
+search initial =>! {C:Configuration, O:Oid} .
+
+in model-checker.maude
+
+mod PCB-VER is 
+ inc PCB-EXEC .
+ pr MODEL-CHECKER .
+
+ subsort SystemState < State .
+
+ var C : Configuration .
+ vars O O' : Oid .
+ vars IT IT' : Interaction .
+ vars M N : Int .
+
+ ops putting getting : -> Prop .
+ eq { < O : BUFFER | > send(O, buffer@put, IT) C, O'} |= putting = true .
+ eq { < O : BUFFER | > send(O, buffer@get, IT) C, O'} |= getting = true .
+
+ op raceCond : -> Formula .
+ eq raceCond = [] ~ (putting /\ getting) .
+
+endm
+
+red modelCheck(initial, raceCond) .

@@ -1,0 +1,28 @@
+(
+connector Controller-eOff_corr {
+  staterequired int INACTIVE;
+  staterequired int ACTIVE;
+  staterequired int CRUISING;
+  staterequired int STANDBY;
+  staterequired int controlState;
+
+   // controles normais de um carro padrao
+  in port oneway engineOff;
+
+  out port oneway correta; // para solucionar o "tranco"
+
+  interaction {
+     engineOff >
+       guard (controlState!=INACTIVE) {
+       // solucao correta
+           alternative (ground);
+           before {controlState=INACTIVE;} }
+    > correta;
+
+  }
+} // end Control
+
+)
+
+
+

@@ -1,0 +1,10 @@
+
+module PRODUCER { 
+ in port put ;
+}
+
+
+module CONSUMER { 
+ in port get ;
+}
+

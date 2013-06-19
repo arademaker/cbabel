@@ -1,0 +1,29 @@
+(
+connector REQUEST-FORK {
+  staterequired bool rf@free ;
+  in port rf@in ;
+  out port rf@out ;
+
+  interaction {
+    rf@in > guard (rf@free) {
+              before { rf@free = FALSE ; }
+            } 
+    > rf@out ;
+  }
+}
+)
+
+(
+connector LEAVE-FORK {
+  staterequired bool lf@free ;
+  in port lf@in ;
+  out port lf@out ;
+
+  interaction {
+   lf@in > guard(TRUE) { 
+             after { lf@free = TRUE ; }
+           }
+   > lf@out ;
+  }
+}
+)

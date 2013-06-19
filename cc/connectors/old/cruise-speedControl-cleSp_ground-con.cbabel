@@ -1,0 +1,28 @@
+(
+
+connector SpeedControl-cleSp_ground {
+  staterequired int DISABLED;      //speed control states
+  staterequired int ENABLED;
+  staterequired int state;         //initial state
+  staterequired int setSpeed;      //target cruise control speed
+
+  staterequired int speed;         // vem do modulo engine
+
+  in port oneway  clearSpeed;
+
+  interaction {
+    clearSpeed >
+       guard (state==DISABLED) {
+          before {setSpeed=0;}
+          alternative (ground);
+       }
+    > ground;
+
+  }
+}
+
+)
+
+
+
+

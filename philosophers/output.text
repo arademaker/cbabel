@@ -1,0 +1,94 @@
+rademake@epge03:~/cbabel-tool-2.3/filosofos$ maude ../cbabel-tool.maude  ver-phi-guards.maude
+		     \||||||||||||||||||/
+		   --- Welcome to Maude ---
+		     /||||||||||||||||||\
+	    Maude 2.1.1 built: Jun 15 2004 12:55:31
+	     Copyright 1997-2004 SRI International
+		   Mon Jan 31 10:17:12 2005
+
+	       Cbabel Tool 2.0 (October 25th, 2004)
+
+Introduced module CBABEL-CONFIGURATION
+
+rewrites: 1848 in 0ms cpu (0ms real) (~ rewrites/second)
+Introduced module PHILOSOPHER
+
+rewrites: 1765 in 10ms cpu (10ms real) (176500 rewrites/second)
+Introduced module FOOD
+
+rewrites: 2474 in 10ms cpu (10ms real) (247400 rewrites/second)
+Introduced module LFORK
+
+rewrites: 2519 in 10ms cpu (10ms real) (251900 rewrites/second)
+Introduced module RFORK
+
+rewrites: 7159 in 20ms cpu (20ms real) (357950 rewrites/second)
+Introduced module DP
+
+rewrites: 10083 in 20ms cpu (20ms real) (504150 rewrites/second)
+Introduced module VER-DP
+
+rewrites: 7088 in 100ms cpu (100ms real) (70880 rewrites/second)
+search in VER-DP : initial =>* C:Configuration send(food,eat,
+    IT1:Interaction)send(food,eat,IT2:Interaction).
+
+Solution 1
+C:Configuration <- < food : FOOD | none > < lfork1 : LFORK | lf@available :
+    false,status : unlocked > < lfork2 : LFORK | lf@available : false,status :
+    unlocked > < lfork3 : LFORK | lf@available : false,status : unlocked > <
+    lfork4 : LFORK | lf@available : false,status : unlocked > < phi1 :
+    PHILOSOPHER | get-fork-status : locked > < phi2 : PHILOSOPHER |
+    get-fork-status : unlocked > < phi3 : PHILOSOPHER | get-fork-status :
+    locked > < phi4 : PHILOSOPHER | get-fork-status : unlocked > < rfork1 :
+    RFORK | rf@available : st(false,unchanged),status : unlocked > < rfork2 :
+    RFORK | rf@available : st(false,unchanged),status : unlocked > < rfork3 :
+    RFORK | rf@available : st(false,unchanged),status : unlocked > < rfork4 :
+    RFORK | rf@available : st(false,unchanged),status : unlocked > do(phi2,
+    get-fork,none)do(phi4,get-fork,none); IT1:Interaction <- [rfork2,rf@out]::[
+    lfork3,lf@out]::[phi3,get-fork]; IT2:Interaction <- [rfork4,rf@out]::[
+    lfork1,lf@out]::[phi1,get-fork]
+rewrites: 203429 in 2800ms cpu (2800ms real) (72653 rewrites/second)
+search in VER-DP : initial =>! C:Configuration .
+
+Solution 1
+C:Configuration <- < food : FOOD | none > < lfork1 : LFORK | lf@available :
+    false,status : unlocked > < lfork2 : LFORK | lf@available : false,status :
+    unlocked > < lfork3 : LFORK | lf@available : false,status : unlocked > <
+    lfork4 : LFORK | lf@available : false,status : unlocked > < phi1 :
+    PHILOSOPHER | get-fork-status : locked > < phi2 : PHILOSOPHER |
+    get-fork-status : locked > < phi3 : PHILOSOPHER | get-fork-status : locked
+    > < phi4 : PHILOSOPHER | get-fork-status : locked > < rfork1 : RFORK |
+    rf@available : st(false,unchanged),status : unlocked > < rfork2 : RFORK |
+    rf@available : st(false,unchanged),status : unlocked > < rfork3 : RFORK |
+    rf@available : st(false,unchanged),status : unlocked > < rfork4 : RFORK |
+    rf@available : st(false,unchanged),status : unlocked > send(rfork1,rf@in,[
+    lfork2,lf@out]::[phi2,get-fork])send(rfork2,rf@in,[lfork3,lf@out]::[phi3,
+    get-fork])send(rfork3,rf@in,[lfork4,lf@out]::[phi4,get-fork])send(rfork4,
+    rf@in,[lfork1,lf@out]::[phi1,get-fork])
+
+No more solutions.
+rewrites: 1657 in 20ms cpu (20ms real) (82850 rewrites/second)
+search in VER-DP : initial =>* send(food,eat,IT:Interaction ::[phi1,
+    get-fork])C:Configuration .
+
+Solution 1
+C:Configuration <- < food : FOOD | none > < lfork1 : LFORK | lf@available :
+    false,status : unlocked > < lfork2 : LFORK | lf@available : true,status :
+    unlocked > < lfork3 : LFORK | lf@available : true,status : unlocked > <
+    lfork4 : LFORK | lf@available : false,status : unlocked > < phi1 :
+    PHILOSOPHER | get-fork-status : locked > < phi2 : PHILOSOPHER |
+    get-fork-status : unlocked > < phi3 : PHILOSOPHER | get-fork-status :
+    unlocked > < phi4 : PHILOSOPHER | get-fork-status : unlocked > < rfork1 :
+    RFORK | rf@available : st(false,unchanged),status : unlocked > < rfork2 :
+    RFORK | rf@available : st(true,unchanged),status : unlocked > < rfork3 :
+    RFORK | rf@available : st(true,unchanged),status : unlocked > < rfork4 :
+    RFORK | rf@available : st(false,unchanged),status : unlocked > do(phi2,
+    get-fork,none)do(phi3,get-fork,none)do(phi4,get-fork,none); IT:Interaction
+    <- [rfork4,rf@out]::[lfork1,lf@out]
+rewrites: 204366 in 2800ms cpu (2800ms real) (72987 rewrites/second)
+search in VER-DP : initial =>* send(food,eat,IT:Interaction ::[phi1,
+    get-fork])send(food,eat,IT:Interaction ::[phi2,get-fork])C:Configuration .
+
+No solution.
+
+Maude> 

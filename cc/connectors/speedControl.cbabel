@@ -1,0 +1,93 @@
+*** speed control states
+*** var int DISABLED = 0 ;      
+*** var int ENABLED  = 1 ;
+
+(
+connector SpeedControlRecordSpeed {
+  var int scrs@state = 0 ;            *** initial state DISABLED 
+  var int scrs@setSpeed = 0 ;         *** target cruise control speed
+  staterequired int scrs@speed ;  *** vem do modulo engine
+  in port oneway scrs@recordSpeed ;
+
+  interaction {
+    scrs@recordSpeed > guard ( TRUE ) {
+                    before { scrs@setSpeed = scrs@speed ; }
+                    alternative (ground) ;
+                  }
+    > ground ;
+  }
+}
+)
+
+(
+connector SpeedControlClearSpeed {
+  staterequired int sccs@state ;      *** initial state
+  staterequired int sccs@setSpeed ;   *** target cruise control speed
+  in port oneway sccs@clearSpeed ;
+
+  interaction {
+    sccs@clearSpeed > guard (sccs@state == 0) { 
+                       before { sccs@setSpeed = 0 ; }
+                       alternative (ground) ;
+                      }
+    > ground ;
+  }
+}
+)
+
+(
+connector SpeedControlDisableControl {
+  staterequired int scdc@state ;      
+  in port oneway scdc@disableControl ;
+
+  interaction {
+    scdc@disableControl > guard (scdc@state == 1) {
+                           before { scdc@state = 0 ; } 
+                           alternative (ground) ;
+                     }
+    > ground ;
+  }
+}
+)
+
+
+(
+connector SpeedControlEnableControl {
+  staterequired int scec@state ; 
+  in port oneway scec@enableControl ;
+
+  interaction {
+    scec@enableControl > guard (scec@state == 0) { 
+                          before { scec@state = 1 ; } 
+                          alternative (ground) ;
+	                 }
+    > ground ;
+  }
+}
+)
+
+(
+connector SpeedControlSetSpeed {
+  staterequired int scss@state ;     *** initial state
+  staterequired int scss@setSpeed ;  *** target cruise control speed
+  staterequired int scss@speed ;     *** vem do modulo engine
+  var int scss@error = 0 ;
+  var int scss@steady = 0 ;
+
+  in port oneway  scss@setSpeed ;
+  out port oneway scss@setThrottle ;   *** jogada com statereq
+
+  interaction {
+    scss@setSpeed > guard (scss@state == 1) { 
+                 before {
+                  scss@error = scss@setSpeed - scss@speed ; 
+                  scss@steady = scss@setSpeed ;        
+                  scss@speed = scss@steady + scss@error ;   
+                 }
+                 alternative (ground) ; 
+               }
+    > scss@setThrottle ; 
+  }
+}
+)
+

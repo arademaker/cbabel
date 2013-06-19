@@ -1,0 +1,25 @@
+connector CarController-eOn_ground {
+
+    var boolean ignition = false;         // engine off
+    var float _throttle = float(0.0);     // throttle setting 0.10
+    var int _brakepedal = int(0);         // brake setting 0..10
+
+    var float maxThrottle = float(10.0);
+    var int maxBrake = int(10);
+
+    staterequired float throttle;        // vem do modulo engine
+    staterequired int brakepedal;        // vem do modulo engine
+
+    in port oneway (void) engineOn;
+
+    interaction {
+
+       engineOn > guard (ignition == false) {
+                  before {ignition = true;
+                         // instantiate carSimulator
+                         // link carSimulator
+                 }
+                 alternative (ground);
+       > ground;    
+   }
+}

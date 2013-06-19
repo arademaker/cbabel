@@ -1,0 +1,76 @@
+\documentclass[10pt]{article}% ===> this file was generated automatically by noweave --- better not edit it
+\usepackage[latin1]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{graphicx}
+\usepackage{subfigure,wrapfig}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{noweb}
+\noweboptions{smallcode,longchunks,nomargintag}
+
+\newcommand{\cb}{CBabel}
+\newcommand{\cbt}{Maude CBabel tool}
+\newcommand{\szt}{Sztajnberg}
+\newcommand{\fm}{Full Maude}
+\newcommand{\tr}{teoria de reescrita}
+\newcommand{\Tr}{Teoria de reescrita}
+\newcommand{\rwl}{lógica de reescrita}
+\newcommand{\Rwl}{Lógica de reescrita}
+\newcommand{\rrio}{CR--RIO}
+%\newcommand{\code}[1]{{\footnotesize{\tt #1}}}
+\newcommand{\ingles}[1]{``#1''}
+\newcommand{\CBCONF}{\code{CBABEL-CONFIGURATION}}
+
+\begin{document}
+\pagestyle{noweb}
+
+\title{A aplicação produtores e consumidores}
+\author{Alexandre Rademaker}
+\maketitle
+
+\section{A aplicação}
+
+O problema dos produtores e consumidores é comumente utilizado na
+literatura, por exemplo em \cite{Tanenbaum1987}, para descrição de
+aspectos de coordenação entre processos concorrentes que disputam
+acesso a um recurso comum. Esta aplicação foi também extensamente
+utilizada em \cite{sztTese} para apresentação das primitivas da
+linguagem \cb{}.
+
+Nesta aplicação, um recurso denominado \ingles{buffer} é disputado
+entre processos produtores e consumidores. Os produtores acessam o
+\ingles{buffer} para depositar itens que eles acabaram de produzir. Os
+consumidores acessam o \ingles{buffer} para remover itens que eles
+consumirão. O \ingles{buffer} pode ser limitado ou ilimitado. Quando
+limitado, a aplicação deve garantir que não serão depositados mais
+itens que o limite máximo permitido, e não serão removidos itens
+quando o \ingles{buffer} estiver vazio. Nesta seção, estaremos
+implementando e analisando três diferentes arquiteturas para o
+problema dos produtores e consumidores. Estas arquiteturas foram
+inspiradas nas arquiteturas propostas por \szt{} em \cite{sztTese}.
+
+\nwfilename{pcb-sync.nw}\nwbegincode{1}\sublabel{NW5RLeB-1XPMUq-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW5RLeB-1XPMUq-1}}}\moddef{modules.maude~{\nwtagstyle{}\subpageref{NW5RLeB-1XPMUq-1}}}\endmoddef\let\nwnotused=\nwoutput{}\nwstartdeflinemarkup\nwprevnextdefs{\relax}{NW5RLeB-1XPMUq-2}\nwenddeflinemarkup
+
+module PRODUCER \{ 
+ in port put ;
+\}
+
+\nwalsodefined{\\{NW5RLeB-1XPMUq-2}}\nwnotused{modules.maude}\nwendcode{}\nwbegindocs{2}\nwdocspar
+
+O modulo consumidor é expresso por:
+
+\nwenddocs{}\nwbegincode{3}\sublabel{NW5RLeB-1XPMUq-2}\nwmargintag{{\nwtagstyle{}\subpageref{NW5RLeB-1XPMUq-2}}}\moddef{modules.maude~{\nwtagstyle{}\subpageref{NW5RLeB-1XPMUq-1}}}\plusendmoddef\let\nwnotused=\nwoutput{}\nwstartdeflinemarkup\nwprevnextdefs{NW5RLeB-1XPMUq-1}{\relax}\nwenddeflinemarkup
+
+module CONSUMER \{ 
+ in port get ;
+\}
+
+\nwendcode{}
+
+\nwixlogsorted{c}{{modules.maude}{NW5RLeB-1XPMUq-1}{\nwixd{NW5RLeB-1XPMUq-1}\nwixd{NW5RLeB-1XPMUq-2}}}%
+\nwbegindocs{4}\nwdocspar
+
+E finalmente podemos definir o modulo buffer.
+
+
+\end{document}
+\nwenddocs{}

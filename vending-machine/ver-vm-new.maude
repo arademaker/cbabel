@@ -1,0 +1,33 @@
+load vm-new.cbabel
+
+(omod VM-EXEC is
+ inc VENDING-MACHINE .
+
+ var C : Configuration .
+ var O : Oid .
+ var IT : Interaction .
+ var N : Int .
+ var P : PortId .
+ var MSG : Msg .
+
+ rl [slot-put-apple] : 
+    do(O, put-apple, IT) < O : SLOT | apples : N > => 
+    done(O, put-apple, IT) < O : SLOT | apples : (N + 1) >  .
+
+ rl [slot-put-cake] : 
+    do(O, put-cake, IT) < O : SLOT | cakes : N > => 
+    done(O, put-cake, IT) < O : SLOT | cakes : (N + 1) >  .
+
+ op copy : Msg Nat -> Configuration .
+ eq copy(MSG, N) = MSG copy(MSG, N - 1) .
+ eq copy(MSG, 0) = none .
+
+ op initial : -> Configuration .
+ eq initial = topology 
+              do(bt-ad, add-$, none) copy(do(bt-aq, add-q, none), 4)
+              do(bt-change, change, none) do(bt-ba, buy-apple, none) .
+endom)
+
+eof
+(show all .)
+q

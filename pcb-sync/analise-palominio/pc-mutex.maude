@@ -1,0 +1,141 @@
+in cbabel-configuration.maude
+
+mod PC-MUTEX is
+  inc CBABEL-CONFIGURATION .
+
+  sorts BUFFER CONSUMER MUTEX PRODUCER .
+  subsort BUFFER < Cid .
+  subsort CONSUMER < Cid .
+  subsort MUTEX < Cid .
+  subsort PRODUCER < Cid .
+  op BUFFER : -> BUFFER .
+  op CONSUMER : -> CONSUMER .
+  op MUTEX : -> MUTEX .
+  op PRODUCER : -> PRODUCER .
+  op buff : -> Oid .
+  op cons1 : -> Oid .
+  op cons2 : -> Oid .
+  op get-buffer@items : Object -> Int .
+  op instantiate : Oid Cid -> Object .
+  op mutx : -> Oid .
+  op open? : Object -> Bool .
+  op prod1 : -> Oid .
+  op prod2 : -> Oid .
+  op set-buffer@items : Object Int -> Object .
+  op topology : -> Configuration .
+
+  op buffer@get : -> PortInId
+    [ctor] .
+  op buffer@items`:_ : Int -> Attribute
+    [gather(&)] .
+  op buffer@put : -> PortInId
+    [ctor] .
+  op changed : -> Status
+    [ctor] .
+  op consumer@get : -> PortOutId
+    [ctor] .
+  op consumer@get-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op mutex@in1 : -> PortInId
+    [ctor] .
+  op mutex@in2 : -> PortInId
+    [ctor] .
+  op mutex@out1 : -> PortOutId
+    [ctor] .
+  op mutex@out2 : -> PortOutId
+    [ctor] .
+  op producer@put : -> PortOutId
+    [ctor] .
+  op producer@put-status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  op status`:_ : PortStatus -> Attribute
+    [gather(&)] .
+  eq topology
+    = instantiate(buff,BUFFER) instantiate(cons1,CONSUMER) instantiate(cons2,CONSUMER) 
+      instantiate(mutx, MUTEX) instantiate(prod1,PRODUCER) instantiate(prod1,PRODUCER) .
+
+  eq get-buffer@items(< O:Oid : V#0:BUFFER | buffer@items : V:Int,none,
+    V#1:AttributeSet >)
+    = V:Int .
+
+  eq instantiate(O:Oid,BUFFER)
+    = < O:Oid : BUFFER | none,buffer@items : 0 > .
+  eq instantiate(O:Oid,CONSUMER)
+    = < O:Oid : CONSUMER | none,consumer@get-status : unlocked > .
+  eq instantiate(O:Oid,MUTEX)
+    = < O:Oid : MUTEX | status : unlocked > .
+  eq instantiate(O:Oid,PRODUCER)
+    = < O:Oid : PRODUCER | none,producer@put-status : unlocked > .
+
+  eq set-buffer@items(< O:Oid : V#2:BUFFER | buffer@items : V:Int,none,
+    V#3:AttributeSet >,V':Int)
+    = < O:Oid : V#2:BUFFER | buffer@items : V':Int,V#3:AttributeSet > .
+
+  eq send(cons1,consumer@get,IT:Interaction)  = send(mutx,mutex@in2,IT:Interaction) [label
+    consumer@get-linking-mutex@in2] .
+  eq send(cons2,consumer@get,IT:Interaction)  = send(mutx,mutex@in2,IT:Interaction) [label
+    consumer@get-linking-mutex@in2] .
+  eq send(mutx,mutex@out1,IT:Interaction)    = send(buff,buffer@put,IT:Interaction) [label
+    mutex@out1-linking-buffer@put] .
+  eq send(mutx,mutex@out2,IT:Interaction)    = send(buff,buffer@get,IT:Interaction) [label
+    mutex@out2-linking-buffer@get] .
+  eq send(prod1,producer@put,IT:Interaction)  = send(mutx,mutex@in1,IT:Interaction) [label
+    producer@put-linking-mutex@in1] .
+  eq send(prod2,producer@put,IT:Interaction)  = send(mutx,mutex@in1,IT:Interaction) [label
+    producer@put-linking-mutex@in1] .
+
+  rl < O:Oid : V#0:MUTEX | status : locked,none,V#1:AttributeSet > ack([O:Oid,
+    mutex@out1]:: IT:Interaction)
+    => < O:Oid : V#0:MUTEX | status : unlocked,V#1:AttributeSet > ack(
+    IT:Interaction) [label MUTEX-acking-mutex@out1] .
+  rl < O:Oid : V#10:BUFFER | buffer@items : V#11:Int,none,V#12:AttributeSet >
+    send(O:Oid,buffer@get,IT:Interaction)
+    => < O:Oid : V#10:BUFFER | buffer@items : V#11:Int,V#12:AttributeSet > do(
+    O:Oid,buffer@get,IT:Interaction) [label BUFFER-recevingAndDo-buffer@get] .
+  rl < O:Oid : V#13:BUFFER | buffer@items : V#14:Int,none,V#15:AttributeSet >
+    send(O:Oid,buffer@put,IT:Interaction)
+    => < O:Oid : V#13:BUFFER | buffer@items : V#14:Int,V#15:AttributeSet > do(
+    O:Oid,buffer@put,IT:Interaction) [label BUFFER-recevingAndDo-buffer@put] .
+  rl < O:Oid : V#2:MUTEX | status : locked,none,V#3:AttributeSet > ack([O:Oid,
+    mutex@out2]:: IT:Interaction)
+    => < O:Oid : V#2:MUTEX | status : unlocked,V#3:AttributeSet > ack(
+    IT:Interaction) [label MUTEX-acking-mutex@out2] .
+  rl < O:Oid : V#4:BUFFER | buffer@items : V#5:Int,none,V#6:AttributeSet >
+    done(O:Oid,buffer@get,IT:Interaction)
+    => < O:Oid : V#4:BUFFER | buffer@items : V#5:Int,V#6:AttributeSet > ack(
+    IT:Interaction) [label BUFFER-doneAndAcking-buffer@get] .
+  rl < O:Oid : V#4:MUTEX | status : unlocked,none,V#5:AttributeSet > send(
+    O:Oid,mutex@in1,IT:Interaction)
+    => < O:Oid : V#4:MUTEX | status : locked,V#5:AttributeSet > send(O:Oid,
+    mutex@out1,[O:Oid,mutex@out1]:: IT:Interaction) [label
+    MUTEX-sending-mutex@in1] .
+  rl < O:Oid : V#6:MUTEX | status : unlocked,none,V#7:AttributeSet > send(
+    O:Oid,mutex@in2,IT:Interaction)
+    => < O:Oid : V#6:MUTEX | status : locked,V#7:AttributeSet > send(O:Oid,
+    mutex@out2,[O:Oid,mutex@out2]:: IT:Interaction) [label
+    MUTEX-sending-mutex@in2] .
+  rl < O:Oid : V#7:BUFFER | buffer@items : V#8:Int,none,V#9:AttributeSet >
+    done(O:Oid,buffer@put,IT:Interaction)
+    => < O:Oid : V#7:BUFFER | buffer@items : V#8:Int,V#9:AttributeSet > ack(
+    IT:Interaction) [label BUFFER-doneAndAcking-buffer@put] .
+  rl ack([O:Oid,consumer@get])< O:Oid : V#0:CONSUMER | consumer@get-status :
+    locked,none,V#1:AttributeSet >
+    => done(O:Oid,consumer@get,none)< O:Oid : V#0:CONSUMER |
+    consumer@get-status : unlocked,V#1:AttributeSet > [label
+    CONSUMER-receivingAck-consumer@get] .
+  rl ack([O:Oid,producer@put])< O:Oid : V#0:PRODUCER | producer@put-status :
+    locked,none,V#1:AttributeSet >
+    => done(O:Oid,producer@put,none)< O:Oid : V#0:PRODUCER |
+    producer@put-status : unlocked,V#1:AttributeSet > [label
+    PRODUCER-receivingAck-producer@put] .
+  rl do(O:Oid,consumer@get,none)< O:Oid : V#2:CONSUMER | consumer@get-status :
+    unlocked,none,V#3:AttributeSet >
+    => send(O:Oid,consumer@get,[O:Oid,consumer@get])< O:Oid : V#2:CONSUMER |
+    consumer@get-status : locked,V#3:AttributeSet > [label
+    CONSUMER-sending-consumer@get] .
+  rl do(O:Oid,producer@put,none)< O:Oid : V#2:PRODUCER | producer@put-status :
+    unlocked,none,V#3:AttributeSet >
+    => send(O:Oid,producer@put,[O:Oid,producer@put])< O:Oid : V#2:PRODUCER |
+    producer@put-status : locked,V#3:AttributeSet > [label
+    PRODUCER-sending-producer@put] .
+endm

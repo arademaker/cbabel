@@ -1,0 +1,142 @@
+fmod CBABEL-ID is
+ pr QID .
+
+ sort Id IdSet .
+ subsort Id < IdSet .
+
+ op ID : Qid -> Id [ctor] .
+ op mt-id : -> IdSet [ctor] .
+ op _;_ : IdSet IdSet -> IdSet [ctor assoc comm id: mt-id] .
+endfm
+
+fmod CBABEL-UNIT is
+ pr INT .
+ inc CBABEL-ID .
+ inc UNIT .
+
+ sorts Assign Conditional Stmt StmtSeq Value Integer Boolean Exp .
+
+ subsorts Integer Boolean < Value .
+ subsorts Value Id < Exp .
+ subsorts Assign Conditional < Stmt < StmtSeq . 
+
+ op VL : Int -> Integer . 
+ ops TRUE FALSE : -> Boolean .
+
+ ops not-equal equal less-than greater-than plus minus : Exp Exp -> Exp .
+ ops land lor : Exp Exp -> Exp .
+ op ((_)) : Exp -> Exp .
+
+ *** id: skip e assoc !!
+ op skip : -> Stmt .
+ op stmt-seq : StmtSeq StmtSeq -> StmtSeq .
+ op assign : Id Exp -> Assign .
+ op if-then-else : Exp StmtSeq StmtSeq  -> Conditional .
+
+
+ sorts  PortDecl PortDeclSet PortType
+        VariableDecl VariableDeclSet VarType 
+        Interaction InteractionSet Contract 
+        InstanceDecl LinkDecl BindDecl ConfigDecl ConfigDeclSet 
+	ModuleDecl ConnectorDecl ComponentDecl .
+
+ subsort PortDecl < PortDeclSet .
+ subsort VariableDecl < VariableDeclSet .
+ subsort Interaction < InteractionSet .
+ subsorts InstanceDecl LinkDecl BindDecl < ConfigDecl < ConfigDeclSet .
+ subsorts ModuleDecl ConnectorDecl < ComponentDecl < Unit .
+
+ ops sinc assinc : -> PortType .
+ op out : Id PortType -> PortDecl [ctor] .
+ op in : Id PortType -> PortDecl [ctor] .
+ op mt-port : -> PortDeclSet [ctor] .
+ op __ : PortDeclSet PortDeclSet -> PortDeclSet [assoc comm id: mt-port] .
+
+ ops Boolean Integer : -> VarType .
+ ops local required : Id VarType -> VariableDecl .
+ op local : Id VarType Exp -> VariableDecl .
+ op mt-var : -> VariableDeclSet .
+ op __ : VariableDeclSet VariableDeclSet -> VariableDeclSet 
+                                            [assoc comm id: mt-var] .
+
+ op seq : IdSet IdSet -> Interaction .
+ op guard : Id Id Exp StmtSeq StmtSeq -> Interaction .
+ op guard : Id Id Id Exp StmtSeq StmtSeq -> Interaction .
+ op mt-interaction : -> InteractionSet [ctor] .
+ op __ : InteractionSet InteractionSet -> InteractionSet 
+                                          [assoc comm id: mt-interaction] .
+
+ op interaction : Interaction -> Contract .
+ op exclusive : InteractionSet -> Contract .
+ op mt-contract : -> Contract .
+
+ op instantiate : Id Id -> InstanceDecl .
+ op link : Id Id Id Id -> LinkDecl .
+ op bind : Id Id Id Id VarType -> BindDecl .
+ op mt-config : -> ConfigDeclSet .
+ op __ : ConfigDeclSet ConfigDeclSet -> ConfigDeclSet [assoc comm id: mt-config] .
+
+ op module : Id VariableDeclSet PortDeclSet -> ModuleDecl .
+ op connector : Id VariableDeclSet PortDeclSet Contract -> ConnectorDecl .
+ op application : Id ConfigDeclSet ConfigDeclSet ConfigDeclSet -> ModuleDecl .
+
+ var VDS : VariableDeclSet .
+ var VD : VariableDecl .
+ var PDS : PortDeclSet .
+ var PD : PortDecl .
+ var CD CD' : Contract .
+ vars CDS CDS' CDS'' : ConfigDeclSet .
+ vars I I' : Id .
+ var U : Unit .
+ var ID : InstanceDecl .
+ var LD : LinkDecl .
+ var BD : BindDecl .
+ var MN : ModName .
+
+ op emptyConnector : -> ConnectorDecl .
+ op emptyModule : -> ModuleDecl .
+ op emptyApplication : -> ModuleDecl .
+ op noName : -> Id .
+ eq noName = ID('noName) .
+
+ eq emptyConnector = connector(noName, mt-var, mt-port, mt-contract) .
+ eq emptyApplication = application(noName, mt-config, mt-config, mt-config) . 
+ eq emptyModule = module(noName, mt-var, mt-port) .
+
+ eq setName( module(I, VDS, PDS) , MN) 
+    = module(ID(MN), VDS, PDS) .
+ eq setName( connector(I, VDS, PDS, CD), MN) 
+    = connector(ID(MN), VDS, PDS, CD) .
+ eq setName( application(I, CDS, CDS', CDS''), MN) 
+    = application(ID(MN), CDS, CDS', CDS'') .
+
+ eq getName( module(ID(MN), VDS, PDS) ) = MN .
+ eq getName( connector(ID(MN), VDS, PDS, CD) ) = MN .
+ eq getName( application(ID(MN), CDS, CDS', CDS'') ) = MN .
+
+ op addPort : PortDecl Unit -> Unit .
+ eq addPort(PD, module(I, VDS, PDS)) = module(I, VDS, PDS PD) .
+ eq addPort(PD, connector(I, VDS, PDS, CD)) 
+    = connector(I, VDS, PDS PD, CD) .
+
+ op addVar : VariableDecl Unit -> Unit .
+ eq addVar(VD, module(I, VDS, PDS)) = module(I, VDS VD, PDS) .
+ eq addVar(VD, connector(I, VDS, PDS, CD)) 
+    = connector(I, VDS VD, PDS, CD) .
+
+ op addContract : Contract Unit -> Unit .
+ eq addContract(CD', connector(I, VDS, PDS, CD)) 
+    = connector(I, VDS, PDS, CD') .
+
+ op addInstance : InstanceDecl Unit -> Unit .
+ eq addInstance(ID, application(I, CDS, CDS', CDS'')) 
+    = application(I, ID CDS, CDS', CDS'') .
+
+ op addLink : LinkDecl Unit -> Unit .
+ eq addLink(LD, application(I, CDS, CDS', CDS'')) 
+    = application(I, CDS, LD CDS', CDS'') .
+
+ op addBind : BindDecl Unit -> Unit .
+ eq addBind(BD, application(I, CDS, CDS', CDS'')) 
+    = application(I, CDS, CDS', BD CDS'') .
+endfm

@@ -1,0 +1,28 @@
+(
+connector Controller-eOn-clear {
+  staterequired int INACTIVE;
+  staterequired int ACTIVE;
+  staterequired int CRUISING;
+  staterequired int STANDBY;
+  staterequired int controlState;
+
+   // controles normais de um carro padrao
+  in port oneway engineOn;
+
+  // efeito produzido no cruise control
+  out port oneway clearSpeed;
+
+  interaction {
+
+    engineOn > 
+       guard (controlState==INACTIVE) {
+          alternative (ground);
+          before {controlState=ACTIVE;} }
+    > clearSpeed;
+  }
+} // end Control
+
+)
+
+
+

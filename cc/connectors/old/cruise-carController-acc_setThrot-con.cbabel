@@ -1,0 +1,29 @@
+connector CarController-acc_setThrot {
+
+   staterequired boolean ignition;   // engine off
+   staterequired double _throttle;   // throttle setting 0.10
+   staterequired int _brakepedal;    // brake setting 0..10
+
+   staterequired double maxThrottle;
+   staterequired int maxBrake;
+
+   staterequired float throttle;        // vem do modulo engine
+   staterequired int brakepedal;        // vem do modulo engine
+
+   in port oneway accelerator;
+
+   out port oneway setTrottle;
+
+   interaction {
+      accelerate > guard (true) {
+            before {
+               if (_brakepedal = brakepedal > 0) brakepedal=0;
+               else {
+                 if (_throttle = throttle < (maxThrottle-1)) // o mesmo com o throttle
+                    throttle += 1.0;
+                 else
+                    throttle = maxThrottle; //***** aqui posso usar variaveis locais do modulo
+             }}
+       > setThrottle;   
+   }
+}

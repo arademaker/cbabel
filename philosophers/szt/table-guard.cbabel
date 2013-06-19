@@ -1,0 +1,50 @@
+(
+connector EXCLUSIVE-COMM-TABLE {
+ in port et@in1 ;
+ in port et@in2 ;
+ out port et@out1 ;
+ out port et@out2 ;
+
+ exclusive{ 
+  et@in1 > et@out1 ; 
+  et@in2 > et@out2 ; 
+ }
+}
+)
+
+(
+connector REQUEST-TABLE {
+  var int max-places = 3 ;
+  var bool place-available = TRUE ;
+  staterequired int rt@used-places ;
+  in port rt@in ;
+  out port rt@out ;
+
+  interaction {
+    rt@in > guard (place-available) {
+             after {
+              if (rt@used-places == max-places) { 
+                place-available = FALSE ; 
+              }
+             }
+            } 
+    > rt@out ;
+  }
+}
+)
+
+(
+connector LEAVE-TABLE {
+  staterequired bool lt@place-available ;
+  in port lt@in ;
+  out port lt@out ;
+
+  interaction {
+   lt@in > guard(TRUE) { 
+            after { lt@place-available = TRUE ; }
+           }
+   > lt@out ;
+  }
+}
+)
+

@@ -1,0 +1,46 @@
+
+1. nao existe em CBABEL o encadeamento de guardas?! na modelagem do
+   Szt isto foi usado. Qual a semantica? deve ser atomica a validacao
+   de ambos?
+
+2. alterei o mapeamento do contrato de interacao guardado minimamente
+   para que o status do conector nao seja alterado para lock mantendo
+   assim o conector sempre 'unlocked'. aberto ou fechado dependera
+   apenas o before.
+
+Versao 2.3: 
+
+1. revisao do mapeamento links = equacoes preservou comportamentos.
+
+
+
+Auxiliar:
+
+  vars AS1 AS2 AS3 : AttributeSet .
+  var T : Transition .
+  vars TL TL' : TransitionList .
+  var NM : RuleName .
+  var C : Configuration .
+  vars N M M' M'' : Int .
+
+  ops ciclo path : ModelCheckResult -> TransitionList .
+  eq ciclo( counterexample(TL, TL') ) = TL' .
+  eq path( counterexample(TL, TL') ) = TL .
+
+  op getPath : TransitionList -> TransitionList .
+  ceq getPath(T TL) = T TL 
+   if {C < cr : COUNT-READ | readers : M'' , AS1 > 
+         < ww : WANT-WRITE | want-write : M' , AS2 > 
+         < wr : WANT-READ | want-read : M , AS3 >, NM} := T /\ 
+    M' > 0 /\ M > 0 /\ M'' > 0 .
+  eq getPath(T TL ) = getPath(TL) [owise] .
+  eq getPath(nil) = nil .
+
+  op count : TransitionList Nat -> Nat .
+  ceq count(T TL, N) = count(TL, s(N))
+   if {C < cr : COUNT-READ | readers : M'' , AS1 > 
+         < ww : WANT-WRITE | want-write : M' , AS2 > 
+         < wr : WANT-READ | want-read : M , AS3 >, NM} := T /\ 
+    M' > 0 /\ M > 0 /\ M'' > 0 .
+  eq count(T TL, N) = count(TL, N) [owise] .
+  eq count(nil, N) = N .

@@ -1,0 +1,16 @@
+
+(
+connector tranco {
+  staterequired int tr@controlState ;
+  in  port oneway tr@correta ;
+  out port oneway tr@disableControl ;
+
+  interaction {
+    tr@correta > guard (tr@controlState == 2) { 
+                   alternative (ground) ;
+              }
+    > tr@disableControl ;
+  }
+}
+)
+

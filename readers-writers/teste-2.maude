@@ -1,0 +1,39 @@
+*** Se existe algum leitor ativo e não existem escritores suspensos
+*** aguardando oportunidade para escrever, então não existe motivo para
+*** outros leitores estarem esperando para ler, já que leitores não
+*** precisam de exclusão mútua entre si.
+
+*** Hint: tautCheck( (f -> g) <-> (~ f \/ g) ) .
+*** Hint: tautCheck((~ suspendReaders R lendo) <-> ~ (suspendReaders U ~ lendo)) .
+
+*** Um observacao importante. A busca abaixo mostra um estado onde
+*** existe um leitor querendo escrever (e ele nao esta bloqueado,
+*** apenas sua msg ainda nao chegou ao count-reader) embora o turn
+*** seja dos leitores. Como esta busca encontra um estado, a
+*** propriedade como descrita inicialmente não estava correta.
+
+(search [1] initial =>* C:Configuration such that test2?(C:Configuration) .)
+
+
+*** Na primeira tentativa de comprovar a propriedade esperamos nao
+*** obter contra-exemplo para o comando abaixo. No entanto, o fato de
+*** existirem leitores suspensos enquanto existem leitores ativos nao
+*** obriga que os leitores suspensos *necessariamente* sejam
+*** desbloqueados antes dos leitores ativos terminarem de ler. Eh
+*** exatamente um trace onde isto ocorre que eh mostrado como
+*** contra-exemplo do comando abaixo.
+
+ eq test2a = [] ((reading /\ ~ suspendWriters /\ suspendReaders) ->
+                 (~ suspendReaders R reading)) .
+
+(red modelCheck(initial, test2a) .)
+
+*** Abaixo procura-se mostrar a propriedade através de um
+*** contra-exemplo. Ou seja, mostra um traço onde os leitores
+*** suspensos sao desbloqueados antes de um leitor ativo terminar de
+*** ler.
+
+(red modelCheck(initial, test2) .)
+
+
+

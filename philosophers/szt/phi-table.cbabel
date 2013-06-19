@@ -1,0 +1,41 @@
+(
+application DINING-PHILOSOPHERS {
+ instantiate PHILOSOPHER as phi1 ;
+ instantiate PHILOSOPHER as phi2 ;
+ instantiate PHILOSOPHER as phi3 ;
+ instantiate PHILOSOPHER as phi4 ;
+ instantiate FORK as fork1 ;
+ instantiate FORK as fork2 ;
+ instantiate FORK as fork3 ;
+ instantiate FORK as fork4 ;
+ instantiate TABLE as table ;
+
+ instantiate SELF-EXCLUSIVE-REQUEST-TABLE as sert ;
+ instantiate SELF-EXCLUSIVE-LEAVE-TABLE as selt ;
+ instantiate EXCLUSIVE-COMM-TABLE as emt ;
+ instantiate REQUEST-TABLE as rt ;
+ instantiate LEAVE-TABLE as lt ;
+
+ link phi1.get-table to sert.sert@in ;
+ link phi2.get-table to sert.sert@in ;
+ link phi3.get-table to sert.sert@in ;
+ link phi4.get-table to sert.sert@in ;
+
+ link phi1.rel-table to selt.selt@in ;
+ link phi2.rel-table to selt.selt@in ;
+ link phi3.rel-table to selt.selt@in ;
+ link phi4.rel-table to selt.selt@in ;
+
+ link sert.sert@out to rt.rt@in ;
+ link rt.rt@out to emt.emt@in1 ;
+ link selt.selt@out to lt.lt@in ;
+ link lt.lt@out to emt.emt@in2 ;
+
+ link emt.emt@out1 to table.table@request ;
+ link emt.emt@out2 to table.table@release ;
+ 
+ bind int rt.rt@used-places to table.used-places ;
+ bind bool lt.lt@place-available to rt.place-available ;
+}
+)
+

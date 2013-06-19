@@ -1,0 +1,23 @@
+connector CarController-eOff_ground {
+
+   staterequired boolean ignition;   // engine off
+   staterequired double _throttle;   // throttle setting 0.10
+   staterequired int _brakepedal;    // brake setting 0..10
+
+   staterequired double maxThrottle;
+   staterequired int maxBrake;
+
+   staterequired float throttle;        // vem do modulo engine
+   staterequired int brakepedal;        // vem do modulo engine
+
+   in port oneway (void) engineOff;
+
+   interaction {
+      engineOff > guard (ignition == true) {
+                  before {ignition = false;
+                         // remove carSimulator
+                  }
+                  alternative (ground);
+       > ground;   
+   }
+}

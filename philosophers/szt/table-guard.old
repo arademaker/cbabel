@@ -1,0 +1,45 @@
+(
+connector REQUEST-TABLE {
+  var int rt@max-places = 3 ;
+  var bool rt@semaphoro = TRUE ;
+  staterequired int rt@used-places ;
+
+  in port rt@in ;
+  out port rt@out ;
+
+  interaction {
+    rt@in > 
+    guard (rt@semaphoro && (rt@used-places < rt@max-places) ) {
+     before {
+      rt@semaphoro = FALSE ;
+     }
+     after {
+      rt@semaphoro = TRUE ;
+     }
+    } 
+    > rt@out ;
+  }
+}
+)
+
+(
+connector LEAVE-TABLE {
+  staterequired bool lt@semaphoro ;
+
+  in port lt@in ;
+  out port lt@out ;
+
+  interaction {
+   lt@in > 
+   guard( lt@semaphoro ) {
+    before {
+     lt@semaphoro = FALSE ;
+    }
+    after { 
+     lt@semaphoro = TRUE ;
+    }
+   }
+   > lt@out ;
+  }
+}
+)

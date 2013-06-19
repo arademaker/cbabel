@@ -1,0 +1,33 @@
+
+
+
+
+** o que eh possivel comprar com a configuracao inicial?
+
+(search initial =>! X:Configuration < slot : SLOT | slot@cakes : C:Int , slot@apples : A:Int > .)
+
+
+*** existe algum estado onde o numero de dollars seja negativo?
+
+(search [1] initial =>* C:Configuration < cd : COUNT-DOLLAR | dollars : N:Int , AS1:AttributeSet >
+                        < cq : COUNT-QUARTER | quarters : M:Int , AS2:AttributeSet >
+  such that (N:Int < 0) or (M:Int < 0) .)
+
+*** colocando apenas 3 quarters nao compro um bolo
+
+(search [1] topology init(do(aq,add-q,none), 3) init(do(bc,buy-cake,none),1) =>* C:Configuration < slot : SLOT | slot@cakes : N:Int , AS:AttributeSet > such that N:Int > 1 .)
+
+*** concorrencia desejada 
+
+(search [1] initial =>* C:Configuration send(slot, put-a, IT1:Interaction) 
+                        send(slot, put-c, IT2:Interaction) .)
+
+
+(search [1] topology do(bt-ad, add-$, none) copy(do(bt-aq, add-q, none), 3) do(bt-bc, buy-cake, none) do(bt-ba,buy-apple, none) =>! < slot : SLOT | apples : N , cakes : M > C:Configuration such that (N > 0) and (M > 0) .)
+
+(search topology do(bt-change,change,none) do(bt-ad,add-$,none) copy(do(bt-aq,add-q,none), 3) do(bt-bc,buy-cake,none) do(bt-ba,buy-apple, none) =>! C:Configuration .)
+
+
+(search [1] topology copy(do(bt-aq, add-q, none), 3) do(bt-bc, buy-cake, none) =>* C:Configuration < slot : SLOT | apples : N:Int , cakes : M:Int > such that M:Int > 0 .)
+
+

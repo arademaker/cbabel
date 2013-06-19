@@ -1,0 +1,78 @@
+load ../s-modules.cbabel
+load pc-mutex-10.cbabel
+
+(omod PCB-EXEC is
+ inc PC-MUTEX . 
+
+ var C : Configuration .
+ var O : Oid .
+ vars IT IT' : Interaction .
+ vars M N : Int .
+
+ rl [producer-do] : done(O, producer@put, IT) => do(O, producer@put, none) .
+ rl [consumer-do] : done(O, consumer@get, IT) => do(O, consumer@get, none) .
+
+ rl [buffer-do-put] :
+    do(O, buffer@put, IT) 
+    < O : BUFFER | items : N , maxitems : M > => 
+    < O : BUFFER | maxitems : M ,
+                   items : (if (N + 1) > (M + 1) then (M + 1) else (N + 1) fi) > 
+    done(O, buffer@put, IT) .
+
+ rl [buffer-do-get] : 
+    do(O, buffer@get, IT) < O : BUFFER | items : N > => 
+    < O : BUFFER | items : (if (N - 1) < -1 then -1 else (N - 1) fi) > 
+    done(O, buffer@get, IT) .
+
+ sort OidSet .
+ subsort Oid < OidSet .
+ var OS : OidSet .
+ var P : PortId .
+
+ op none : -> OidSet .
+ op __ : OidSet OidSet -> OidSet [comm assoc id: none] .
+
+ op start : OidSet PortId -> Configuration .
+ eq start(O OS, P) = do(O, P, none) start(OS, P) .
+ eq start(none, P) = none .
+
+ op initial : -> Configuration .
+ eq initial = 
+      topology 
+      start(prod1 prod2 prod3, 
+            producer@put)
+      start(cons1 cons2, 
+            consumer@get) .
+endom)
+
+(omod PCB-VER is 
+ inc PCB-EXEC .
+ pr MODEL-CHECKER .
+
+ subsort Configuration < State .
+
+ var C : Configuration .
+ var O : Oid .
+ vars IT IT' : Interaction .
+ vars M N : Int .
+ var P : PortInId .
+
+ ops begin end : Oid -> Prop .
+ eq do(O, P, IT) C |= begin(O) = true .
+ eq done(O, P, IT) C |= end(O) = true .
+
+ ops putting getting : -> Prop .
+ eq < O : BUFFER | > send(O, buffer@put, IT) C |= putting = true .
+ eq < O : BUFFER | > send(O, buffer@get, IT) C |= getting = true .
+
+ op raceCond : -> Formula .
+ eq raceCond = [] ~ (putting /\ getting) .
+
+ ops overflow underflow : -> Prop .
+ ceq < O : BUFFER | items : N, maxitems : M >
+     C |= overflow = true if N > M .
+
+ ceq < O : BUFFER | items : N > 
+     C |= underflow = true if N < 0 .
+endom)
+

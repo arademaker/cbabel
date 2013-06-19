@@ -1,0 +1,457 @@
+Maude> (red modelCheck(initial, (([] <> writing) /\ ([] <> suspendWriters) /\ ([] <> suspendReaders)) <-> 
+                         ((writing /\ suspendWriters /\ suspendReaders) => (suspendReaders U ~ writing)) ) .)
+
+rewrites: 754677 in 18710ms cpu (18710ms real) (40335 rewrites/second)
+reduce in VER-RW :
+  modelCheck(initial,[]<> writing /\[]<> suspendWriters /\[]<> suspendReaders
+    <-> writing /\ suspendWriters /\ suspendReaders => suspendReaders U ~
+    writing)
+result ModelCheckResult :
+  counterexample(
+
+{< cr : COUNT-READ | cr@want-read : st(0,unchanged),
+    cr@want-write : st(0,unchanged),cr@writing : st(false,unchanged),readers :
+    0,status : unlocked,turn : 0 > < cw : COUNT-WRITE | cw@readers : st(0,
+    unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,unchanged),
+    cw@want-write : st(0,unchanged),status : unlocked,writers : 0,writing :
+    false > < db : DATABASE | none > < reader1 : READER | r@read-status :
+    unlocked > < reader2 : READER | r@read-status : unlocked > < wr : WANT-READ
+    | status : unlocked,want-read : 0 > < writer1 : WRITER | w@write-status :
+    unlocked > < writer2 : WRITER | w@write-status : unlocked > < ww :
+    WANT-WRITE | status : unlocked,want-write : 0 > do(reader1,r@read,none)do(
+    reader2,r@read,none)do(writer1,w@write,none)do(writer2,w@write,none),
+    'READER-sending-r@read}
+
+{< cr : COUNT-READ | cr@want-read : st(0,unchanged),
+    cr@want-write : st(0,unchanged),cr@writing : st(false,unchanged),readers :
+    0,status : unlocked,turn : 0 > < cw : COUNT-WRITE | cw@readers : st(0,
+    unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,unchanged),
+    cw@want-write : st(0,unchanged),status : unlocked,writers : 0,writing :
+    false > < db : DATABASE | none > < reader1 : READER | r@read-status :
+    locked > < reader2 : READER | r@read-status : unlocked > < wr : WANT-READ |
+    status : unlocked,want-read : 0 > < writer1 : WRITER | w@write-status :
+    unlocked > < writer2 : WRITER | w@write-status : unlocked > < ww :
+    WANT-WRITE | status : unlocked,want-write : 0 > do(reader2,r@read,none)do(
+    writer1,w@write,none)do(writer2,w@write,none)send(wr,in-want-read,[reader1,
+    r@read]),'READER-sending-r@read}
+
+CICLO
+
+{< cr : COUNT-READ | cr@want-read : st(0,
+    unchanged),cr@want-write : st(0,unchanged),cr@writing : st(false,
+    unchanged),readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE |
+    cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,
+    unchanged),cw@want-write : st(0,unchanged),status : unlocked,writers : 0,
+    writing : false > < db : DATABASE | none > < reader1 : READER |
+    r@read-status : locked > < reader2 : READER | r@read-status : locked > < wr
+    : WANT-READ | status : unlocked,want-read : 0 > < writer1 : WRITER |
+    w@write-status : unlocked > < writer2 : WRITER | w@write-status : unlocked
+    > < ww : WANT-WRITE | status : unlocked,want-write : 0 > do(writer1,
+    w@write,none)do(writer2,w@write,none)send(wr,in-want-read,[reader1,
+    r@read])send(wr,in-want-read,[reader2,r@read]),'WRITER-sending-w@write}
+
+{<
+    cr : COUNT-READ | cr@want-read : st(0,unchanged),cr@want-write : st(0,
+    unchanged),cr@writing : st(false,unchanged),readers : 0,status : unlocked,
+    turn : 0 > < cw : COUNT-WRITE | cw@readers : st(0,unchanged),cw@turn : st(
+    0,unchanged),cw@want-read : st(0,unchanged),cw@want-write : st(0,
+    unchanged),status : unlocked,writers : 0,writing : false > < db : DATABASE
+    | none > < reader1 : READER | r@read-status : locked > < reader2 : READER |
+    r@read-status : locked > < wr : WANT-READ | status : unlocked,want-read : 0
+    > < writer1 : WRITER | w@write-status : locked > < writer2 : WRITER |
+    w@write-status : unlocked > < ww : WANT-WRITE | status : unlocked,
+    want-write : 0 > do(writer2,w@write,none)send(wr,in-want-read,[reader1,
+    r@read])send(wr,in-want-read,[reader2,r@read])send(ww,in-want-write,[
+    writer1,w@write]),'WRITER-sending-w@write}
+
+{< cr : COUNT-READ | cr@want-read
+    : st(0,unchanged),cr@want-write : st(0,unchanged),cr@writing : st(false,
+    unchanged),readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE |
+    cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,
+    unchanged),cw@want-write : st(0,unchanged),status : unlocked,writers : 0,
+    writing : false > < db : DATABASE | none > < reader1 : READER |
+    r@read-status : locked > < reader2 : READER | r@read-status : locked > < wr
+    : WANT-READ | status : unlocked,want-read : 0 > < writer1 : WRITER |
+    w@write-status : locked > < writer2 : WRITER | w@write-status : locked > <
+    ww : WANT-WRITE | status : unlocked,want-write : 0 > send(wr,in-want-read,[
+    reader1,r@read])send(wr,in-want-read,[reader2,r@read])send(ww,
+    in-want-write,[writer1,w@write])send(ww,in-want-write,[writer2,w@write]),
+    'WANT-WRITE-sending-in-want-write}
+
+{< cr : COUNT-READ | cr@want-read : st(0,
+    unchanged),cr@want-write : st(1,unchanged),cr@writing : st(false,
+    unchanged),readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE |
+    cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,
+    unchanged),cw@want-write : st(1,unchanged),status : unlocked,writers : 0,
+    writing : false > < db : DATABASE | none > < reader1 : READER |
+    r@read-status : locked > < reader2 : READER | r@read-status : locked > < wr
+    : WANT-READ | status : unlocked,want-read : 0 > < writer1 : WRITER |
+    w@write-status : locked > < writer2 : WRITER | w@write-status : locked > <
+    ww : WANT-WRITE | status : unlocked,want-write : 1 > send(cw,
+    in-count-write,[ww,out-want-write]::[writer1,w@write])send(wr,in-want-read,
+    [reader1,r@read])send(wr,in-want-read,[reader2,r@read])send(ww,
+    in-want-write,[writer2,w@write]),'COUNT-WRITE-sending-in-count-write}
+
+{< cr
+    : COUNT-READ | cr@want-read : st(0,unchanged),cr@want-write : st(0,
+    unchanged),cr@writing : st(true,unchanged),readers : 0,status : unlocked,
+    turn : 0 > < cw : COUNT-WRITE | cw@readers : st(0,unchanged),cw@turn : st(
+    0,unchanged),cw@want-read : st(0,unchanged),cw@want-write : st(0,
+    unchanged),status : unlocked,writers : 1,writing : true > < db : DATABASE |
+    none > < reader1 : READER | r@read-status : locked > < reader2 : READER |
+    r@read-status : locked > < wr : WANT-READ | status : unlocked,want-read : 0
+    > < writer1 : WRITER | w@write-status : locked > < writer2 : WRITER |
+    w@write-status : locked > < ww : WANT-WRITE | status : unlocked,want-write
+    : 0 > send(db,db@write,[cw,out-count-write]::[ww,out-want-write]::[writer1,
+    w@write])send(wr,in-want-read,[reader1,r@read])send(wr,in-want-read,[
+    reader2,r@read])send(ww,in-want-write,[writer2,w@write]),
+    'DATABASE-recevingAndDo-db@write}
+
+{< cr : COUNT-READ | cr@want-read : st(0,
+    unchanged),cr@want-write : st(0,unchanged),cr@writing : st(true,unchanged),
+    readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE | cw@readers :
+    st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,unchanged),
+    cw@want-write : st(0,unchanged),status : unlocked,writers : 1,writing :
+    true > < db : DATABASE | none > < reader1 : READER | r@read-status : locked
+    > < reader2 : READER | r@read-status : locked > < wr : WANT-READ | status :
+    unlocked,want-read : 0 > < writer1 : WRITER | w@write-status : locked > <
+    writer2 : WRITER | w@write-status : locked > < ww : WANT-WRITE | status :
+    unlocked,want-write : 0 > do(db,db@write,[cw,out-count-write]::[ww,
+    out-want-write]::[writer1,w@write])send(wr,in-want-read,[reader1,
+    r@read])send(wr,in-want-read,[reader2,r@read])send(ww,in-want-write,[
+    writer2,w@write]),'db-write}
+
+{< cr : COUNT-READ | cr@want-read : st(0,
+    unchanged),cr@want-write : st(0,unchanged),cr@writing : st(true,unchanged),
+    readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE | cw@readers :
+    st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,unchanged),
+    cw@want-write : st(0,unchanged),status : unlocked,writers : 1,writing :
+    true > < db : DATABASE | none > < reader1 : READER | r@read-status : locked
+    > < reader2 : READER | r@read-status : locked > < wr : WANT-READ | status :
+    unlocked,want-read : 0 > < writer1 : WRITER | w@write-status : locked > <
+    writer2 : WRITER | w@write-status : locked > < ww : WANT-WRITE | status :
+    unlocked,want-write : 0 > done(db,db@write,[cw,out-count-write]::[ww,
+    out-want-write]::[writer1,w@write])send(wr,in-want-read,[reader1,
+    r@read])send(wr,in-want-read,[reader2,r@read])send(ww,in-want-write,[
+    writer2,w@write]),'DATABASE-doneAndAcking-db@write}
+
+{ack([cw,
+    out-count-write]::[ww,out-want-write]::[writer1,w@write])< cr : COUNT-READ
+    | cr@want-read : st(0,unchanged),cr@want-write : st(0,unchanged),cr@writing
+    : st(true,unchanged),readers : 0,status : unlocked,turn : 0 > < cw :
+    COUNT-WRITE | cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),
+    cw@want-read : st(0,unchanged),cw@want-write : st(0,unchanged),status :
+    unlocked,writers : 1,writing : true > < db : DATABASE | none > < reader1 :
+    READER | r@read-status : locked > < reader2 : READER | r@read-status :
+    locked > < wr : WANT-READ | status : unlocked,want-read : 0 > < writer1 :
+    WRITER | w@write-status : locked > < writer2 : WRITER | w@write-status :
+    locked > < ww : WANT-WRITE | status : unlocked,want-write : 0 > send(wr,
+    in-want-read,[reader1,r@read])send(wr,in-want-read,[reader2,r@read])send(
+    ww,in-want-write,[writer2,w@write]),'COUNT-WRITE-acking-out-count-write}
+
+{ack([ww,out-want-write]::[writer1,w@write])< cr : COUNT-READ | cr@want-read
+    : st(0,unchanged),cr@want-write : st(0,unchanged),cr@writing : st(false,
+    unchanged),readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE |
+    cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,
+    unchanged),cw@want-write : st(0,unchanged),status : unlocked,writers : 0,
+    writing : false > < db : DATABASE | none > < reader1 : READER |
+    r@read-status : locked > < reader2 : READER | r@read-status : locked > < wr
+    : WANT-READ | status : unlocked,want-read : 0 > < writer1 : WRITER |
+    w@write-status : locked > < writer2 : WRITER | w@write-status : locked > <
+    ww : WANT-WRITE | status : unlocked,want-write : 0 > send(wr,in-want-read,[
+    reader1,r@read])send(wr,in-want-read,[reader2,r@read])send(ww,
+    in-want-write,[writer2,w@write]),'WANT-WRITE-acking-out-want-write}
+
+{ack([
+    writer1,w@write])< cr : COUNT-READ | cr@want-read : st(0,unchanged),
+    cr@want-write : st(0,unchanged),cr@writing : st(false,unchanged),readers :
+    0,status : unlocked,turn : 0 > < cw : COUNT-WRITE | cw@readers : st(0,
+    unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,unchanged),
+    cw@want-write : st(0,unchanged),status : unlocked,writers : 0,writing :
+    false > < db : DATABASE | none > < reader1 : READER | r@read-status :
+    locked > < reader2 : READER | r@read-status : locked > < wr : WANT-READ |
+    status : unlocked,want-read : 0 > < writer1 : WRITER | w@write-status :
+    locked > < writer2 : WRITER | w@write-status : locked > < ww : WANT-WRITE |
+    status : unlocked,want-write : 0 > send(wr,in-want-read,[reader1,
+    r@read])send(wr,in-want-read,[reader2,r@read])send(ww,in-want-write,[
+    writer2,w@write]),'WRITER-receivingAck-w@write}
+
+{< cr : COUNT-READ |
+    cr@want-read : st(0,unchanged),cr@want-write : st(0,unchanged),cr@writing :
+    st(false,unchanged),readers : 0,status : unlocked,turn : 0 > < cw :
+    COUNT-WRITE | cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),
+    cw@want-read : st(0,unchanged),cw@want-write : st(0,unchanged),status :
+    unlocked,writers : 0,writing : false > < db : DATABASE | none > < reader1 :
+    READER | r@read-status : locked > < reader2 : READER | r@read-status :
+    locked > < wr : WANT-READ | status : unlocked,want-read : 0 > < writer1 :
+    WRITER | w@write-status : unlocked > < writer2 : WRITER | w@write-status :
+    locked > < ww : WANT-WRITE | status : unlocked,want-write : 0 > done(
+    writer1,w@write,none)send(wr,in-want-read,[reader1,r@read])send(wr,
+    in-want-read,[reader2,r@read])send(ww,in-want-write,[writer2,w@write]),
+    'writing}
+
+{< cr : COUNT-READ | cr@want-read : st(0,unchanged),cr@want-write
+    : st(0,unchanged),cr@writing : st(false,unchanged),readers : 0,status :
+    unlocked,turn : 0 > < cw : COUNT-WRITE | cw@readers : st(0,unchanged),
+    cw@turn : st(0,unchanged),cw@want-read : st(0,unchanged),cw@want-write :
+    st(0,unchanged),status : unlocked,writers : 0,writing : false > < db :
+    DATABASE | none > < reader1 : READER | r@read-status : locked > < reader2 :
+    READER | r@read-status : locked > < wr : WANT-READ | status : unlocked,
+    want-read : 0 > < writer1 : WRITER | w@write-status : unlocked > < writer2
+    : WRITER | w@write-status : locked > < ww : WANT-WRITE | status : unlocked,
+    want-write : 0 > do(writer1,w@write,none)send(wr,in-want-read,[reader1,
+    r@read])send(wr,in-want-read,[reader2,r@read])send(ww,in-want-write,[
+    writer2,w@write]),'WANT-WRITE-sending-in-want-write}
+
+{< cr : COUNT-READ |
+    cr@want-read : st(0,unchanged),cr@want-write : st(1,unchanged),cr@writing :
+    st(false,unchanged),readers : 0,status : unlocked,turn : 0 > < cw :
+    COUNT-WRITE | cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),
+    cw@want-read : st(0,unchanged),cw@want-write : st(1,unchanged),status :
+    unlocked,writers : 0,writing : false > < db : DATABASE | none > < reader1 :
+    READER | r@read-status : locked > < reader2 : READER | r@read-status :
+    locked > < wr : WANT-READ | status : unlocked,want-read : 0 > < writer1 :
+    WRITER | w@write-status : unlocked > < writer2 : WRITER | w@write-status :
+    locked > < ww : WANT-WRITE | status : unlocked,want-write : 1 > do(writer1,
+    w@write,none)send(cw,in-count-write,[ww,out-want-write]::[writer2,
+    w@write])send(wr,in-want-read,[reader1,r@read])send(wr,in-want-read,[
+    reader2,r@read]),'WRITER-sending-w@write}
+
+{< cr : COUNT-READ | cr@want-read
+    : st(0,unchanged),cr@want-write : st(1,unchanged),cr@writing : st(false,
+    unchanged),readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE |
+    cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,
+    unchanged),cw@want-write : st(1,unchanged),status : unlocked,writers : 0,
+    writing : false > < db : DATABASE | none > < reader1 : READER |
+    r@read-status : locked > < reader2 : READER | r@read-status : locked > < wr
+    : WANT-READ | status : unlocked,want-read : 0 > < writer1 : WRITER |
+    w@write-status : locked > < writer2 : WRITER | w@write-status : locked > <
+    ww : WANT-WRITE | status : unlocked,want-write : 1 > send(cw,
+    in-count-write,[ww,out-want-write]::[writer2,w@write])send(wr,in-want-read,
+    [reader1,r@read])send(wr,in-want-read,[reader2,r@read])send(ww,
+    in-want-write,[writer1,w@write]),'COUNT-WRITE-sending-in-count-write}
+
+{< cr
+    : COUNT-READ | cr@want-read : st(0,unchanged),cr@want-write : st(0,
+    unchanged),cr@writing : st(true,unchanged),readers : 0,status : unlocked,
+    turn : 0 > < cw : COUNT-WRITE | cw@readers : st(0,unchanged),cw@turn : st(
+    0,unchanged),cw@want-read : st(0,unchanged),cw@want-write : st(0,
+    unchanged),status : unlocked,writers : 1,writing : true > < db : DATABASE |
+    none > < reader1 : READER | r@read-status : locked > < reader2 : READER |
+    r@read-status : locked > < wr : WANT-READ | status : unlocked,want-read : 0
+    > < writer1 : WRITER | w@write-status : locked > < writer2 : WRITER |
+    w@write-status : locked > < ww : WANT-WRITE | status : unlocked,want-write
+    : 0 > send(db,db@write,[cw,out-count-write]::[ww,out-want-write]::[writer2,
+    w@write])send(wr,in-want-read,[reader1,r@read])send(wr,in-want-read,[
+    reader2,r@read])send(ww,in-want-write,[writer1,w@write]),
+    'DATABASE-recevingAndDo-db@write}
+
+{< cr : COUNT-READ | cr@want-read : st(0,
+    unchanged),cr@want-write : st(0,unchanged),cr@writing : st(true,unchanged),
+    readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE | cw@readers :
+    st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,unchanged),
+    cw@want-write : st(0,unchanged),status : unlocked,writers : 1,writing :
+    true > < db : DATABASE | none > < reader1 : READER | r@read-status : locked
+    > < reader2 : READER | r@read-status : locked > < wr : WANT-READ | status :
+    unlocked,want-read : 0 > < writer1 : WRITER | w@write-status : locked > <
+    writer2 : WRITER | w@write-status : locked > < ww : WANT-WRITE | status :
+    unlocked,want-write : 0 > do(db,db@write,[cw,out-count-write]::[ww,
+    out-want-write]::[writer2,w@write])send(wr,in-want-read,[reader1,
+    r@read])send(wr,in-want-read,[reader2,r@read])send(ww,in-want-write,[
+    writer1,w@write]),'db-write}
+
+{< cr : COUNT-READ | cr@want-read : st(0,
+    unchanged),cr@want-write : st(0,unchanged),cr@writing : st(true,unchanged),
+    readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE | cw@readers :
+    st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,unchanged),
+    cw@want-write : st(0,unchanged),status : unlocked,writers : 1,writing :
+    true > < db : DATABASE | none > < reader1 : READER | r@read-status : locked
+    > < reader2 : READER | r@read-status : locked > < wr : WANT-READ | status :
+    unlocked,want-read : 0 > < writer1 : WRITER | w@write-status : locked > <
+    writer2 : WRITER | w@write-status : locked > < ww : WANT-WRITE | status :
+    unlocked,want-write : 0 > done(db,db@write,[cw,out-count-write]::[ww,
+    out-want-write]::[writer2,w@write])send(wr,in-want-read,[reader1,
+    r@read])send(wr,in-want-read,[reader2,r@read])send(ww,in-want-write,[
+    writer1,w@write]),'DATABASE-doneAndAcking-db@write}
+
+{ack([cw,
+    out-count-write]::[ww,out-want-write]::[writer2,w@write])< cr : COUNT-READ
+    | cr@want-read : st(0,unchanged),cr@want-write : st(0,unchanged),cr@writing
+    : st(true,unchanged),readers : 0,status : unlocked,turn : 0 > < cw :
+    COUNT-WRITE | cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),
+    cw@want-read : st(0,unchanged),cw@want-write : st(0,unchanged),status :
+    unlocked,writers : 1,writing : true > < db : DATABASE | none > < reader1 :
+    READER | r@read-status : locked > < reader2 : READER | r@read-status :
+    locked > < wr : WANT-READ | status : unlocked,want-read : 0 > < writer1 :
+    WRITER | w@write-status : locked > < writer2 : WRITER | w@write-status :
+    locked > < ww : WANT-WRITE | status : unlocked,want-write : 0 > send(wr,
+    in-want-read,[reader1,r@read])send(wr,in-want-read,[reader2,r@read])send(
+    ww,in-want-write,[writer1,w@write]),'COUNT-WRITE-acking-out-count-write}
+
+{
+    ack([ww,out-want-write]::[writer2,w@write])< cr : COUNT-READ | cr@want-read
+    : st(0,unchanged),cr@want-write : st(0,unchanged),cr@writing : st(false,
+    unchanged),readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE |
+    cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,
+    unchanged),cw@want-write : st(0,unchanged),status : unlocked,writers : 0,
+    writing : false > < db : DATABASE | none > < reader1 : READER |
+    r@read-status : locked > < reader2 : READER | r@read-status : locked > < wr
+    : WANT-READ | status : unlocked,want-read : 0 > < writer1 : WRITER |
+    w@write-status : locked > < writer2 : WRITER | w@write-status : locked > <
+    ww : WANT-WRITE | status : unlocked,want-write : 0 > send(wr,in-want-read,[
+    reader1,r@read])send(wr,in-want-read,[reader2,r@read])send(ww,
+    in-want-write,[writer1,w@write]),'WANT-WRITE-acking-out-want-write}
+
+{ack([
+    writer2,w@write])< cr : COUNT-READ | cr@want-read : st(0,unchanged),
+    cr@want-write : st(0,unchanged),cr@writing : st(false,unchanged),readers :
+    0,status : unlocked,turn : 0 > < cw : COUNT-WRITE | cw@readers : st(0,
+    unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,unchanged),
+    cw@want-write : st(0,unchanged),status : unlocked,writers : 0,writing :
+    false > < db : DATABASE | none > < reader1 : READER | r@read-status :
+    locked > < reader2 : READER | r@read-status : locked > < wr : WANT-READ |
+    status : unlocked,want-read : 0 > < writer1 : WRITER | w@write-status :
+    locked > < writer2 : WRITER | w@write-status : locked > < ww : WANT-WRITE |
+    status : unlocked,want-write : 0 > send(wr,in-want-read,[reader1,
+    r@read])send(wr,in-want-read,[reader2,r@read])send(ww,in-want-write,[
+    writer1,w@write]),'WRITER-receivingAck-w@write}
+
+{< cr : COUNT-READ |
+    cr@want-read : st(0,unchanged),cr@want-write : st(0,unchanged),cr@writing :
+    st(false,unchanged),readers : 0,status : unlocked,turn : 0 > < cw :
+    COUNT-WRITE | cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),
+    cw@want-read : st(0,unchanged),cw@want-write : st(0,unchanged),status :
+    unlocked,writers : 0,writing : false > < db : DATABASE | none > < reader1 :
+    READER | r@read-status : locked > < reader2 : READER | r@read-status :
+    locked > < wr : WANT-READ | status : unlocked,want-read : 0 > < writer1 :
+    WRITER | w@write-status : locked > < writer2 : WRITER | w@write-status :
+    unlocked > < ww : WANT-WRITE | status : unlocked,want-write : 0 > done(
+    writer2,w@write,none)send(wr,in-want-read,[reader1,r@read])send(wr,
+    in-want-read,[reader2,r@read])send(ww,in-want-write,[writer1,w@write]),
+    'WANT-WRITE-sending-in-want-write}
+
+{< cr : COUNT-READ | cr@want-read : st(0,
+    unchanged),cr@want-write : st(1,unchanged),cr@writing : st(false,
+    unchanged),readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE |
+    cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,
+    unchanged),cw@want-write : st(1,unchanged),status : unlocked,writers : 0,
+    writing : false > < db : DATABASE | none > < reader1 : READER |
+    r@read-status : locked > < reader2 : READER | r@read-status : locked > < wr
+    : WANT-READ | status : unlocked,want-read : 0 > < writer1 : WRITER |
+    w@write-status : locked > < writer2 : WRITER | w@write-status : unlocked >
+    < ww : WANT-WRITE | status : unlocked,want-write : 1 > done(writer2,
+    w@write,none)send(cw,in-count-write,[ww,out-want-write]::[writer1,
+    w@write])send(wr,in-want-read,[reader1,r@read])send(wr,in-want-read,[
+    reader2,r@read]),'writing}
+
+{< cr : COUNT-READ | cr@want-read : st(0,
+    unchanged),cr@want-write : st(1,unchanged),cr@writing : st(false,
+    unchanged),readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE |
+    cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,
+    unchanged),cw@want-write : st(1,unchanged),status : unlocked,writers : 0,
+    writing : false > < db : DATABASE | none > < reader1 : READER |
+    r@read-status : locked > < reader2 : READER | r@read-status : locked > < wr
+    : WANT-READ | status : unlocked,want-read : 0 > < writer1 : WRITER |
+    w@write-status : locked > < writer2 : WRITER | w@write-status : unlocked >
+    < ww : WANT-WRITE | status : unlocked,want-write : 1 > do(writer2,w@write,
+    none)send(cw,in-count-write,[ww,out-want-write]::[writer1,w@write])send(wr,
+    in-want-read,[reader1,r@read])send(wr,in-want-read,[reader2,r@read]),
+    'COUNT-WRITE-sending-in-count-write}
+
+{< cr : COUNT-READ | cr@want-read : st(
+    0,unchanged),cr@want-write : st(0,unchanged),cr@writing : st(true,
+    unchanged),readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE |
+    cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,
+    unchanged),cw@want-write : st(0,unchanged),status : unlocked,writers : 1,
+    writing : true > < db : DATABASE | none > < reader1 : READER |
+    r@read-status : locked > < reader2 : READER | r@read-status : locked > < wr
+    : WANT-READ | status : unlocked,want-read : 0 > < writer1 : WRITER |
+    w@write-status : locked > < writer2 : WRITER | w@write-status : unlocked >
+    < ww : WANT-WRITE | status : unlocked,want-write : 0 > do(writer2,w@write,
+    none)send(db,db@write,[cw,out-count-write]::[ww,out-want-write]::[writer1,
+    w@write])send(wr,in-want-read,[reader1,r@read])send(wr,in-want-read,[
+    reader2,r@read]),'DATABASE-recevingAndDo-db@write}
+
+{< cr : COUNT-READ |
+    cr@want-read : st(0,unchanged),cr@want-write : st(0,unchanged),cr@writing :
+    st(true,unchanged),readers : 0,status : unlocked,turn : 0 > < cw :
+    COUNT-WRITE | cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),
+    cw@want-read : st(0,unchanged),cw@want-write : st(0,unchanged),status :
+    unlocked,writers : 1,writing : true > < db : DATABASE | none > < reader1 :
+    READER | r@read-status : locked > < reader2 : READER | r@read-status :
+    locked > < wr : WANT-READ | status : unlocked,want-read : 0 > < writer1 :
+    WRITER | w@write-status : locked > < writer2 : WRITER | w@write-status :
+    unlocked > < ww : WANT-WRITE | status : unlocked,want-write : 0 > do(db,
+    db@write,[cw,out-count-write]::[ww,out-want-write]::[writer1,w@write])do(
+    writer2,w@write,none)send(wr,in-want-read,[reader1,r@read])send(wr,
+    in-want-read,[reader2,r@read]),'db-write}
+
+{< cr : COUNT-READ | cr@want-read
+    : st(0,unchanged),cr@want-write : st(0,unchanged),cr@writing : st(true,
+    unchanged),readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE |
+    cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,
+    unchanged),cw@want-write : st(0,unchanged),status : unlocked,writers : 1,
+    writing : true > < db : DATABASE | none > < reader1 : READER |
+    r@read-status : locked > < reader2 : READER | r@read-status : locked > < wr
+    : WANT-READ | status : unlocked,want-read : 0 > < writer1 : WRITER |
+    w@write-status : locked > < writer2 : WRITER | w@write-status : unlocked >
+    < ww : WANT-WRITE | status : unlocked,want-write : 0 > do(writer2,w@write,
+    none)done(db,db@write,[cw,out-count-write]::[ww,out-want-write]::[writer1,
+    w@write])send(wr,in-want-read,[reader1,r@read])send(wr,in-want-read,[
+    reader2,r@read]),'DATABASE-doneAndAcking-db@write}
+
+{ack([cw,
+    out-count-write]::[ww,out-want-write]::[writer1,w@write])< cr : COUNT-READ
+    | cr@want-read : st(0,unchanged),cr@want-write : st(0,unchanged),cr@writing
+    : st(true,unchanged),readers : 0,status : unlocked,turn : 0 > < cw :
+    COUNT-WRITE | cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),
+    cw@want-read : st(0,unchanged),cw@want-write : st(0,unchanged),status :
+    unlocked,writers : 1,writing : true > < db : DATABASE | none > < reader1 :
+    READER | r@read-status : locked > < reader2 : READER | r@read-status :
+    locked > < wr : WANT-READ | status : unlocked,want-read : 0 > < writer1 :
+    WRITER | w@write-status : locked > < writer2 : WRITER | w@write-status :
+    unlocked > < ww : WANT-WRITE | status : unlocked,want-write : 0 > do(
+    writer2,w@write,none)send(wr,in-want-read,[reader1,r@read])send(wr,
+    in-want-read,[reader2,r@read]),'COUNT-WRITE-acking-out-count-write}
+
+{ack([
+    ww,out-want-write]::[writer1,w@write])< cr : COUNT-READ | cr@want-read :
+    st(0,unchanged),cr@want-write : st(0,unchanged),cr@writing : st(false,
+    unchanged),readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE |
+    cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,
+    unchanged),cw@want-write : st(0,unchanged),status : unlocked,writers : 0,
+    writing : false > < db : DATABASE | none > < reader1 : READER |
+    r@read-status : locked > < reader2 : READER | r@read-status : locked > < wr
+    : WANT-READ | status : unlocked,want-read : 0 > < writer1 : WRITER |
+    w@write-status : locked > < writer2 : WRITER | w@write-status : unlocked >
+    < ww : WANT-WRITE | status : unlocked,want-write : 0 > do(writer2,w@write,
+    none)send(wr,in-want-read,[reader1,r@read])send(wr,in-want-read,[reader2,
+    r@read]),'WANT-WRITE-acking-out-want-write}
+
+{ack([writer1,w@write])< cr :
+    COUNT-READ | cr@want-read : st(0,unchanged),cr@want-write : st(0,
+    unchanged),cr@writing : st(false,unchanged),readers : 0,status : unlocked,
+    turn : 0 > < cw : COUNT-WRITE | cw@readers : st(0,unchanged),cw@turn : st(
+    0,unchanged),cw@want-read : st(0,unchanged),cw@want-write : st(0,
+    unchanged),status : unlocked,writers : 0,writing : false > < db : DATABASE
+    | none > < reader1 : READER | r@read-status : locked > < reader2 : READER |
+    r@read-status : locked > < wr : WANT-READ | status : unlocked,want-read : 0
+    > < writer1 : WRITER | w@write-status : locked > < writer2 : WRITER |
+    w@write-status : unlocked > < ww : WANT-WRITE | status : unlocked,
+    want-write : 0 > do(writer2,w@write,none)send(wr,in-want-read,[reader1,
+    r@read])send(wr,in-want-read,[reader2,r@read]),
+    'WRITER-receivingAck-w@write}
+
+{< cr : COUNT-READ | cr@want-read : st(0,
+    unchanged),cr@want-write : st(0,unchanged),cr@writing : st(false,
+    unchanged),readers : 0,status : unlocked,turn : 0 > < cw : COUNT-WRITE |
+    cw@readers : st(0,unchanged),cw@turn : st(0,unchanged),cw@want-read : st(0,
+    unchanged),cw@want-write : st(0,unchanged),status : unlocked,writers : 0,
+    writing : false > < db : DATABASE | none > < reader1 : READER |
+    r@read-status : locked > < reader2 : READER | r@read-status : locked > < wr
+    : WANT-READ | status : unlocked,want-read : 0 > < writer1 : WRITER |
+    w@write-status : unlocked > < writer2 : WRITER | w@write-status : unlocked
+    > < ww : WANT-WRITE | status : unlocked,want-write : 0 > do(writer2,
+    w@write,none)done(writer1,w@write,none)send(wr,in-want-read,[reader1,
+    r@read])send(wr,in-want-read,[reader2,r@read]),'writing})
+

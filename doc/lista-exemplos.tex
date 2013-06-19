@@ -1,0 +1,580 @@
+\documentclass[a4paper,11pt,draft]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{a4wide,url,fancyvrb}
+
+\RecustomVerbatimCommand{\VerbatimInput}{VerbatimInput}{fontsize=\scriptsize}
+\RecustomVerbatimEnvironment{Verbatim}{Verbatim}{fontsize=\scriptsize}
+
+\begin{document}
+
+\section{Introdução}
+Esta lista é, basicamente, o relatório de VP com algumas
+atualizações. Mas como vc pediu urgencia, preferi ao inves de
+atualizar o relatório, enviar a relação no formato solicitado.
+
+O mapeamento utilizado em TODOS os exemplos abaixo é o do artigo com
+as seguintes alterações:
+
+\begin{itemize}
+\item os guardas nao implementam uma variavel de estado que altera
+   entre lock/unlock! Como o texto do artigo nao entra em detalhes
+   sobre as variaveis "status", apenas as regras 13 e 14 precisarão
+   ser alteradas. Os guardas entao podem ser executados de forma
+   concorrente, quando necessario implementar exclusao mutua, duas
+   saidas sao possiveis: um conector com contrato de exclusao mutua
+   ser colocado antes ou uma variavel semaphoro ser incluida na
+   expressao do guarda e atualiza de acordo no before/after.
+
+\item os links passaram de regras para equacoes. Usando como exemplo
+   uma arquitetura minima: MODULO1 > CONECTOR > MODULO2. Com os links
+   como regras temos dois estados diferentes para representar o fato
+   do MODULO1 ter enviado uma mensagem para o CONECTOR que ainda nao
+   chegou. Com os links como equações, uma mensagem saindo do MODULO1
+   e "igual" a uma mensagem chegando no CONECTOR (estes dois estados
+   sao reduzidos para um só: mensagem em transito de MODULO1 para
+   CONECTOR)
+\end{itemize}
+
+Nas seções seguintes, seguem os exemplos.
+
+
+\section{Vending Machine}
+
+Descrição CBABEL:
+\VerbatimInput{vm/vm.cbabel}
+
+Módulo de verificação utilizado:
+\VerbatimInput{vm/ver-vm.maude}
+
+As seguintes verificações foram executadas.
+
+Todos os possiveis estados finais a partir do estado inicial. Todas as
+saídas encontradas estão corretas.
+\begin{Verbatim}
+search in VER-VM : initial =>! C:Configuration < slot : SLOT | slot@cakes :
+    N:Int,slot@apples : M:Int > .
+
+Solution 1
+C:Configuration <- < ad : ADD-DOLLAR | none > < aq : ADD-QUARTER | none > < ba
+    : BUY-APPLE | none > < bc : BUY-CAKE | none > < cd : COUNT-DOLLAR | dollars
+    : 0,status : unlocked > < cq : COUNT-QUARTER | quarters : 2,status :
+    unlocked > < sa : SOLD-APPLE | apples : 5,sa@dollars : st(0,unchanged),
+    status : unlocked > < sc : SOLD-CAKE | cakes : 3,sc@dollars : st(0,
+    unchanged),status : unlocked > < split : SPLIT | status : unlocked > send(
+    sa,ack-a,[ba,buy-a])send(sa,ack-a,[ba,buy-a]); M:Int <- 0 ; N:Int <- 2
+
+Solution 2
+C:Configuration <- < ad : ADD-DOLLAR | none > < aq : ADD-QUARTER | none > < ba
+    : BUY-APPLE | none > < bc : BUY-CAKE | none > < cd : COUNT-DOLLAR | dollars
+    : 0,status : unlocked > < cq : COUNT-QUARTER | quarters : 3,status :
+    unlocked > < sa : SOLD-APPLE | apples : 4,sa@dollars : st(0,unchanged),
+    status : unlocked > < sc : SOLD-CAKE | cakes : 4,sc@dollars : st(0,
+    unchanged),status : unlocked > < split : SPLIT | status : unlocked > send(
+    sa,ack-a,[ba,buy-a])send(sc,ack-c,[bc,buy-c]); M:Int <- 1 ; N:Int <- 1
+
+Solution 3
+C:Configuration <- < ad : ADD-DOLLAR | none > < aq : ADD-QUARTER | none > < ba
+    : BUY-APPLE | none > < bc : BUY-CAKE | none > < cd : COUNT-DOLLAR | dollars
+    : 0,status : unlocked > < cq : COUNT-QUARTER | quarters : 0,status :
+    unlocked > < sa : SOLD-APPLE | apples : 3,sa@dollars : st(0,unchanged),
+    status : unlocked > < sc : SOLD-CAKE | cakes : 4,sc@dollars : st(0,
+    unchanged),status : unlocked > < split : SPLIT | status : unlocked > send(
+    sc,ack-c,[bc,buy-c]); M:Int <- 2 ; N:Int <- 1
+
+No more solutions.
+\end{Verbatim}
+
+Verificação de funcionamento. Se forem colocados 3 quarters na maquina
+e solicitado um bolo a maquina irá vender o bolo? ok. nenhuma
+saida. Um bolo custa um dolar.
+\begin{Verbatim}
+search in VER-VM : topology init(do(aq,add-q,none),3)init(do(bc,buy-c,none),1)
+    =>* C:Configuration < slot : SLOT | slot@cakes : N:Int,AS:AttributeSet > .
+
+No solution.
+\end{Verbatim}
+
+Existe algum estado onde a maquina conte um numero de negativo de
+dolares ou quarters?
+\begin{Verbatim}
+rewrites: 198317 in 2290ms cpu (2280ms real) (86601 rewrites/second)
+search in VER-VM : initial =>* C:Configuration < cd : COUNT-DOLLAR | dollars :
+    N:Int,AS:AttributeSet > such that N < 0 .
+
+No solution.
+
+rewrites: 198317 in 2570ms cpu (2580ms real) (77166 rewrites/second)
+search in VER-VM : initial =>* C:Configuration < cq : COUNT-QUARTER | quarters
+    : N:Int,AS:AttributeSet > such that < 0 .
+
+No solution.
+\end{Verbatim}
+
+Verificando a concorrência. Existe a possibilidade da maquina devolver
+no slot de saida, simultaneamente, maças e bolos?
+\begin{Verbatim}
+search in VER-VM : initial =>* C:Configuration send(slot,put-a,
+    IT1:Interaction)send(slot,put-c,IT2:Interaction).
+
+Solution 1
+C:Configuration <- < ad : ADD-DOLLAR | none > < aq : ADD-QUARTER | none > < ba
+    : BUY-APPLE | none > < bc : BUY-CAKE | none > < cd : COUNT-DOLLAR | dollars
+    : 0,status : unlocked > < cq : COUNT-QUARTER | quarters : 0,status :
+    unlocked > < sa : SOLD-APPLE | apples : 4,sa@dollars : st(0,unchanged),
+    status : unlocked > < sc : SOLD-CAKE | cakes : 4,sc@dollars : st(0,
+    unchanged),status : unlocked > < slot : SLOT | slot@apples : 0,slot@cakes :
+    0 > < split : SPLIT | status : unlocked > do(aq,add-q,none)do(aq,add-q,
+    none)do(ba,buy-a,none)do(bc,buy-c,none)send(cq,cq@add-q,[split,s@put-q]::[
+    sa,give-a]::[ba,buy-a]); IT1:Interaction <- [split,s@give-out-a]::[sa,
+    give-a]::[ba,buy-a]; IT2:Interaction <- [sc,give-c]::[bc,buy-c]
+\end{Verbatim}
+
+
+\clearpage
+\section{Produtor-Consumidor-Buffer}
+
+Foram 5 as variacoes de arquiteturas de PCB desenvolvidas. Uma em cada
+diretorio: s-default, s-mutex, s-mutex-guards, s-guards-mutex e
+s-monitor.
+
+Na configuracao guardas+mutex fizemos a movimentacao da variavel
+maxitems e criacao de uma terceira variavel nitems para controle do
+numero de itens colocados/retirados do buffer pelos guardas. Conforme
+conversamos, estas variaveis sao de controle, por isso ficam nos
+guardas. A variavel items do buffer serve apenas para controlar o
+numero de items EFETIVAMENTE armazenados no buffer e,
+consequentemente, para verificacoes.
+
+
+  remover apenas o nero de items efetivos do buffer menos 1, pois o
+  ultimo ack de put nAiso chegou e os guardas ainda nao contabilizaram
+  o ultimo item depositado.
+
+Bem, acredito que todas as variacoes sincronas do PCB estao ok agora e
+podemos usar a 1, 2 e 3 no artigo.
+
+1. pc-default
+ - com racecond
+ - sem deadlock
+
+2. pc-mutex
+ - sem racecond
+ - sem deadlock
+
+3. pc-guards-mutex
+ - sem racecond
+ - sem deadlock
+ - sem upperflow ou underflow
+
+4. pc-mutex-guards
+ - sem racecond
+ - com deadlock
+ - sem upperflow ou underflow
+
+5. pc-monitor
+ - sem racecond
+ - sem deadlock
+ - sem upperflow ou underflow
+
+observacoes:
+
+3 e 4: variacao da variavel nitems nos guardas controla
+abertura/fechamento dos guardas.
+
+5: variacao da variavel items no buffer controla abertura/fechamento
+dos guardas mas os guardas implementam monitor.
+
+ ainda, caso um ack demore a ser recebido pelo guard-put, o guard-get
+ ir2. os codigos que atualizam as variaveis permanecem no after dos
+ guardas. Pensando no guard-put: estamos com isso garantindo que
+ apenas quando o ack de um put chegar ao guard-put este abrir
+
+Estarei listando aqui apenas os exemplos sincronos. Modulos CBABEL
+comuns as versões:
+\VerbatimInput{pcb/s-modules.cbabel}
+
+Módulo de verificação utilizado nos exemplos:
+\VerbatimInput{pcb/s-ver-pcb.maude}
+
+Um comentário geral sobre starvation. Em todas as configurações
+utilizei um produtor e um consumidor. Sempre que existe controle do
+limite do buffer, o starvation não se verifica pois, caso o consumidor
+esteja sendo bloqueado constantemente pelo produtor, em algum momento
+o buffer ficará cheio e o consumidor então poderá executar. Para
+verificar o starvation do produtor, estou utilizando a formula:
+
+\begin{Verbatim} 
+(red modelCheck(initial, [] <> putting) .)
+\end{Verbatim} 
+
+Caso eu utilizasse mais de um produtor e mais de um consumidor,
+certamente seria possivel o starvation de um dos produtores ou um dos
+consumidores. Em todas as verificações então não vou analisar
+starvation.
+
+
+\subsection{PCB-Default}
+
+Descrição CBABEL do connector DEFAULT e da aplicação:
+\VerbatimInput{pcb/default.cbabel}
+\VerbatimInput{pcb/pc-default.cbabel}
+
+Verificações executadas:
+
+Race condition ocorre:
+\begin{Verbatim}
+rewrites: 1810 in 60ms cpu (60ms real) (30166 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ raceCond)
+result ModelCheckResult :
+  counterexample({< buff : BUFFER | buffer@items : 0,buffer@maxitems : 2 > <
+    cons : CONSUMER | consumer@get-status : unlocked > < default1 : DEFAULT |
+    status : unlocked > < default2 : DEFAULT | status : unlocked > < prod :
+    PRODUCER | producer@put-status : unlocked > do(cons,consumer@get,none)do(
+    prod,producer@put,none),'CONSUMER-sending-consumer@get}{< buff : BUFFER |
+    buffer@items : 0,buffer@maxitems : 2 > < cons : CONSUMER |
+\end{Verbatim}
+
+Natualmente, como não existe controle algum, underflow e overflow
+ocorrem. Não ocorre Deadlock. Pois nunca todos os módulos são
+bloqueados.
+\begin{Verbatim}
+rewrites: 1548 in 30ms cpu (30ms real) (51600 rewrites/second)
+search in S-VER-PCB : initial =>! C:Configuration .
+
+No solution.
+\end{Verbatim}
+
+
+\subsection{PCB-Mutex}
+
+Descrição CBABEL do connector MUTEX e da aplicação:
+\VerbatimInput{pcb/mutex.cbabel}
+\VerbatimInput{pcb/pc-mutex.cbabel}
+
+Foram executas as mesmas verificacoes anteriores.
+
+Race condition não ocorre:
+\begin{Verbatim}
+rewrites: 2109 in 50ms cpu (50ms real) (42180 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ raceCond)
+result Bool :
+  true
+\end{Verbatim}
+
+Underflow e overflow ocorrem. Deadlock não ocorre.
+
+
+\subsection{PCB-Guardas-Mutex}
+
+Descrições CBABEL:
+\VerbatimInput{pcb/guard-get.cbabel}
+\VerbatimInput{pcb/guard-put.cbabel}
+\VerbatimInput{pcb/pc-guards-mutex.cbabel}
+
+Nesta configuração os módulos produtor e consumidor estão ligados aos
+guardas, e estes ao mutex que finalmente liga ao buffer.
+
+Race condition não ocorre. 
+\begin{Verbatim}
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ raceCond)
+result Bool :
+  true
+\end{Verbatim}
+
+Underflow e overflow ocorrem.
+\begin{Verbatim}
+rewrites: 5129 in 200ms cpu (210ms real) (25645 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ underflow)
+result ModelCheckResult :
+  counterexample({< buff : BUFFER | buffer@items : 0,buffer@maxitems : 2 > <
+    cons : CONSUMER | consumer@get-status : unlocked > < gget : GUARD-GET |
+    guard-get@cheio : false,guard-get@items : st(0,unchanged),guard-get@vazio :
+    st(true,unchanged),status : unlocked > < gput : GUARD-PUT | guard-put@cheio
+    : st(false,unchanged),guard-put@items : st(0,unchanged),guard-put@maxitems
+    : st(2,unchanged),guard-put@vazio : true,status : unlocked > < mutx : MUTEX
+    | status : unlocked > < prod : PRODUCER | producer@put-status : unlocked >
+    do(cons,consumer@get,none)do(prod,producer@put,none),...
+\end{Verbatim}
+
+Vou explicar a situação de underflow, o caso do overflow é análogo. O
+problema ocorre quando um ack do produtor fica ``preso'' entre o mutex
+e o guard-put enquanto o consumidor esvazia o buffer.
+
+Lembrando: o guard-get esta aberto quando a variavel cheio for
+verdadeira (existe pelo menos um item no buffer para ser retirado). O
+guard-put esta aberto quando a variavel vazio estiver verdadeira
+(existe pelo menos um espaço livre no buffer).
+
+Imaginem um estado onde o buffer acabou de ser completado com o maximo
+de itens por uma mensagem de put, as variaveis cheio e vazio estao
+verdadeiras (pois apenas no processamento do ack o guard-put sera
+fechado, vazio = false), e o consumidor acaba de receber um ack da
+ultima requisicao. 
+
+O ack do put sera passado para o mutex que sera liberado, ficando
+``parado'' entre o mutex e o guard-put. O consumidor ira iniciar nova
+requisicao que chegará até o buffer pois ambos os guardas estao
+abertos e o mutex liberado. no ack do guard-get a variavel vazio sera
+mantida como true. O buffer ficou com 1 item. Apos receber o ack o
+consumidor inicia nova requisicao. A nova mensagem do consumidor chega
+ao buffer e retira o ultimo item. Quando o ack desta requisicao é
+tratado pelo guard-get a variavel cheio torna-se false e a variavel
+vazio é mantida true. Agora, e só agora, o ack do put é tratado pelo
+guard-put. Que retorna a veriavel cheio para true indevidamente e
+mantem a variavel fazio como true.
+
+
+Deadlock não ocorre.
+\begin{Verbatim}
+rewrites: 12003 in 240ms cpu (250ms real) (50012 rewrites/second)
+search in S-VER-PCB : initial =>! C:Configuration .
+
+No solution.
+\end{Verbatim}
+
+Se o limite inferior do buffer for estourado, pela especificação
+original da tese do Alexandre, o consumidor pode continuar acessando o
+buffer indefinidademente. Para evitar isso, uma alternativa é trocar
+as expressões dos guardas para:
+\VerbatimInput{pcb/guard-get-1.cbabel}
+\VerbatimInput{pcb/guard-put-1.cbabel}
+
+
+\section{PCB-Mutex-Guardas}
+
+Nesta configuração, os guardas são colocados depois do conector com
+mutex. Neste caso o deadlock ocorrerá mas não o estouro dos limites.
+
+Descrição da aplicação CBABEL:
+\VerbatimInput{pcb/pc-mutex-guards.cbabel}
+
+A race condition não ocorre:
+\begin{Verbatim}
+rewrites: 4880 in 90ms cpu (100ms real) (54222 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ raceCond)
+result Bool :
+  true
+\end{Verbatim}
+
+O upperflow e underflow não ocorrem:
+\begin{Verbatim}
+rewrites: 4996 in 80ms cpu (80ms real) (62450 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ underflow)
+result Bool :
+  true
+
+rewrites: 4996 in 80ms cpu (70ms real) (62450 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ upperflow)
+result Bool :
+  true
+\end{Verbatim}
+
+O deadlock ocorre em duas situações. Mensagem de get bloqueada pelo
+guard-get e bloqueando o mutex. Mensagem de put bloqueada pelo
+guard-put e bloqueando o mutex.
+\begin{Verbatim}
+rewrites: 3703 in 80ms cpu (90ms real) (46287 rewrites/second)
+search in S-VER-PCB : initial =>! C:Configuration .
+
+Solution 1
+C:Configuration <- < buff : BUFFER | buffer@items : 0,buffer@maxitems : 2 > <
+    cons : CONSUMER | consumer@get-status : locked > < gget : GUARD-GET |
+    guard-get@cheio : false,guard-get@items : st(0,unchanged),guard-get@vazio :
+    st(true,unchanged),status : unlocked > < gput : GUARD-PUT | guard-put@cheio
+    : st(false,unchanged),guard-put@items : st(0,unchanged),guard-put@maxitems
+    : st(2,unchanged),guard-put@vazio : true,status : unlocked > < mutx : MUTEX
+    | status : locked > < prod : PRODUCER | producer@put-status : locked >
+    send(gget,guard-get@in,[mutx,mutex@out2]::[cons,consumer@get])send(mutx,
+    mutex@in1,[prod,producer@put])
+
+Solution 2
+C:Configuration <- < buff : BUFFER | buffer@items : 2,buffer@maxitems : 2 > <
+    cons : CONSUMER | consumer@get-status : locked > < gget : GUARD-GET |
+    guard-get@cheio : true,guard-get@items : st(2,unchanged),guard-get@vazio :
+    st(false,unchanged),status : unlocked > < gput : GUARD-PUT |
+    guard-put@cheio : st(true,unchanged),guard-put@items : st(2,unchanged),
+    guard-put@maxitems : st(2,unchanged),guard-put@vazio : false,status :
+    unlocked > < mutx : MUTEX | status : locked > < prod : PRODUCER |
+    producer@put-status : locked > send(gput,guard-put@in,[mutx,mutex@out1]::[
+    prod,producer@put])send(mutx,mutex@in2,[cons,consumer@get])
+
+No more solutions.
+\end{Verbatim}
+
+\subsection{PCB-Guardas}
+
+Configuração sugerida pelo Christiano apenas com guardas sem mutex.
+\VerbatimInput{pcb/pc-guards.cbabel}
+
+A race condition não é evitada.
+\begin{Verbatim}
+rewrites: 5400 in 130ms cpu (140ms real) (41538 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ raceCond)
+result ModelCheckResult :
+  counterexample({< buff : BUFFER | buffer@items : 0,buffer@maxitems : 2 > <
+    cons : CONSUMER | consumer@get-status : unlocked > < gget : GUARD-GET |
+    guard-get@cheio : fal
+\end{Verbatim}
+
+O underflow e overflow também ocorrem. A explicação é a mesma da
+arquitetura pcb-guards-mutex. Acontece que agora não existe o mutex
+entre os guardas e o buffer.
+\begin{Verbatim}
+rewrites: 4347 in 80ms cpu (80ms real) (54337 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ underflow)
+result ModelCheckResult :
+  counterexample({< buff : BUFFER | buffer@items : 0,buffer@maxitems : 2 > <
+    cons : CONSUMER | consumer@get-status : unlocked > < gget : GUARD-GET |
+    guard-get@cheio : false,guard-get@items : st(0,unchanged),guard-get@vazio :
+ ...
+\end{Verbatim}
+
+Deadlock não ocorre.
+\begin{Verbatim}
+rewrites: 10069 in 210ms cpu (210ms real) (47947 rewrites/second)
+search in S-VER-PCB : initial =>! C:Configuration .
+
+No solution.
+\end{Verbatim}
+
+\subsection{PCB-Monitor}
+
+Esta é, finalmente, a configuração que resolve todos os
+problemas. Descrição CBABEL dos módulos:
+\VerbatimInput{pcb/guard-get-monitor.cbabel}
+\VerbatimInput{pcb/guard-put-monitor.cbabel}
+\VerbatimInput{pcb/pc-monitor.cbabel}
+
+Race condition free, upperflow e underflow free:
+\begin{Verbatim}
+rewrites: 4699 in 100ms cpu (100ms real) (46990 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ raceCond)
+result Bool :
+  true
+
+rewrites: 4775 in 70ms cpu (80ms real) (68214 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ underflow)
+result Bool :
+  true
+
+rewrites: 4775 in 80ms cpu (70ms real) (59687 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]~ upperflow)
+result Bool :
+  true
+\end{Verbatim}
+
+Deadlock free:
+\begin{Verbatim}
+rewrites: 3610 in 90ms cpu (90ms real) (40111 rewrites/second)
+search in S-VER-PCB : initial =>! C:Configuration .
+
+No solution.
+\end{Verbatim}
+
+Como dito anteriormente, nesta também se verifica o starvation free
+dos modulos, dado que temos apenas um produtor e um consumidor. Este
+resultado, no entanto, não é relevante.
+\begin{Verbatim}
+rewrites: 4679 in 70ms cpu (70ms real) (66842 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]<> putting)
+result Bool :
+  true
+
+rewrites: 4673 in 80ms cpu (80ms real) (58412 rewrites/second)
+reduce in S-VER-PCB :
+  modelCheck(initial,[]<> getting)
+result Bool :
+  true
+\end{Verbatim}
+
+\clearpage
+\section{Leitores e Escritores}
+
+A descrição CBABEL dos módulos, conectores e aplicação:
+\VerbatimInput{readers-writers/connectors.cbabel}
+\VerbatimInput{readers-writers/modules.cbabel}
+\VerbatimInput{readers-writers/readers-writers.cbabel}
+
+O módulo de verificação utilizado:
+\VerbatimInput{readers-writers/ver-readers-writers.maude}
+
+O acesso exclusivo de escritores é garantido:
+\begin{Verbatim}
+rewrites: 740384 in 17230ms cpu (17220ms real) (42970 rewrites/second)
+reduce in VER-RW :
+  modelCheck(initial,[]~ writers&readers)
+result Bool :
+  true
+
+rewrites: 740010 in 17430ms cpu (17430ms real) (42456 rewrites/second)
+reduce in VER-RW :
+  modelCheck(initial,[]~ two-writers)
+result Bool :
+  true
+\end{Verbatim}
+
+O acesso concorrente de leitores é permitido:
+\begin{Verbatim}
+rewrites: 11688 in 250ms cpu (250ms real) (46752 rewrites/second)
+search in VER-RW : initial =>* C:Configuration send(db,db@read,
+    IT1:Interaction)send(db,db@read,IT2:Interaction).
+
+Solution 1
+C:Configuration <- < cr : COUNT-READ | cr@want-read : st(0,unchanged),
+    cr@want-write : st(0,unchanged),cr@writing : st(false,unchanged),readers :
+    2,status : unlocked,turn : 1 > < cw : COUNT-WRITE | cw@readers : st(2,
+    unchanged),cw@turn : st(1,unchanged),cw@want-read : st(0,unchanged),
+    cw@want-write : st(0,unchanged),status : unlocked,writing : false > < db :
+    DATABASE | none > < reader1 : READER | r@read-status : locked > < reader2 :
+    READER | r@read-status : locked > < wr : WANT-READ | status : unlocked,
+    want-read : 0 > < writer1 : WRITER | w@write-status : unlocked > < writer2
+    : WRITER | w@write-status : unlocked > < ww : WANT-WRITE | status :
+    unlocked,want-write : 0 > do(writer1,w@write,none)do(writer2,w@write,none);
+    IT1:Interaction <- [cr,out-count-read]::[wr,out-want-read]::[reader1,
+    r@read]; IT2:Interaction <- [cr,out-count-read]::[wr,out-want-read]::[
+    reader2,r@read]
+\end{Verbatim}
+
+Como no exemplo do produtor e consumidor, também aqui não conseguimos
+garantir o starvation-free dos leitores ou escritores. O
+contra-exemplo a seguir mostra um traço onde apenas os leitores
+acessam o database seguido de um loop onde apenas os leitores e o
+writer2 acessam o database.
+\begin{Verbatim}
+rewrites: 8358 in 150ms cpu (150ms real) (55720 rewrites/second)
+reduce in VER-RW :
+  modelCheck(initial,[]<> writing(writer1))
+result ModelCheckResult :
+  counterexample({< cr : COUNT-READ | cr@want-read : st(0,unchanged),
+    cr@want-write : st(0,unchanged),cr@writing : st(false,unchanged),readers :
+    0,status : unlocked,turn : 0 > < cw :...
+\end{Verbatim}
+
+A arquitetura é deadlock-free:
+\begin{Verbatim}
+rewrites: 735717 in 17410ms cpu (17430ms real) (42258 rewrites/second)
+search in VER-RW : initial =>! C:Configuration .
+
+No solution.
+\end{Verbatim}
+
+\clearpage
+\section{Filósofos}
+
+
+
+\end{document}

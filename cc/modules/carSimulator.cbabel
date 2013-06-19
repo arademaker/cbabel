@@ -1,0 +1,42 @@
+*** Basically the car engine. Sensors that can capture the actual speed /
+*** throttle and brake pedals. Is also accepts break and throttle stimulus
+*** to stop / accelerate the car.
+
+*** throttle setting 0.10
+*** speed 0 .. 120 mph!
+*** miles*10
+*** brake setting 0..10
+*** inverse air resistance factor
+
+***  var int throttle = 0 ;
+***  var int speed = 0 ;
+***  var int maxSpeed = 120 ;
+***  var int distance = 0 ;
+***  var int brakepedal = 0 ;
+***  var int maxThrottle = 10 ;
+***  var int maxBrake = 10 ;
+***  var int airResistance = 12 ;
+***  var int ticksPerSecond = 5 ;
+
+***  setThrottle do:
+***     {
+***         if (throttle<0.0) throttle=0.0;
+***         if (throttle>10.0) throttle=10.0;
+***     }
+
+(
+module carSimulator {
+  var int carSimulator@throttle = 0 ;
+  var int carSimulator@speed = 0 ;
+  var int carSimulator@distance = 0 ;
+  var int carSimulator@brakepedal = 0 ;
+
+  *** var int maxSpeed = 120 ; 
+  *** var int maxThrottle = 10 ;
+  *** var int maxBrake = 10 ;
+  *** var int airResistance = 12 ;
+  *** var int ticksPerSecond = 5 ;
+
+  in port oneway carSimulator@setThrottle ;
+}
+)

@@ -1,0 +1,123 @@
+(
+module PHILOSOPHER { 
+ out port phi@eat ;
+}
+)
+
+(
+module FOOD {
+ in port food@eat ;
+}
+)
+
+(
+module TABLE {
+ var int places = 3 ;
+}
+)
+
+(
+connector GET-TABLE {
+ staterequired int get-table@places ;
+ in port get-table@in ;
+ out port get-table@out ; 
+
+ interaction {
+  get-table@in > guard(get-table@places > 0) { 
+   before { 
+    get-table@places = get-table@places - 1 ;
+   }
+   after {
+    get-table@places = get-table@places + 1 ;
+   }
+  } > get-table@out ;
+ }
+}
+)
+
+(
+module FORK { 
+ var bool available = TRUE ;
+}
+)
+
+(
+connector GET-FORK {
+ staterequired bool get-fork@available ;
+ in port get-fork@in ;
+ out port get-fork@out ; 
+
+ interaction {
+  get-fork@in > guard(get-fork@available == TRUE) { 
+   before { 
+    get-fork@available = FALSE ;
+   }
+   after {
+    get-fork@available = TRUE ;
+   }
+  } > get-fork@out ;
+ }
+}
+)
+
+
+(
+application DP {
+ instantiate PHILOSOPHER as phi1 ;
+ instantiate PHILOSOPHER as phi2 ;
+ instantiate PHILOSOPHER as phi3 ;
+ instantiate PHILOSOPHER as phi4 ;
+ instantiate FOOD as food ;
+ instantiate TABLE as table ;
+ instantiate FORK as fork1 ;
+ instantiate FORK as fork2 ;
+ instantiate FORK as fork3 ;
+ instantiate FORK as fork4 ;
+ instantiate GET-TABLE as gtable1 ;
+ instantiate GET-TABLE as gtable2 ;
+ instantiate GET-TABLE as gtable3 ;
+ instantiate GET-TABLE as gtable4 ;
+ instantiate GET-FORK as lfork1 ;
+ instantiate GET-FORK as lfork2 ;
+ instantiate GET-FORK as lfork3 ;
+ instantiate GET-FORK as lfork4 ;
+ instantiate GET-FORK as rfork1 ;
+ instantiate GET-FORK as rfork2 ;
+ instantiate GET-FORK as rfork3 ;
+ instantiate GET-FORK as rfork4 ;
+
+ link phi1.phi@eat to gtable1.get-table@in ;
+ link gtable1.get-table@out to lfork1.get-fork@in ;
+ link lfork1.get-fork@out to rfork1.get-fork@in ;
+ link rfork1.get-fork@out to food.food@eat ;
+
+ link phi2.phi@eat to gtable2.get-table@in ;
+ link gtable2.get-table@out to lfork2.get-fork@in ;
+ link lfork2.get-fork@out to rfork2.get-fork@in ;
+ link rfork2.get-fork@out to food.food@eat ;
+
+ link phi3.phi@eat to gtable3.get-table@in ;
+ link gtable3.get-table@out to lfork3.get-fork@in ;
+ link lfork3.get-fork@out to rfork3.get-fork@in ;
+ link rfork3.get-fork@out to food.food@eat ;
+
+ link phi4.phi@eat to gtable4.get-table@in ;
+ link gtable4.get-table@out to lfork4.get-fork@in ;
+ link lfork4.get-fork@out to rfork4.get-fork@in ;
+ link rfork4.get-fork@out to food.food@eat ;
+
+ bind bool lfork1.get-fork@available to fork1.available ;
+ bind bool rfork1.get-fork@available to fork4.available ;
+ bind bool lfork2.get-fork@available to fork2.available ;
+ bind bool rfork2.get-fork@available to fork1.available ;
+ bind bool lfork3.get-fork@available to fork3.available ;
+ bind bool rfork3.get-fork@available to fork2.available ;
+ bind bool lfork4.get-fork@available to fork4.available ;
+ bind bool rfork4.get-fork@available to fork3.available ;
+
+ bind int gtable1.get-table@places to table.places ;
+ bind int gtable2.get-table@places to table.places ;
+ bind int gtable3.get-table@places to table.places ;
+ bind int gtable4.get-table@places to table.places ;
+}
+)

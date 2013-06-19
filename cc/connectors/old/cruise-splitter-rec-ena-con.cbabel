@@ -1,0 +1,23 @@
+(
+/*
+    Sends the signal to the car engine and
+    to the cruise control
+*/
+
+connector splitter-rec-ena {
+
+  // controles normais de um carro padrao
+
+  in port oneway  rec-ena;
+
+  out port oneway  recordSpeed;
+
+  out port oneway  enableControl;
+
+  interaction {
+
+     rec-ena > (recordSpeed || enableControl);
+  }
+} // splitter
+
+)

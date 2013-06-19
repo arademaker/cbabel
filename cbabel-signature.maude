@@ -1,0 +1,97 @@
+fmod CBABEL-SIGNATURE is
+ pr INT .
+ pr QID-LIST .
+
+ *** IDS 
+ sorts eId .
+
+ op cbtoken : Qid -> eId [special(id-hook Bubble  (1 1)
+                           op-hook qidSymbol (<Qids> : ~> Qid)
+                           id-hook Exclude ( . ; TRUE FALSE ))] .
+
+ *** STMTS 
+ sorts eBoolean eExp .
+ subsorts eBoolean eId < eExp .
+
+ ops TRUE FALSE : -> eBoolean .
+ ops _!=_ _==_ _<_ _>_ _+_ _-_ : eExp eExp -> eExp [prec 32] .
+ ops _&&_ _||_ : eExp eExp -> eExp [prec 33] .
+ op ((_)) : eExp -> eExp .
+
+ sorts eStmt eStmtSeq .
+ subsort eStmt < eStmtSeq . 
+
+ op skip : -> eStmt .
+ op _=_; : eId eExp -> eStmt [prec 13] .
+ op if (_) {_} : eExp eStmtSeq  -> eStmt .
+ op if (_) {_} else {_} : eExp eStmtSeq eStmtSeq  -> eStmt .
+ op __ : eStmtSeq eStmtSeq -> eStmtSeq [prec 45 assoc] .
+
+ *** PORTS
+ sort ePortDecl .
+
+ op in port_; : eId -> ePortDecl .
+ op out port_; : eId -> ePortDecl .
+ op in port oneway_; : eId -> ePortDecl .
+ op out port oneway_; : eId -> ePortDecl .
+
+ *** VARS
+ sorts eVarDecl eVarType .
+ 
+ ops int bool : -> eVarType .
+ op var_ _;   : eVarType eId -> eVarDecl .
+ op var_ _=_; : eVarType eId eExp -> eVarDecl .
+ op staterequired_ _; : eVarType eId -> eVarDecl .
+
+
+ *** MODULES 
+ sorts eModuleDecl eInstantiateDecl eLinkDecl eBindDecl eElement eElementSet .
+ subsorts eVarDecl ePortDecl < eElement .
+ subsorts eLinkDecl eInstantiateDecl eBindDecl < eElement .
+ subsort eElement < eElementSet .
+
+ op mt-element : -> eElementSet .
+ op __ : eElementSet eElementSet -> eElementSet 
+                                    [assoc comm id: mt-element prec 50] .
+
+ op module_{_} : eId eElementSet -> eModuleDecl .
+ op application_{_} : eId eElementSet -> eModuleDecl .
+
+ op instantiate_as_; : eId eId -> eInstantiateDecl [prec 49] .
+ op link_to_; : eId eId -> eLinkDecl [prec 49] .
+ op bind_ _to_; : eVarType eId eId -> eBindDecl [prec 49] .
+
+
+ *** CONTRACTS
+ sorts GuardBody GuardDecl PortExp 
+       InteractionDecl InteractionDeclSet ContractDecl .
+ subsort InteractionDecl < InteractionDeclSet .
+ subsort ContractDecl < eElement .
+ subsort eId < PortExp .
+
+ op before{_} : eStmtSeq -> GuardBody . 
+ op after{_} : eStmtSeq -> GuardBody .
+ op alternative(_); : eId -> GuardBody .
+ op __ : GuardBody GuardBody -> GuardBody [assoc comm] .
+
+ op guard(_) : eExp -> GuardDecl .
+ op guard(_){_} : eExp GuardBody -> GuardDecl . 
+ op _>_>_; : eId GuardDecl eId -> InteractionDecl [prec 15] .
+
+ op _|_ : PortExp PortExp -> PortExp [assoc comm prec 13] .
+ op _>_; : PortExp PortExp -> InteractionDecl [prec 15] .
+ op __ : InteractionDeclSet InteractionDeclSet -> InteractionDeclSet [assoc comm] .
+
+ op interaction{_} : InteractionDecl -> ContractDecl .
+ op exclusive{_} : InteractionDeclSet -> ContractDecl .
+
+
+ *** CONNECTORS
+ sort eConnectorDecl .
+ op connector_{_} : eId eElementSet -> eConnectorDecl .
+
+ *** CBABEL
+ sort eComponentDecl .
+ subsorts eConnectorDecl eModuleDecl < eComponentDecl .
+endfm
+

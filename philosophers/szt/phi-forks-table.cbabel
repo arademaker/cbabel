@@ -1,0 +1,80 @@
+(
+application NOVA-CEIA-FILOSOFOS {
+ instantiate PHILOSOPHER as phi1 ;
+ instantiate PHILOSOPHER as phi2 ;
+ instantiate PHILOSOPHER as phi3 ;
+ instantiate PHILOSOPHER as phi4 ;
+ instantiate FORK as fork1 ;
+ instantiate FORK as fork2 ;
+ instantiate FORK as fork3 ;
+ instantiate FORK as fork4 ;
+ instantiate TABLE as table ;
+ instantiate REQUEST-FORK as rfc1 ;
+ instantiate LEAVE-FORK as lfc1 ;
+ instantiate REQUEST-FORK as rfc2 ;
+ instantiate LEAVE-FORK as lfc2 ;
+ instantiate REQUEST-FORK as rfc3 ;
+ instantiate LEAVE-FORK as lfc3 ;
+ instantiate REQUEST-FORK as rfc4 ;
+ instantiate LEAVE-FORK as lfc4 ;
+ instantiate EXCLUSIVE-COMM-TABLE as et ;
+ instantiate REQUEST-TABLE as rt ;
+ instantiate LEAVE-TABLE as lt ;
+
+ link phi1.get-table to et.et@in1 ;
+ link phi2.get-table to et.et@in1 ;
+ link phi3.get-table to et.et@in1 ;
+ link phi4.get-table to et.et@in1 ;
+ link phi1.rel-table to et.et@in2 ;
+ link phi2.rel-table to et.et@in2 ;
+ link phi3.rel-table to et.et@in2 ;
+ link phi4.rel-table to et.et@in2 ;
+ link et.et@out1 to table.table@request ;
+ link et.et@out2 to table.table@release ;
+
+ link phi1.rel-lfork to lfc1.lf@in ;
+ link phi1.get-lfork to rfc1.rf@in ;
+ link phi1.rel-rfork to lfc4.lf@in ;
+ link phi1.get-rfork to rfc4.rf@in ;
+
+ link phi2.rel-lfork to lfc2.lf@in ;
+ link phi2.get-lfork to rfc2.rf@in ;
+ link phi2.rel-rfork to lfc1.lf@in ;
+ link phi2.get-rfork to rfc1.rf@in ;
+
+ link phi3.rel-lfork to lfc3.lf@in ;
+ link phi3.get-lfork to rfc3.rf@in ;
+ link phi3.rel-rfork to lfc2.lf@in ;
+ link phi3.get-rfork to rfc2.rf@in ;
+
+ link phi4.rel-lfork to lfc4.lf@in ;
+ link phi4.get-lfork to rfc4.rf@in ;
+ link phi4.rel-rfork to lfc3.lf@in ;
+ link phi4.get-rfork to rfc3.rf@in ;
+
+ link rfc1.rf@out to fork1.fork@request ;
+ link lfc1.lf@out to fork1.fork@release ;
+
+ link rfc2.rf@out to fork2.fork@request ;
+ link lfc2.lf@out to fork2.fork@release ;
+
+ link rfc3.rf@out to fork3.fork@request ;
+ link lfc3.lf@out to fork3.fork@release ;
+
+ link rfc4.rf@out to fork4.fork@request ;
+ link lfc4.lf@out to fork4.fork@release ;
+
+ bind bool lfc1.lf@free to fork1.free ;
+ bind bool lfc2.lf@free to fork2.free ;
+ bind bool lfc3.lf@free to fork3.free ;
+ bind bool lfc4.lf@free to fork4.free ;
+
+ bind bool rfc1.rf@free to fork1.free ;
+ bind bool rfc2.rf@free to fork2.free ;
+ bind bool rfc3.rf@free to fork3.free ;
+ bind bool rfc4.rf@free to fork4.free ;
+
+ bind bool lt.lt@place-available to rt.place-available ;
+ bind int rt.rt@used-places to table.used-places ;
+}
+)

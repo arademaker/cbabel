@@ -1,0 +1,11 @@
+*** Regular car input controls
+
+(
+module carInput {
+  out port oneway carInput@engineOn ;
+  out port oneway carInput@engineOff ;
+  out port oneway carInput@accelerate ;
+  out port oneway carInput@brake ;
+}
+)
+

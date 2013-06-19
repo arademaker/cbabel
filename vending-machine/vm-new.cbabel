@@ -1,0 +1,159 @@
+(
+module BUY-APPLE {
+ out port oneway buy-apple ;
+}
+)
+
+(
+module BUY-CAKE {
+ out port oneway buy-cake ;
+}
+)
+
+(
+module ADD-DOLLAR {
+ out port oneway add-$ ;
+}
+)
+
+(
+module ADD-QUARTER {
+ out port oneway add-q ;
+}
+)
+
+(
+module CHANGE {
+ out port oneway change ;
+}
+)
+
+
+(
+module SLOT {
+ var int apples = 0 ;
+ var int cakes = 0 ;
+
+ in port oneway put-apple ;
+ in port oneway put-cake ;
+}
+)
+
+(
+connector MAKE-CHANGE {
+ staterequired int ch@dollars ;
+ staterequired int ch@quarters ;
+ in port oneway change-in ;
+
+ interaction {
+  change-in > guard(ch@quarters > 3) {
+               before {
+                ch@dollars = ch@dollars + 1 ;
+                ch@quarters = ch@quarters - 4 ;
+               }
+              }
+  > ground ;
+ }
+}
+)
+
+(
+connector COUNT-DOLLAR {
+ var int dollars = 0 ;
+ in port oneway inc-$ ;
+
+ interaction {
+  inc-$ > guard(TRUE) {
+           before { 
+            dollars = dollars + 1 ;
+           }
+          } 
+  > ground ;
+ }
+}
+)
+
+(
+connector COUNT-QUARTER {
+ var int quarters = 0 ;
+ in port oneway inc-q ;
+
+ interaction {
+  inc-q > guard(TRUE) {
+           before { 
+            quarters = quarters + 1 ;
+           }
+          } 
+  > ground ;
+ }
+}
+)
+
+
+(
+connector SOLD-APPLE {
+ staterequired int sa@dollars ;
+ staterequired int sa@quarters ;
+ in port oneway ack-apple ;
+ out port oneway give-apple ;
+
+ interaction {
+  ack-apple > guard(sa@dollars > 0) {
+               before { 
+                sa@dollars = sa@dollars - 1 ;
+                sa@quarters = sa@quarters + 1 ;
+               }
+              } 
+  > give-apple ;
+ }
+}
+)
+
+(
+connector SOLD-CAKE {
+ staterequired int sc@dollars ;
+ in port oneway ack-cake ;
+ out port oneway give-cake ;
+
+ interaction {
+  ack-cake > guard(sc@dollars > 0) {
+              before { 
+               sc@dollars = sc@dollars - 1 ;
+              }
+             } 
+  > give-cake ;
+ }
+}
+)
+
+(
+application VENDING-MACHINE {
+ instantiate ADD-DOLLAR as bt-ad ;
+ instantiate ADD-QUARTER as bt-aq ;
+ instantiate BUY-APPLE as bt-ba ;
+ instantiate BUY-CAKE as bt-bc ;
+ instantiate CHANGE as bt-change ;
+ instantiate SLOT as slot ;
+ instantiate MAKE-CHANGE as con-change ;
+ instantiate SOLD-CAKE as con-sc ;
+ instantiate SOLD-APPLE as con-sa ;
+ instantiate COUNT-DOLLAR as con-cd ;
+ instantiate COUNT-QUARTER as con-cq ;
+
+ link bt-aq.add-q to con-cq.inc-q ;
+ link bt-ad.add-$ to con-cd.inc-$ ;
+ link bt-change.change to con-change.change-in ;
+
+ bind int con-change.ch@dollars to con-cd.dollars ;
+ bind int con-change.ch@quarters to con-cq.quarters ;
+
+ link bt-ba.buy-apple to con-sa.ack-apple ;
+ link bt-bc.buy-cake to con-sc.ack-cake ;
+ link con-sa.give-apple to slot.put-apple ;
+ link con-sc.give-cake to slot.put-cake ;
+
+ bind int con-sa.sa@dollars to con-cd.dollars ;
+ bind int con-sc.sc@dollars to con-cd.dollars ;
+ bind int con-sa.sa@quarters to con-cq.quarters ;
+}
+)

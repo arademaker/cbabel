@@ -1,0 +1,13 @@
+load a-producer.cbabel
+load a-consumer.cbabel
+load s-buffer.cbabel
+load default.cbabel
+load pc-default.cbabel
+
+(omod APP is
+ inc PC-DEFAULT .
+endom)
+
+load a-ver-pcb.maude
+
+load searches.maude

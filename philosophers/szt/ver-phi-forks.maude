@@ -1,0 +1,63 @@
+in modules.cbabel
+in fork-guard.cbabel
+in phi-forks.cbabel
+
+(omod EXEC-DP is
+ inc DINING-PHILOSOPHERS . 
+
+ var C : Configuration .
+ var O : Oid .
+ var IT IT1 IT2 : Interaction .
+ vars N : Int .
+
+ var C : Configuration . var O : Oid .
+ var IT IT1 IT2 : Interaction . vars N : Int .
+
+ op initial : -> Configuration .
+ eq initial = topology init(phi1) init(phi3) .
+
+ op init : Oid -> Configuration .
+ eq init(O) < O : PHILOSOPHER | state : 0 > = < O : PHILOSOPHER | state : 1 > .
+
+ rl [getting-forks] :
+   < O : PHILOSOPHER | state : 1 > => 
+   < O : PHILOSOPHER | state : 2 >  
+   do(O, get-lfork, none) do(O, get-rfork, none) .
+
+ rl [eating] :
+   done(O, get-lfork, IT1) done(O, get-rfork, IT2) 
+   < O : PHILOSOPHER | > => 
+   < O : PHILOSOPHER | state : 3 > .
+
+ rl [releasing] :
+   < O : PHILOSOPHER | state : 3 > =>
+   < O : PHILOSOPHER | state : 4 >
+   do(O, rel-lfork, none) do(O, rel-rfork, none) .
+
+ rl [thinking] :
+   done(O, rel-lfork, IT1) done(O, rel-rfork, IT2) 
+   < O : PHILOSOPHER | > => 
+   < O : PHILOSOPHER | state : 1 > .
+
+ rl [fork-do-request] :
+    < O : FORK | > do(O, fork@request, IT) => 
+    < O : FORK | > done(O, fork@request, IT) .
+
+ rl [fork-do-release] :
+    < O : FORK | > do(O, fork@release, IT) => 
+    < O : FORK | > done(O, fork@release, IT) .
+endom)
+
+eof
+
+*** Quantas diferentes mensagens transitam no sistema com apenas 1
+*** filosofo em execução
+
+(search [800] topology initial =>* C:Configuration M:Msg .) 
+
+(search initial =>! C:Configuration .)
+
+(search [1] initial =>* send(O, fork@request, IT:Interaction) C:Configuration .)
+
+(search [1] initial =>* ack([O, get-lfork] :: IT:Interaction)  
+                        ack([O, get-rfork] :: IT':Interaction) C:Configuration .)

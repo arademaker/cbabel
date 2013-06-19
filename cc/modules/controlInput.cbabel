@@ -1,0 +1,10 @@
+*** Control buttons for the Cruise controller
+
+(
+module controlInput {
+ out port oneway controlInput@on ;
+ out port oneway controlInput@off ;
+ out port oneway controlInput@resume ;
+}
+)
+ 

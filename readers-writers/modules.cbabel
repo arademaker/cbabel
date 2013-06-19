@@ -1,0 +1,18 @@
+(
+module READER {
+ out port r@read ;
+}
+)
+
+(
+module WRITER {
+ out port w@write ;
+}
+)
+
+(
+module BUFFER {
+ in port buffer@read ;
+ in port buffer@write ;
+}
+)

@@ -1,0 +1,28 @@
+(
+
+connector Controller-br_disa {
+  var int INACTIVE = int(0);
+  var int ACTIVE   = int(1);
+  var int CRUISING = int(2);
+  var int STANDBY  = int(3);
+  var int controlState  = INACTIVE;
+
+   // controles normais de um carro padrao
+  in port oneway brake;
+
+  // efeito produzido no cruise control
+  out port oneway disableControl;
+
+  interaction {
+    brake >
+      guard (controlState==CRUISING) {
+        alternative (ground);
+        before {controlState=STANDBY;}  }
+    > disableControl;
+  }
+} // end Control
+
+)
+
+
+

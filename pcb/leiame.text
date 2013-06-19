@@ -1,0 +1,43 @@
+
+Observacoes apos mudanca do mapeamento para links = equacoes:
+
+1. nas configuracoes sem controle de limite do buffer, com modulos
+   sincronos, ocorre starvation do produtor e do consumidor pois um
+   destes pode sempre "vencer" na disputa de acesso ao buffer. o
+   starvation eh evitado quando a partir do buffer cheio apenas o
+   consumidor pode acessa-lo, e a partir do buffer vazio, apenas o
+   produtor pode acessa-lo. Deadlock eh evitado.
+
+2. na configuracao produtor/consumidor > guardas > mutex > buffer nao
+   ocorre deadlock e tambem nao ocorre estouro de limite. OBS: nas
+   configuracoes com guardas uma nova variavel nitems eh usada nos
+   guardas para controlar o numero de itens que foram colocados no
+   buffer. Esta variavel eh necessaria para evitar que entre a colocao
+   de um item no buffer e a atualizacao das variaveis vazio/cheio,
+   ocorram interacoes.
+
+3. na configuracao produtor/consumidor > mutex > guardas > buffer
+   ocorre deadlock. isto porque, imagine o buffer vazio, uma mensagem
+   de get passa pelo mutex mas eh bloqueada no guard-get e mensagem de
+   put nao pode passar do mutex para liberar o guard-get, deadlock.
+
+4. uma configuracao adicional foi especificada, com guardas
+   implementando um monitor! Isto eh feito sem o contrato de exclusao
+   mutua. Apenas os guardas com uma variavel adicional chamada
+   semaphoro. Ou seja, os guardas sao executados de forma atomica sob
+   exclusao mutua como cada procedimento de um monitor.
+
+5. aumentar o numero de produtores e consumidores para testar
+   performace! com versao assinc de 2 produtores e 2 consumidores ja
+   demorou mais que 2 horas.
+
+
+Resumo:
+
+ PC -> Mutex -> Guardas -> B = deadlock 
+
+ P - G - M - B = não monitor, estouro de buffer
+
+ P - G-mon - B = ok 
+
+ 

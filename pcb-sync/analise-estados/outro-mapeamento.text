@@ -1,0 +1,52 @@
+
+class Producer | input : PortSet .
+
+class Consumer | output : PortSet .
+
+
+ sort Port .
+ op {_,_} : Qid Status : -> Port .
+ ops notInit waiting finished  : -> Status .
+
+*** Mensagens
+
+ msg_from_Addr_
+ msg_to_Addr 
+ reply_to_Addr
+ reply_from_Addr
+
+***** Saida
+ rl  < x : Producer | output : {p, notInit} IS > 
+     do(x, p) => 
+     < x : Producer | output : {p, waiting} IS > 
+     (msg X from x : P) .
+
+
+***** Links
+rl < X: System | links : Link(a : x, b : y) LS >
+   (msg X from IT : [a,b]) => 
+   < channels | > 
+   (msg X to IT : [a,b] : [b,y]) .
+
+Mas e quando dois modulos estao ligados (a e b) na mesma porta de
+entrada?  como responder ao correto?
+  
+
+***** Connector
+rl < x : Default | input : port(P, S) IS >
+   (msg X to IT : [x,P]) => 
+   ...
+   (msg X from IT : [x,P']) .
+
+rl < x : Default | input : port(P, S) IS >
+   (reply X to IT : [x, p]) => 
+   ...
+   (reply X from IT) .
+
+
+***** Entrada
+rl < x : Buffer | items : X > 
+   (msg X to IT : [x,p]) => 
+   ...
+   (reply X from IT : [x,p]) .
+

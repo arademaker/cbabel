@@ -1,0 +1,20 @@
+(
+module PRODUCER {
+ out port oneway producer@put ;
+}
+)
+
+(
+module CONSUMER {
+ out port oneway consumer@get ;
+}
+)
+
+(
+module BUFFER {
+ var int buffer@items = 0 ;
+ var int buffer@maxitems = 2 ;
+ in port buffer@put ;
+ in port buffer@get ;
+}
+)

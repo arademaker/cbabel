@@ -1,0 +1,64 @@
+
+*** (c) Se existe um escritor ativo e temos leitores e escritores
+*** suspensos nos respectivos guardas, aguardando permissão para agir,
+*** então a prioridade será dada aos leitores, que só poderão agir
+*** quando o escritor terminar.
+
+(red modelCheck(initial,  test3) .)
+(red modelCheck(initial, test3a) .)
+
+As proposicoes test3 e test3a, como defininadas no modulo VER-RW, tem
+como modelo trivial a nao ocorrencia do lado esquerdo da implicacao
+(isto eh leitor escrevendo), logo o MC retorna true para ambas as
+proposicoes mas isto nao e garantia da propriedade (c), eh garantia de
+que existe um caminho onde nunca existe um escritor escrevendo.
+
+Isto pode ser comprovado com:
+
+(red modelCheck(initial, [] <> writing) .)
+
+que retorna contra-exemplos mostrando um path onde nunca um escritor
+conseguiu escrever. Mas esta resposta se contrapoe com a verificacao:
+
+(red modelCheck(initial, [] ~ writing) .)
+
+Que tambem retorna um contraexemplo mostrando que nao eh verdade que
+nunca ocorre um writing.
+
+=== 
+
+Alternativamente, apos definir o operador writingWithBlocked?
+encontramos 176 estados onde existe um escritor escrevendo e leitores
+e escritores esperando:
+
+(search [200] initial =>* C:Configuration such that test3?(C:Configuration) .)
+
+Outra opcao para encontrar estes 176 estados:
+
+(search [1] initial =>* C:Configuration < wr : WANT-READ | want-read : N:Int , AS:AttributeSet > < ww : WANT-WRITE | want-write : N1:Int , AS1:AttributeSet > < cw : COUNT-WRITE | writing : true , AS2:AttributeSet > such that N:Int > 0 and N1:Int > 0 .)
+
+Realizando o model check a partir de um destes estados comprovamos que
+a propriedade se verifica a partir DESTE  estado. Mas e os demais 175?
+
+(omod VER-3 is 
+  inc VER-RW .
+
+  op init3 : -> Configuration .
+  eq init3 = ack([cw,out-count-write]::[ww,out-want-write]::[writer2,
+    w@write])< cr : COUNT-READ | cr@want-read : st(1,unchanged),cr@want-write :
+    st(1,unchanged),cr@writing : st(true,unchanged),readers : 0,status :
+    unlocked,turn : 0 > < cw : COUNT-WRITE | cw@readers : st(0,unchanged),
+    cw@turn : st(0,unchanged),cw@want-read : st(1,unchanged),cw@want-write :
+    st(1,unchanged),status : unlocked,writers : 1,writing : true > < db :
+    DATABASE | none > < reader1 : READER | r@read-status : locked > < reader2 :
+    READER | r@read-status : unlocked > < wr : WANT-READ | status : unlocked,
+    want-read : 1 > < writer1 : WRITER | w@write-status : locked > < writer2 :
+    WRITER | w@write-status : locked > < ww : WANT-WRITE | status : unlocked,
+    want-write : 1 > done(reader2,r@read,none)send(cr,in-count-read,[wr,
+    out-want-read]::[reader1,r@read])send(cw,in-count-write,[ww,
+    out-want-write]::[writer1,w@write]) .
+endom)
+
+(red modelCheck(init3, suspendReaders U (~ writing)) .)
+
+*** True .

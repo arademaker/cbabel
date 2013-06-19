@@ -1,0 +1,47 @@
+(
+
+// Basically the car engine. Sensors that can
+// capture the actual speed / throttle and brake
+// pedals. Is also accepts break and throttle stimulus
+// to stop / accelerate the car.
+
+module CarSimulator {
+
+
+    // begins execution as soon as the application is up
+//**** fico executando isso o tempo todo / so que tem o "sleep" !!!
+
+    public void run() {
+        double fdist=0.0;
+        double fspeed=0.0;
+
+        while (true) {
+             sleep (1000/ticksPerSecond);
+
+             fspeed = fspeed+((throttle - fspeed/airResistance - 2*brakepedal))/ticksPerSecond;
+             if (fspeed>maxSpeed) fspeed=maxSpeed;
+             if (fspeed<0) fspeed=0;
+             fdist = fdist + (fspeed/36.0)/ticksPerSecond;
+             speed = (int)fspeed;
+             distance=(int)fdist;
+             if (throttle>0.0) throttle-=0.5/ticksPerSecond; //throttle decays
+        }
+    }
+
+    // implementation of speed control interface
+
+
+//**** o "do" eu faco com variaveis. Ao ser acionada a porta setThrottle eu
+//**** recalculo o throttle
+
+    in port oneway  setThrottle {
+        
+        if (throttle<0.0) throttle=0.0;
+        if (throttle>10.0) throttle=10.0;
+        
+    }
+ 
+
+}
+
+)

@@ -1,0 +1,102 @@
+(
+omod TESTE is
+  including CBABEL-CONFIGURATION .
+  class Controller | ACTIVE : Int, CRUISING : Int, INACTIVE : Int,
+    STANDBY : Int, controlState : Int, status : PortStatus .
+
+  op get-ACTIVE : Object -> Int .
+  op get-CRUISING : Object -> Int .
+  op get-INACTIVE : Object -> Int .
+  op get-STANDBY : Object -> Int .
+  op get-controlState : Object -> Int .
+  op set-ACTIVE : Object Int -> Object .
+  op set-CRUISING : Object Int -> Object .
+  op set-INACTIVE : Object Int -> Object .
+  op set-STANDBY : Object Int -> Object .
+  op set-controlState : Object Int -> Object .
+  op brake : -> PortInId     [ctor] .
+  op disableControl : -> PortOutId     [ctor] .
+
+  op me : -> Oid .
+
+var X : Object .
+
+ ceq instantiate(O:Oid, Controller) =
+    set-controlState(
+     set-STANDBY(set-INACTIVE(set-CRUISING(set-ACTIVE(X, 0), 1), 2), 3), 
+       get-ACTIVE(
+        set-STANDBY(set-INACTIVE(set-CRUISING(set-ACTIVE(X, 0), 1), 2), 3))) 
+  if X := 
+    < O:Oid : Controller | status : unlocked, ACTIVE : 0 , 
+      CRUISING : 0 , INACTIVE : 0 , STANDBY : 0 , controlState : 0 > .
+
+  eq get-ACTIVE(< O:Oid : Controller | ACTIVE : V:Int >)
+    = V:Int .
+  eq get-CRUISING(< O:Oid : Controller | CRUISING : V:Int >)
+    = V:Int .
+  eq get-INACTIVE(< O:Oid : Controller | INACTIVE : V:Int >)
+    = V:Int .
+  eq get-STANDBY(< O:Oid : Controller | STANDBY : V:Int >)
+    = V:Int .
+  eq get-controlState(< O:Oid : Controller | controlState : V:Int >)
+    = V:Int .
+
+  eq set-ACTIVE(< O:Oid : Controller | ACTIVE : V:Int >,V':Int)
+    = < O:Oid : Controller | ACTIVE : V':Int > .
+  eq set-CRUISING(< O:Oid : Controller | CRUISING : V:Int >,V':Int)
+    = < O:Oid : Controller | CRUISING : V':Int > .
+  eq set-INACTIVE(< O:Oid : Controller | INACTIVE : V:Int >,V':Int)
+    = < O:Oid : Controller | INACTIVE : V':Int > .
+  eq set-STANDBY(< O:Oid : Controller | STANDBY : V:Int >,V':Int)
+    = < O:Oid : Controller | STANDBY : V':Int > .
+  eq set-controlState(< O:Oid : Controller | controlState : V:Int >,
+    V':Int)
+    = < O:Oid : Controller | controlState : V':Int > .
+
+  ceq after(OBJ:Object)
+    = OBJ:Object
+    if class(OBJ:Object)= Controller .
+  ceq before(OBJ:Object)
+    = set-controlState(OBJ:Object,get-STANDBY(OBJ:Object))
+    if class(OBJ:Object)= Controller .
+  ceq open?(OBJ:Object)
+    = get-controlState(OBJ:Object)== get-CRUISING(OBJ:Object)
+    if class(OBJ:Object)= Controller .
+
+  rl < O:Oid : Controller | status : unlocked >
+ack([O:Oid,disableControl]:: IT:Interaction)
+    => after(< O:Oid : Controller | status : unlocked >)
+ack(IT:Interaction) [label Controller-acking-disableControl] .
+  crl < O:Oid : Controller | status : unlocked >
+send(O:Oid,brake,IT:Interaction)
+    => before(< O:Oid : Controller | status : unlocked >)
+send(O:Oid,disableControl,[O:Oid,disableControl]:: IT:Interaction)
+    if open?(< O:Oid : Controller | status : unlocked >)= true [label
+    Controller-sending-brake] .
+  crl < O:Oid : Controller | status : unlocked >
+send(O:Oid,brake,IT:Interaction)
+    => before(< O:Oid : Controller | status : unlocked >)
+send(O:Oid,ground,[O:Oid,ground]:: IT:Interaction)
+    if open?(< O:Oid : Controller | status : unlocked >)= false [label
+    Controller-sending-ground] .
+endom
+)
+
+eof
+
+  eq instantiate(O:Oid,Controller) = 
+     set-controlState(
+     < O:Oid : Controller | status : unlocked, ACTIVE : 1 , 
+       CRUISING : 2 , INACTIVE : 0 , STANDBY : 3 , controlState : 0 >, 
+       get-ACTIVE(< O:Oid : Controller | status : unlocked, ACTIVE : 1 , 
+       CRUISING : 2 , INACTIVE : 0 , STANDBY : 3 , controlState : 0 >)) 
+
+
+eq instantiate(O:Oid, Controller) =
+    set-controlSate(
+     set-STANDBY(set-INACTIVE(set-CRUSING(set-ACTIVE(X, 0), 1), 2), 3), 
+       get-ACTIVE(
+        set-STANDBY(set-INACTIVE(set-CRUSING(set-ACTIVE(X, 0), 1), 2), 3))) 
+ if X := 
+    < O:Oid : Controller | status : unlocked, ACTIVE : 0 , 
+              CRUISING : 0 , INACTIVE : 0 , STANDBY : 0 , controlState : 0 > .

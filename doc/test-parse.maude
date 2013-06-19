@@ -1,0 +1,41 @@
+in cbabel-signature.maude
+
+fmod TESTE is 
+ pr META-LEVEL .
+ pr CBABEL-SIGNATURE .
+endfm
+
+eof
+
+red in TESTE : upTerm( guard(x > 10 && y == TRUE) ) .
+red in TESTE : upTerm( in port 10 ; ) .
+red in TESTE : upTerm( in port out ; ) .
+red in TESTE : upTerm( in port TRUE ; ) .
+
+
+***(
+ - ddd > loop-mode > token(''ddd.Qid) 
+ - downQid(''ddd.Qid) > 'ddd
+ - metaParse('ddd ) > na assinatura de cbabel nao existe ddd pois nao
+tenho uma constante para cada id, logo
+ - ID('ddd) 
+
+ - downQid(''10.Qid) > '10
+ - metaParse('10) > na assinatura de cbabel > s^10[0] (10 meta representado)
+ - VL(downTerm())
+)
+
+mod LIXO is 
+ pr CBABEL-SIGNATURE .
+ pr META-LEVEL .
+ pr MOVE-DOWN .
+
+ op t : -> Term .
+ eq t = ''yx.Qid .
+
+ op M : -> Module .
+ eq M = upModule('CBABEL-SIGNATURE, true) .
+endm
+
+red metaParse(M, downQid(t), anyType ) .
+

@@ -1,0 +1,47 @@
+load a-modules.cbabel
+load a-pc-guards-mutex.cbabel
+
+(omod APP is inc PC-GUARDS-MUTEX . endom)
+
+(omod VER-PCB is
+ inc APP . 
+ inc MODEL-CHECKER .
+
+ subsort Configuration < State .
+
+ var C : Configuration . vars O O' : Oid .
+ vars IT IT' : Interaction . var P : PortId . 
+ vars M N : Int . 
+
+ rl [producer-do] : < O : PRODUCER | > => < O : PRODUCER | > do(O, producer@put, none) .
+ rl [consumer-do] : < O : CONSUMER | > => < O : CONSUMER | > do(O, consumer@get, none) .
+
+ rl [buffer-do-put] :
+    do(O, buffer@put, IT) < O : BUFFER | buffer@items : N , buffer@maxitems : M > => 
+    < O : BUFFER | buffer@items : (if s(N) > 3 then 3 else s(N) fi) , buffer@maxitems : M > 
+    done(O, buffer@put, IT)  .
+ rl [buffer-do-get] : 
+    do(O, buffer@get, IT) < O : BUFFER | buffer@items : N > => 
+    < O : BUFFER | buffer@items : (if (N - 1) < -1 then -1 else (N - 1) fi) > 
+    done(O, buffer@get, IT) .
+
+ eq send(O, P, IT) send(O, P, IT) send(O, P, IT) =
+    send(O, P, IT) send(O, P, IT) [label msgs-send-abstraction] .
+ eq do(O, P, IT) do(O, P, IT) do(O, P, IT) =
+    do(O, P, IT) do(O, P, IT) [label msgs-do-abstraction] .
+ eq done(O, P, IT) done(O, P, IT) done(O, P, IT) =
+    done(O, P, IT) done(O, P, IT) [label msgs-done-abstraction] .
+ eq ack(IT)  ack(IT)  ack(IT) =
+    ack(IT)  ack(IT) [label msgs-ack-abstraction] .
+
+ op raceCond : -> Prop .
+ eq send(O, buffer@get, IT) send(O, buffer@put, IT') C |= raceCond = true .
+ ops overflow underflow : -> Prop .
+ ceq < O : BUFFER | buffer@items : N , buffer@maxitems : M > 
+     C |= overflow = true if N > M .
+ ceq < O : BUFFER | buffer@items : N > C |= underflow = true if N < 0 .
+
+ op initial : -> Configuration .
+ eq initial = topology 
+              do(cons, consumer@get, none) do(prod, producer@put, none) .
+endom)

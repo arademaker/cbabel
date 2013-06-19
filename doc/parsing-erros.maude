@@ -1,0 +1,83 @@
+
+fmod TESTE is 
+ sorts A ASet C .
+ subsort A < ASet .
+ subsort A < C .
+
+ op x : -> A .
+ op y : -> C .
+endfm
+
+eof
+********************************
+fmod TESTE is 
+ pr QID .
+ sorts Id IdList .
+ subsort Id < IdList .
+ *** subsort Id < Qid .
+
+ op ID : Qid -> Id [ctor] .
+ op mt-id : -> IdList [ctor] .
+
+ *** agora fica seguro usar , ou ; ou qq outra coisa
+ op _;_ : IdList IdList -> IdList [assoc comm id: mt-id] .
+endfm
+
+fmod LIXO is
+ pr TESTE .
+ pr META-LEVEL .
+endfm
+
+parse in LIXO : ID('a) ; ID('b) ; ID('c) .
+red in LIXO :  ID('a) ; ID('b) ; ID('c) .
+red in LIXO :  ID('a) ; ID('b) ; ID('c) :: IdList .
+
+eof
+
+
+********************************
+fmod TESTE is 
+ pr QID .
+ sorts Id IdList .
+ subsort Id < IdList .
+
+*** todo Id é um Qid 
+ subsort Id < Qid . 
+
+ op mt-id : -> IdList [ctor] .
+ op _;_ : IdList IdList -> IdList [assoc comm id: mt-id] .
+endfm
+
+fmod LIXO is
+ pr TESTE .
+ pr META-LEVEL .
+endfm
+
+parse in LIXO : 'a ; 'b ; 'c .
+red in LIXO : 'a ; 'b ; 'c :: IdList .
+red in LIXO : 'a ; 'b , 'c .
+
+
+********************************
+fmod TESTE is 
+ pr QID .
+ sorts Id IdList .
+ subsort Id < IdList .
+ 
+*** Todo Qid eh um Id. O carrier set do subsort Qid e' incluso
+*** no carrier set do sort maior (que e' vazio).
+ subsort Qid < Id . 
+
+ op mt-id : -> IdList [ctor] .
+ op _;_ : IdList IdList -> IdList [assoc comm id: mt-id] .
+endfm
+
+fmod LIXO is
+ pr TESTE .
+ pr META-LEVEL .
+endfm
+
+parse in LIXO : 'a ; 'b ; 'c .
+red in LIXO : 'a ; 'b ; 'c :: IdList .
+red in LIXO : 'a ; 'b , 'c .
+

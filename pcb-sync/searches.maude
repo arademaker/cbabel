@@ -1,0 +1,86 @@
+*** race condition 
+(red modelCheck(initial, raceCond) .)
+
+(search [1] initial =>* C:Configuration send(buff, buffer@put, IT1:Interaction) send(buff, buffer@get, IT2:Interaction) .)
+
+
+*** deadlock
+
+(search initial =>! C:Configuration .)
+
+(red modelCheck(initial, []<> enable(mutx)) .)
+
+(red modelCheck(initial, deadlockFree).)
+
+
+Nao funcionou por gerar contra-exemplo em todas as configuracoes:
+
+(red modelCheck(initial, []<> begin(prod1) -> []<> end(prod1) ) .)
+
+(red modelCheck(initial, []<> (end(prod1) \/ end(cons1)) .) 
+
+(red modelCheck(initial, []<> begin(prod1)) .)
+
+
+*** underflow
+(red modelCheck(initial, [] ~ underflow) .)
+
+(search [1] initial =>* C:Configuration 
+            < buff : BUFFER | buffer@items : N:Int , AS:AttributeSet > such that N:Int < 0 .)
+
+
+*** overflow
+(red modelCheck(initial, [] ~ overflow) .)
+
+(search [1] initial =>* C:Configuration 
+            < buff : BUFFER | buffer@items : N:Int , buffer@maxitems : M:Int > 
+  such that N:Int > M:Int .)
+
+
+*** starvation do produtor
+(red modelCheck(initial, [] <> putting) .)
+
+*** starvation do consumidor
+(red modelCheck(initial, [] <> getting) .)
+
+
+*** analises localizadas
+
+Em PC-GUARDS-MUTEX
+
+(search [1] 
+  < gget : GUARD-GET | empty : 0 , gg@full : st(2,unchanged) > 
+  < gput : GUARD-PUT | full : 2 , gp@empty : st(0,unchanged) >
+  < mutx : MUTEX | status : unlocked >
+  send(gput,gp@in, IT1:Interaction)
+  =>* 
+  C2:Configuration send(buff, buffer@put, IT2:Interaction) .)
+
+(search [1] 
+  < gget : GUARD-GET | empty : 0 , gg@full : st(2,unchanged) > 
+  < gput : GUARD-PUT | full : 2 , gp@empty : st(0,unchanged) >
+  < mutx : MUTEX | status : unlocked >
+  send(gget,gg@in, IT1:Interaction)
+  =>* 
+  C2:Configuration send(buff, buffer@get, IT2:Interaction) .)
+
+
+Em PC-MUTEX 
+
+(select PCB-EXEC .)
+
+(search [1] < mutx : MUTEX | status : unlocked >
+            < buff : BUFFER | items : 1 , maxitems : 1 > 
+            send(mutx, mutex@in1, IT1:Interaction) 
+            send(mutx, mutex@in2, IT2:Interaction) =>* C2:Configuration
+            < buff : BUFFER | items : N:Int , maxitems : M:Int > 
+  such that N:Int > M:Int .)
+
+
+
+(search [1] initial =>* C:Configuration 
+              < gget : GUARD-GET | empty : N:Int , A1:AttributeSet > 
+              < gput : GUARD-PUT | full : M:Int , A2:AttributeSet > 
+  such that (N:Int > 2 or M:Int > 2 or N:Int < 0 or M:Int < 0) .)
+
+             

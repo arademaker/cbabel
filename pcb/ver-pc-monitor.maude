@@ -1,0 +1,48 @@
+load s-modules.cbabel
+load pc-monitor.cbabel
+
+(omod VER-PCB is
+ inc PC-MONITOR . 
+ inc MODEL-CHECKER .
+
+ var C : Configuration .
+ var O O' : Oid .
+ vars IT IT1 IT2 : Interaction .
+ vars M N : Int .
+
+ op initial : -> Configuration .
+ eq initial = topology 
+              do(cons, consumer@get, none) do(prod, producer@put, none) .
+
+ rl [producer-do] : done(O, producer@put, IT) => do(O, producer@put, none) .
+ rl [consumer-do] : done(O, consumer@get, IT) => do(O, consumer@get, none) .
+
+ rl [buffer-do-put] :
+    do(O, buffer@put, IT) < O : BUFFER | buffer@items : N > => 
+    done(O, buffer@put, IT) < O : BUFFER | buffer@items : inc(N) > .
+
+ rl [buffer-do-get] : 
+    do(O, buffer@get, IT) < O : BUFFER | buffer@items : N > => 
+    done(O, buffer@get, IT) < O : BUFFER | buffer@items : dec(N) > .
+
+ op inc : Int -> Int .
+ eq inc(N) = if s(N) > 3 then 3 else s(N) fi .
+ op dec : Int -> Int .
+ eq dec(N) = if (N - 1) < -1 then -1 else (N - 1) fi .
+
+ subsort Configuration < State .
+ ops putting getting : -> Prop .
+ eq send(O, buffer@put, IT) C |= putting = true .
+ eq send(O, buffer@get, IT) C |= getting = true .
+
+ op raceCond : -> Formula .
+ eq raceCond = (putting /\ getting) . 
+
+ ops overflow underflow : -> Prop .
+ ceq < O : BUFFER | buffer@items : N > < gput : GUARD-PUT | gp@maxitems : M > 
+     C |= overflow = true  
+  if N > M .
+
+ ceq < O : BUFFER | buffer@items : N > C |= underflow = true 
+  if N < 0 .
+endom)
